@@ -1,0 +1,34 @@
+# ── Core Telegram ──────────────────────────────────────────────
+python-telegram-bot==21.6
+httpx==0.27.2
+aiohttp==3.10.5
+
+# ── Scheduling ─────────────────────────────────────────────────
+APScheduler==3.10.4
+python-dotenv==1.0.1
+
+# ── Weather / Numerics ─────────────────────────────────────────
+openmeteo-requests==1.3.0
+requests-cache==1.2.1
+retry-requests==2.0.0
+numpy==2.1.0
+scipy==1.14.1
+pandas==2.2.2
+
+# ── Storage ────────────────────────────────────────────────────
+aiosqlite==0.20.0
+sqlite-utils==3.37
+
+# ── Logging ────────────────────────────────────────────────────
+loguru==0.7.2
+rich==13.8.1
+
+# ── Utils ──────────────────────────────────────────────────────
+pydantic==2.9.2
+tenacity==9.0.0
+pytz==2024.2
+python-dateutil==2.9.0
+
+# ── Polymarket (optional, only needed for live trading) ────────
+# py-clob-client==0.18.0
+# web3==7.2.0
