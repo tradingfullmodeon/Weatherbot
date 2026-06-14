@@ -819,10 +819,14 @@ class Orchestrator:
         logger.info(f"   Mode: {TRADING_MODE.upper()} | Scan: {SCAN_INTERVAL}min")
         logger.info("=" * 55)
 
-        token = os.getenv("TELEGRAM_BOT_TOKEN","")
-        if not token or "your_" in token:
-            logger.error("❌ TELEGRAM_BOT_TOKEN not set in Railway environment variables!")
+        token = os.getenv("TELEGRAM_BOT_TOKEN","").strip()
+        if not token:
+            logger.error("❌ TELEGRAM_BOT_TOKEN is empty. Go to Railway → Variables and add it, then redeploy.")
             sys.exit(1)
+        if len(token) < 20 or ":" not in token:
+            logger.error(f"❌ TELEGRAM_BOT_TOKEN looks invalid (got {len(token)} chars). Check Railway Variables.")
+            sys.exit(1)
+        logger.info(f"[Init] Token loaded: ...{token[-8:]}")
 
         await self.portfolio.init_db()
 
