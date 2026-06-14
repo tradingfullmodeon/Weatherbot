@@ -10,9 +10,37 @@ from datetime import datetime, timezone
 from typing import Optional
 from dataclasses import dataclass, field
 
-from dotenv import load_dotenv
-# load_dotenv only fills vars NOT already set — Railway vars take priority
-load_dotenv(override=False)
+from dotenv import load_dotenv, dotenv_values
+
+def _load_all_env_sources():
+    """
+    Railway injects vars via multiple mechanisms.
+    Try all of them to ensure we find TELEGRAM_BOT_TOKEN.
+    """
+    # 1. Standard .env file (local dev)
+    load_dotenv(override=False)
+    
+    # 2. Railway sometimes writes to /etc/environment
+    try:
+        load_dotenv("/etc/environment", override=False)
+    except Exception:
+        pass
+    
+    # 3. Try reading from /proc/1/environ (parent process env)
+    try:
+        with open("/proc/1/environ", "rb") as f:
+            entries = f.read().split(b"\x00")
+        for entry in entries:
+            try:
+                k, v = entry.decode("utf-8", errors="replace").split("=", 1)
+                if k and k not in os.environ:
+                    os.environ[k] = v
+            except ValueError:
+                pass
+    except Exception:
+        pass
+
+_load_all_env_sources()
 
 from loguru import logger
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -820,23 +848,49 @@ class Orchestrator:
         logger.info(f"   Mode: {TRADING_MODE.upper()} | Scan: {SCAN_INTERVAL}min")
         logger.info("=" * 55)
 
-        # Dump env for debug
-        logger.info("[ENV] Checking environment:")
-        for k,v in sorted(os.environ.items()):
-            if any(x in k for x in ["TELEGRAM","TRADING","PAPER","RAILWAY","PORT"]):
-                safe = (v[:4]+"..."+v[-4:]) if len(v)>12 else v
+        # ── Full env dump for debugging ──
+        logger.info("[ENV] === All environment variables ===")
+        all_keys = sorted(os.environ.keys())
+        logger.info(f"[ENV] Total vars: {len(all_keys)}")
+        for k in all_keys:
+            v = os.environ[k]
+            if any(x in k for x in ["TELEGRAM","TRADING","PAPER","RAILWAY","PORT","BOT"]):
+                safe = (v[:6]+"..."+v[-4:]) if len(v)>14 else v
                 logger.info(f"[ENV]   {k} = {safe}")
+        logger.info(f"[ENV] Keys with TELEGRAM: {[k for k in all_keys if 'TELEGRAM' in k]}")
+        logger.info("[ENV] ===================================")
 
-        token = os.environ.get("TELEGRAM_BOT_TOKEN","").strip()
+        # Try every possible way to get the token
+        token = (
+            os.environ.get("TELEGRAM_BOT_TOKEN") or
+            os.environ.get("telegram_bot_token") or  # lowercase variant
+            ""
+        ).strip()
         logger.info(f"[ENV] Token len={len(token)} has_colon={(':' in token)}")
 
         if not token or len(token) < 20 or ":" not in token:
             logger.error(
-                f"Token invalid (len={len(token)}). "
-                "Railway: Variables tab -> confirm TELEGRAM_BOT_TOKEN -> Redeploy."
+                f"TELEGRAM_BOT_TOKEN not found (len={len(token)}). "
+                f"Found {len(all_keys)} env vars total."
             )
-            await asyncio.sleep(30)
-            sys.exit(1)
+            logger.error("=" * 55)
+            logger.error("FIX — Run in Railway Console:")
+            logger.error("  export TELEGRAM_BOT_TOKEN=your_token_here")
+            logger.error("  python main.py")
+            logger.error("OR: Railway -> Variables -> Raw Editor -> add vars -> Update")
+            logger.error("=" * 55)
+            # Keep container alive (don't crash) so Railway Console stays open
+            # Bot will retry every 30s in case vars get injected dynamically
+            retry = 0
+            while True:
+                await asyncio.sleep(30)
+                retry += 1
+                token = os.environ.get("TELEGRAM_BOT_TOKEN","").strip()
+                if token and len(token) > 20 and ":" in token:
+                    logger.info(f"[Init] Token appeared after {retry*30}s! Continuing...")
+                    break
+                if retry % 4 == 0:  # every 2 min
+                    logger.warning(f"[Wait] Still waiting for TELEGRAM_BOT_TOKEN ({retry*30}s elapsed)")
         logger.info(f"[Init] Token OK: ...{token[-8:]}")
 
         await self.portfolio.init_db()
