@@ -11,7 +11,8 @@ from typing import Optional
 from dataclasses import dataclass, field
 
 from dotenv import load_dotenv
-load_dotenv()
+# load_dotenv only fills vars NOT already set — Railway vars take priority
+load_dotenv(override=False)
 
 from loguru import logger
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -819,14 +820,24 @@ class Orchestrator:
         logger.info(f"   Mode: {TRADING_MODE.upper()} | Scan: {SCAN_INTERVAL}min")
         logger.info("=" * 55)
 
-        token = os.getenv("TELEGRAM_BOT_TOKEN","").strip()
-        if not token:
-            logger.error("❌ TELEGRAM_BOT_TOKEN is empty. Go to Railway → Variables and add it, then redeploy.")
+        # Dump env for debug
+        logger.info("[ENV] Checking environment:")
+        for k,v in sorted(os.environ.items()):
+            if any(x in k for x in ["TELEGRAM","TRADING","PAPER","RAILWAY","PORT"]):
+                safe = (v[:4]+"..."+v[-4:]) if len(v)>12 else v
+                logger.info(f"[ENV]   {k} = {safe}")
+
+        token = os.environ.get("TELEGRAM_BOT_TOKEN","").strip()
+        logger.info(f"[ENV] Token len={len(token)} has_colon={(':' in token)}")
+
+        if not token or len(token) < 20 or ":" not in token:
+            logger.error(
+                f"Token invalid (len={len(token)}). "
+                "Railway: Variables tab -> confirm TELEGRAM_BOT_TOKEN -> Redeploy."
+            )
+            await asyncio.sleep(30)
             sys.exit(1)
-        if len(token) < 20 or ":" not in token:
-            logger.error(f"❌ TELEGRAM_BOT_TOKEN looks invalid (got {len(token)} chars). Check Railway Variables.")
-            sys.exit(1)
-        logger.info(f"[Init] Token loaded: ...{token[-8:]}")
+        logger.info(f"[Init] Token OK: ...{token[-8:]}")
 
         await self.portfolio.init_db()
 
