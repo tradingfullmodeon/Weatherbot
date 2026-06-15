@@ -270,55 +270,47 @@ class GammaClient:
     def __init__(self): self.s = httpx.AsyncClient(timeout=30)
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2,max=10))
-    async def _fetch(self, tag, limit=200, offset=0):
-        r = await self.s.get(f"{GAMMA_BASE}/markets", params={
-            "tag":tag,"active":"true","closed":"false","limit":limit,"offset":offset})
+    async def _fetch_page(self, offset=0, limit=100, tag=None):
+        """Fetch a page of markets."""
+        params = {"active":"true","closed":"false","limit":limit,"offset":offset}
+        if tag:
+            params["tag"] = tag
+        r = await self.s.get(f"{GAMMA_BASE}/markets", params=params)
         r.raise_for_status()
-        d = r.json(); return d if isinstance(d,list) else d.get("markets",[])
-
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2,max=10))
-    async def _search(self, query, limit=100):
-        """Search markets by question text."""
-        r = await self.s.get(f"{GAMMA_BASE}/markets", params={
-            "q": query, "active": "true", "closed": "false", "limit": limit})
-        if r.status_code == 200 and r.content:
-            d = r.json()
-            return d if isinstance(d, list) else d.get("markets", [])
-        # Fallback: fetch all and filter client-side
-        r2 = await self.s.get(f"{GAMMA_BASE}/markets", params={
-            "active": "true", "closed": "false", "limit": limit})
-        r2.raise_for_status()
-        d2 = r2.json()
-        all_m = d2 if isinstance(d2, list) else d2.get("markets", [])
-        q_lower = query.lower()
-        return [m for m in all_m if q_lower in (m.get("question","") or "").lower()]
+        d = r.json()
+        return d if isinstance(d,list) else d.get("markets",[])
 
     async def get_weather_markets(self):
-        all_m=[]; seen=set()
-        
-        # Strategy 1: Search by weather-related query strings
-        QUERIES = [
-            "high temperature", "low temperature", "temperature exceed",
-            "degrees fahrenheit", "degrees celsius", "°F", "°C",
-            "rainfall inches", "precipitation inches", "inches of rain",
-            "snowfall", "snow inches", "blizzard",
-            "heat index", "wind speed mph",
-            "will it rain", "measurable precipitation",
-        ]
-        for q in QUERIES:
-            try:
-                batch = await self._search(q, 100)
-                all_m.extend(batch)
-            except Exception as e:
-                logger.debug(f"[Gamma] search '{q}' failed: {e}")
+        """
+        Fetch weather markets by scanning ALL active markets and filtering by content.
+        Polymarket's tag system is unreliable; we scan broadly and filter client-side.
+        """
+        all_m = []
+        seen = set()
 
-        # Strategy 2: Also try tag-based (in case some still work)
-        for tag in ["weather", "climate"]:
+        # Step 1: Fetch first 500 markets (5 pages × 100)
+        # These are sorted by volume/activity so weather markets should be near top
+        logger.info("[Gamma] Scanning active markets...")
+        for offset in range(0, 500, 100):
             try:
-                batch = await self._fetch(tag, 100, 0)
+                batch = await self._fetch_page(offset=offset, limit=100)
+                if not batch:
+                    break
+                all_m.extend(batch)
+                logger.debug(f"[Gamma] Fetched page offset={offset}, got {len(batch)}")
+                if len(batch) < 100:
+                    break
+            except Exception as e:
+                logger.warning(f"[Gamma] Page fetch error at offset={offset}: {e}")
+                break
+
+        # Step 2: Also try weather/climate tags (might return different results)
+        for tag in ["weather", "climate", "sports", "science"]:
+            try:
+                batch = await self._fetch_page(tag=tag, limit=100)
                 all_m.extend(batch)
             except Exception as e:
-                logger.debug(f"[Gamma] tag '{tag}' failed: {e}")
+                logger.debug(f"[Gamma] tag '{tag}': {e}")
 
         # Deduplicate
         unique = []
@@ -327,31 +319,40 @@ class GammaClient:
             if cid and cid not in seen:
                 seen.add(cid); unique.append(m)
 
-        # Filter: only keep markets whose question contains weather keywords
+        # Step 3: Filter for actual weather/climate content
         WEATHER_KW = [
-            "temperature","degrees fahrenheit","degrees celsius","°f","°c",
-            "rainfall","snowfall","precipitation","blizzard","frost","flood",
-            "drought","wildfire","heat index","wind speed","heat wave","hurricane landfall","hurricane strikes",
-            "inches of rain","inches of snow","measurable rain",
+            # Temperature
+            "temperature","degrees fahrenheit","degrees celsius",
+            "°f","°c","high of","low of","heat index",
+            # Precipitation
+            "rainfall","snowfall","precipitation","inches of rain",
+            "inches of snow","measurable rain","measurable precipitation",
+            "blizzard","frost","flood","drought",
+            # Extreme weather
+            "heat wave","cold snap","wildfire","tornado","hurricane landfall",
+            "hurricane strikes","tropical storm","wind speed",
+            # Direct weather phrases
+            "will it rain","will it snow","chance of rain",
         ]
-        # Sports teams / non-weather uses of weather words to exclude
-        SPORTS_EXCLUDE = [
-            "hurricanes win","hurricanes make","stanley cup","nhl","nba","nfl","mlb",
-            "tornado warning issued","heat win","miami heat","oklahoma city thunder",
-            "chicago bulls","new orleans pelicans","new orleans saints",
+        EXCLUDE = [
+            "stanley cup","nhl playoff","nba champion","nfl champion",
+            "win the championship","win the series","win the title",
+            "hurricanes win","heat win","thunder win","bulls win",
+            "pelicans win","saints win","jaguars win",
         ]
         def is_weather(m):
-            q = (m.get("question","") or "").lower()
-            if any(ex in q for ex in SPORTS_EXCLUDE): return False
+            q = (m.get("question","") or m.get("title","") or "").lower()
+            if not q: return False
+            if any(ex in q for ex in EXCLUDE): return False
             return any(k in q for k in WEATHER_KW)
 
         weather = [m for m in unique if is_weather(m)]
 
-        logger.info(f"[Gamma] {len(unique)} total, {len(weather)} weather-specific")
-        for m in weather[:5]:
+        logger.info(f"[Gamma] Scanned {len(unique)} markets → {len(weather)} weather")
+        for m in weather[:8]:
             q = m.get("question","") or "(no question)"
             liq = float(m.get("liquidity",0) or 0)
-            logger.info(f"[Gamma] ✓ {q[:80]} (liq=${liq:.0f})")
+            logger.info(f"[Gamma] ✓ {q[:85]} (liq=${liq:.0f})")
         return weather
 
     async def close(self): await self.s.aclose()
