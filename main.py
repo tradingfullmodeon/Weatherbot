@@ -817,25 +817,52 @@ class Orchestrator:
         self.scheduler.add_job(self._exit_job,"interval",minutes=EXIT_INT,id="exit")
         self.scheduler.start()
 
-        app=self.bot.build(token)
-        try:
-            await app.initialize(); await app.start()
-            await app.updater.start_polling(drop_pending_updates=True)
-            logger.info("✅ Bot running — send /start in Telegram")
-            while True: await asyncio.sleep(60)
-        except (KeyboardInterrupt,SystemExit): logger.info("Shutting down...")
-        except Exception as e:
-            if "Conflict" in str(e):
-                logger.warning(f"[Telegram] Conflict: another instance running. Waiting 15s...")
-                await asyncio.sleep(15)
-            else:
-                logger.error(f"[Telegram] Unexpected error: {e}", exc_info=True)
-        finally:
-            try: await app.updater.stop(); await app.stop(); await app.shutdown()
-            except Exception: pass
-            self.scheduler.shutdown(wait=False)
-            await self.engine.close(); await self.portfolio.close()
-            logger.info("Done.")
+        # Retry loop — handles Telegram Conflict when old instance is still running
+        MAX_RETRIES = 10
+        for attempt in range(MAX_RETRIES):
+            app = self.bot.build(token)
+            try:
+                await app.initialize()
+                await app.start()
+                # drop_pending_updates=True clears any conflict immediately
+                await app.updater.start_polling(
+                    drop_pending_updates=True,
+                    allowed_updates=["message","callback_query"],
+                )
+                logger.info("✅ Bot running — send /start in Telegram")
+                while True:
+                    await asyncio.sleep(60)
+            except (KeyboardInterrupt, SystemExit):
+                logger.info("Shutting down...")
+                break
+            except Exception as e:
+                err = str(e)
+                if "Conflict" in err:
+                    wait = 10 * (attempt + 1)
+                    logger.warning(f"[Telegram] Conflict (attempt {attempt+1}/{MAX_RETRIES}). "
+                                   f"Old instance still running. Waiting {wait}s...")
+                    try:
+                        await app.updater.stop()
+                        await app.stop()
+                        await app.shutdown()
+                    except Exception: pass
+                    await asyncio.sleep(wait)
+                    continue
+                else:
+                    logger.error(f"[Telegram] Error: {e}", exc_info=True)
+                    break
+            finally:
+                try:
+                    await app.updater.stop()
+                    await app.stop()
+                    await app.shutdown()
+                except Exception: pass
+            break  # clean exit
+
+        self.scheduler.shutdown(wait=False)
+        await self.engine.close()
+        await self.portfolio.close()
+        logger.info("Done.")
 
 # ══════════════════════════════════════════════════════════════════
 #  ENTRY POINT
