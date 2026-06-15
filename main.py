@@ -107,11 +107,25 @@ CITY_COORDS = {
 }
 CITY_ALIASES = {
     "new york city":"New York","nyc":"New York","new york, ny":"New York",
-    "los angeles":"Los Angeles","san francisco":"San Francisco","sf":"San Francisco",
+    "new york, new york":"New York","manhattan":"New York","brooklyn":"New York",
+    "los angeles":"Los Angeles","l.a.":"Los Angeles","hollywood":"Los Angeles",
+    "san francisco":"San Francisco","sf":"San Francisco","bay area":"San Francisco",
     "washington dc":"Washington","washington, dc":"Washington","d.c.":"Washington",
-    "st louis":"St. Louis","salt lake":"Salt Lake City",
-    "new orleans":"New Orleans","kansas city":"Kansas City",
+    "washington d.c.":"Washington",
+    "st louis":"St. Louis","st. louis":"St. Louis",
+    "salt lake":"Salt Lake City","slc":"Salt Lake City",
+    "new orleans":"New Orleans","nola":"New Orleans",
+    "kansas city":"Kansas City","kc":"Kansas City",
+    "oklahoma city":"Oklahoma City","okc":"Oklahoma City",
+    "las vegas":"Las Vegas","vegas":"Las Vegas",
+    "fort worth":"Dallas",
+    "san antonio":"San Antonio",
+    "el paso":"El Paso",
+    "colorado springs":"Denver",
 }
+
+# Add San Antonio to CITY_COORDS
+CITY_COORDS["San Antonio"] = (29.4241, -98.4936)
 
 # ══════════════════════════════════════════════════════════════════
 #  DATA MODELS
@@ -284,13 +298,16 @@ class GammaClient:
         
         # Strategy 1: Search by weather-related query strings
         QUERIES = [
-            "temperature", "degrees", "rainfall", "precipitation",
-            "hurricane", "tornado", "snow", "heat wave", "blizzard",
-            "high temperature", "low temperature", "weather",
+            "high temperature", "low temperature", "temperature exceed",
+            "degrees fahrenheit", "degrees celsius", "°F", "°C",
+            "rainfall inches", "precipitation inches", "inches of rain",
+            "snowfall", "snow inches", "blizzard",
+            "heat index", "wind speed mph",
+            "will it rain", "measurable precipitation",
         ]
         for q in QUERIES:
             try:
-                batch = await self._search(q, 50)
+                batch = await self._search(q, 100)
                 all_m.extend(batch)
             except Exception as e:
                 logger.debug(f"[Gamma] search '{q}' failed: {e}")
@@ -311,11 +328,24 @@ class GammaClient:
                 seen.add(cid); unique.append(m)
 
         # Filter: only keep markets whose question contains weather keywords
-        WEATHER_KW = ["temperature","degrees","°f","°c","rain","snow","hurricane",
-                      "tornado","heat","cold","wind","precipitation","weather",
-                      "blizzard","frost","flood","drought","wildfire","storm"]
-        weather = [m for m in unique
-                   if any(k in (m.get("question","") or "").lower() for k in WEATHER_KW)]
+        WEATHER_KW = [
+            "temperature","degrees fahrenheit","degrees celsius","°f","°c",
+            "rainfall","snowfall","precipitation","blizzard","frost","flood",
+            "drought","wildfire","heat index","wind speed","heat wave","hurricane landfall","hurricane strikes",
+            "inches of rain","inches of snow","measurable rain",
+        ]
+        # Sports teams / non-weather uses of weather words to exclude
+        SPORTS_EXCLUDE = [
+            "hurricanes win","hurricanes make","stanley cup","nhl","nba","nfl","mlb",
+            "tornado warning issued","heat win","miami heat","oklahoma city thunder",
+            "chicago bulls","new orleans pelicans","new orleans saints",
+        ]
+        def is_weather(m):
+            q = (m.get("question","") or "").lower()
+            if any(ex in q for ex in SPORTS_EXCLUDE): return False
+            return any(k in q for k in WEATHER_KW)
+
+        weather = [m for m in unique if is_weather(m)]
 
         logger.info(f"[Gamma] {len(unique)} total, {len(weather)} weather-specific")
         for m in weather[:5]:
