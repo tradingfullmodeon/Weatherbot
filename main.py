@@ -262,25 +262,67 @@ class GammaClient:
         r.raise_for_status()
         d = r.json(); return d if isinstance(d,list) else d.get("markets",[])
 
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2,max=10))
+    async def _search(self, query, limit=100):
+        """Search markets by question text."""
+        r = await self.s.get(f"{GAMMA_BASE}/markets", params={
+            "q": query, "active": "true", "closed": "false", "limit": limit})
+        if r.status_code == 200 and r.content:
+            d = r.json()
+            return d if isinstance(d, list) else d.get("markets", [])
+        # Fallback: fetch all and filter client-side
+        r2 = await self.s.get(f"{GAMMA_BASE}/markets", params={
+            "active": "true", "closed": "false", "limit": limit})
+        r2.raise_for_status()
+        d2 = r2.json()
+        all_m = d2 if isinstance(d2, list) else d2.get("markets", [])
+        q_lower = query.lower()
+        return [m for m in all_m if q_lower in (m.get("question","") or "").lower()]
+
     async def get_weather_markets(self):
         all_m=[]; seen=set()
-        for tag in ["weather","climate","temperature"]:
-            offset=0
-            while True:
-                batch = await self._fetch(tag,200,offset)
-                if not batch: break
-                all_m.extend(batch); offset+=200
-                if len(batch)<200: break
-        unique=[]
+        
+        # Strategy 1: Search by weather-related query strings
+        QUERIES = [
+            "temperature", "degrees", "rainfall", "precipitation",
+            "hurricane", "tornado", "snow", "heat wave", "blizzard",
+            "high temperature", "low temperature", "weather",
+        ]
+        for q in QUERIES:
+            try:
+                batch = await self._search(q, 50)
+                all_m.extend(batch)
+            except Exception as e:
+                logger.debug(f"[Gamma] search '{q}' failed: {e}")
+
+        # Strategy 2: Also try tag-based (in case some still work)
+        for tag in ["weather", "climate"]:
+            try:
+                batch = await self._fetch(tag, 100, 0)
+                all_m.extend(batch)
+            except Exception as e:
+                logger.debug(f"[Gamma] tag '{tag}' failed: {e}")
+
+        # Deduplicate
+        unique = []
         for m in all_m:
-            cid=m.get("conditionId","")
-            if cid and cid not in seen: seen.add(cid); unique.append(m)
-        logger.info(f"[Gamma] {len(unique)} unique weather markets")
-        # Log first 5 questions for debugging
-        for m in unique[:5]:
-            q = m.get("question","") or m.get("title","") or "(no question)"
-            logger.info(f"[Gamma] Sample: {q[:90]}")
-        return unique
+            cid = m.get("conditionId","")
+            if cid and cid not in seen:
+                seen.add(cid); unique.append(m)
+
+        # Filter: only keep markets whose question contains weather keywords
+        WEATHER_KW = ["temperature","degrees","°f","°c","rain","snow","hurricane",
+                      "tornado","heat","cold","wind","precipitation","weather",
+                      "blizzard","frost","flood","drought","wildfire","storm"]
+        weather = [m for m in unique
+                   if any(k in (m.get("question","") or "").lower() for k in WEATHER_KW)]
+
+        logger.info(f"[Gamma] {len(unique)} total, {len(weather)} weather-specific")
+        for m in weather[:5]:
+            q = m.get("question","") or "(no question)"
+            liq = float(m.get("liquidity",0) or 0)
+            logger.info(f"[Gamma] ✓ {q[:80]} (liq=${liq:.0f})")
+        return weather
 
     async def close(self): await self.s.aclose()
 
@@ -782,6 +824,12 @@ class Orchestrator:
             logger.info("✅ Bot running — send /start in Telegram")
             while True: await asyncio.sleep(60)
         except (KeyboardInterrupt,SystemExit): logger.info("Shutting down...")
+        except Exception as e:
+            if "Conflict" in str(e):
+                logger.warning(f"[Telegram] Conflict: another instance running. Waiting 15s...")
+                await asyncio.sleep(15)
+            else:
+                logger.error(f"[Telegram] Unexpected error: {e}", exc_info=True)
         finally:
             try: await app.updater.stop(); await app.stop(); await app.shutdown()
             except Exception: pass
