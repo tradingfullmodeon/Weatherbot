@@ -179,38 +179,74 @@ def _token(market, outcome):
     return ""
 
 def parse_markets(markets):
-    KW = ["temperature","high","low","\xb0f","\xb0c","degrees","rain","precipitation",
-          "snow","hurricane","tornado","wind","wildfire","weather","heat","cold","freeze",
-          "frost","rainfall","storm","flood","drought"]
-    parsed = []; sk = [0,0,0]
+    parsed = []; sk = {"no_city":0,"no_thr":0,"no_price":0}
+
     for m in markets:
-        q = m.get("question","") or m.get("title","") or ""
-        if not any(k in q.lower() for k in KW): sk[0]+=1; continue
+        # Check all possible question/title fields
+        q = (m.get("question") or m.get("title") or m.get("name") or
+             m.get("groupItemTitle") or m.get("subtitle") or "")
+        if not q:
+            continue
+
+        # Try to find a city in the question
         city = _city(q)
-        if not city: sk[1]+=1; continue
-        mt = _mtype(q); thr = _threshold(q)
+        if not city:
+            # Also check description/resolution_source for city names
+            desc = m.get("description","") or m.get("resolutionSource","") or ""
+            city = _city(desc)
+        if not city:
+            sk["no_city"] += 1
+            continue
+
+        mt = _mtype(q)
+        thr = _threshold(q)
+
+        # For non-temperature markets, threshold is optional
         if thr is None:
-            if mt in ("precipitation","hurricane","tornado","wind","general"): thr = 0.0
-            else: sk[2]+=1; continue
+            if mt in ("precipitation","hurricane","tornado","wind","general"):
+                thr = 0.0
+            else:
+                # Still try: look for any number that might be a threshold
+                nums = re.findall(r'(\d{2,3})', q)
+                plausible = [float(n) for n in nums if 32 <= float(n) <= 130]
+                thr = plausible[0] if plausible else None
+
+            if thr is None:
+                sk["no_thr"] += 1
+                continue
+
+        # Parse prices
         prices = m.get("outcomePrices",[])
         try:
-            if isinstance(prices,list) and len(prices)>=2: yp,np_=float(prices[0]),float(prices[1])
+            if isinstance(prices,list) and len(prices)>=2:
+                yp,np_=float(prices[0]),float(prices[1])
             elif isinstance(prices,str):
                 pl=json.loads(prices); yp,np_=float(pl[0]),float(pl[1])
-            else: yp,np_=0.5,0.5
-        except Exception: yp,np_=0.5,0.5
+            else:
+                yp,np_=0.5,0.5
+        except Exception:
+            yp,np_=0.5,0.5
+
+        # Sanity check on prices
+        if not (0.01 <= yp <= 0.99):
+            sk["no_price"] += 1
+            continue
+
         parsed.append({
             "condition_id": m.get("conditionId","") or m.get("condition_id",""),
             "question": q,
             "yes_token_id": _token(m,"yes"), "no_token_id": _token(m,"no"),
             "yes_price": yp, "no_price": np_,
-            "volume": float(m.get("volume",0) or 0),
+            "volume":    float(m.get("volume",0) or 0),
             "liquidity": float(m.get("liquidity",0) or 0),
-            "end_date": m.get("endDate","") or m.get("end_date",""),
+            "end_date":  m.get("endDate","") or m.get("end_date",""),
             "city": city, "threshold_f": thr, "market_type": mt,
         })
-    logger.info(f"[Parser] {len(markets)} total -> {len(parsed)} parsed "
-                f"(no_kw={sk[0]}, no_city={sk[1]}, no_thr={sk[2]})")
+
+    logger.info(
+        f"[Parser] {len(markets)} total -> {len(parsed)} parsed "
+        f"(no_city={sk['no_city']}, no_thr={sk['no_thr']}, no_price={sk['no_price']})"
+    )
     return parsed
 
 # ══════════════════════════════════════════════════════════════════
@@ -240,6 +276,10 @@ class GammaClient:
             cid=m.get("conditionId","")
             if cid and cid not in seen: seen.add(cid); unique.append(m)
         logger.info(f"[Gamma] {len(unique)} unique weather markets")
+        # Log first 5 questions for debugging
+        for m in unique[:5]:
+            q = m.get("question","") or m.get("title","") or "(no question)"
+            logger.info(f"[Gamma] Sample: {q[:90]}")
         return unique
 
     async def close(self): await self.s.aclose()
