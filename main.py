@@ -817,56 +817,92 @@ class Orchestrator:
         self.scheduler.add_job(self._exit_job,"interval",minutes=EXIT_INT,id="exit")
         self.scheduler.start()
 
-        # Retry loop — handles Telegram Conflict when old instance is still running
-        MAX_RETRIES = 10
-        for attempt in range(MAX_RETRIES):
-            app = self.bot.build(token)
+        app = self.bot.build(token)
+
+        # Use run_polling() which handles Conflict internally with proper backoff
+        # We run it in a separate task so scheduler stays alive
+        async def _run_bot():
             try:
+                # Aggressive timeout to detect and release Conflict fast
                 await app.initialize()
+                # Delete webhook + drop pending to clear any conflict state
+                await app.bot.delete_webhook(drop_pending_updates=True)
+                await asyncio.sleep(2)  # Brief pause after clearing
                 await app.start()
-                # drop_pending_updates=True clears any conflict immediately
                 await app.updater.start_polling(
                     drop_pending_updates=True,
-                    allowed_updates=["message","callback_query"],
+                    poll_interval=1.0,
+                    timeout=10,
+                    read_timeout=15,
+                    write_timeout=15,
+                    connect_timeout=15,
+                    pool_timeout=15,
+                    allowed_updates=["message", "callback_query"],
+                    
                 )
                 logger.info("✅ Bot running — send /start in Telegram")
+                # Keep alive
                 while True:
-                    await asyncio.sleep(60)
-            except (KeyboardInterrupt, SystemExit):
-                logger.info("Shutting down...")
-                break
+                    await asyncio.sleep(30)
             except Exception as e:
-                err = str(e)
-                if "Conflict" in err:
-                    wait = 10 * (attempt + 1)
-                    logger.warning(f"[Telegram] Conflict (attempt {attempt+1}/{MAX_RETRIES}). "
-                                   f"Old instance still running. Waiting {wait}s...")
-                    try:
-                        await app.updater.stop()
-                        await app.stop()
-                        await app.shutdown()
-                    except Exception: pass
-                    await asyncio.sleep(wait)
-                    continue
-                else:
-                    logger.error(f"[Telegram] Error: {e}", exc_info=True)
-                    break
+                logger.error(f"[Bot] {e}")
             finally:
                 try:
                     await app.updater.stop()
                     await app.stop()
                     await app.shutdown()
-                except Exception: pass
-            break  # clean exit
+                except Exception:
+                    pass
+
+        # Retry with backoff until we get past any Conflict from old instances
+        for attempt in range(1, 16):
+            logger.info(f"[Telegram] Connect attempt {attempt}/15...")
+            try:
+                # Clear webhook/conflict state first via raw API call
+                async with httpx.AsyncClient(timeout=10) as hc:
+                    await hc.post(
+                        f"https://api.telegram.org/bot{token}/deleteWebhook",
+                        json={"drop_pending_updates": True}
+                    )
+                await asyncio.sleep(3)
+
+                bot_task = asyncio.create_task(_run_bot())
+                # Wait a bit to see if it crashes immediately (Conflict)
+                await asyncio.sleep(8)
+                if bot_task.done():
+                    exc = bot_task.exception()
+                    if exc and "Conflict" in str(exc):
+                        wait = min(attempt * 5, 60)
+                        logger.warning(f"[Telegram] Conflict on attempt {attempt}. Waiting {wait}s for old instance to die...")
+                        await asyncio.sleep(wait)
+                        continue
+                    elif exc:
+                        logger.error(f"[Telegram] Bot failed: {exc}")
+                        break
+                    else:
+                        logger.warning("[Telegram] Bot task ended unexpectedly")
+                        break
+                else:
+                    # Bot is running! Wait for it
+                    logger.info(f"[Telegram] Connected on attempt {attempt} ✅")
+                    try:
+                        await bot_task
+                    except (KeyboardInterrupt, SystemExit):
+                        pass
+                    except Exception as e:
+                        logger.error(f"[Telegram] Runtime error: {e}")
+                    break
+            except (KeyboardInterrupt, SystemExit):
+                break
+            except Exception as e:
+                logger.error(f"[Telegram] Attempt {attempt} error: {e}")
+                await asyncio.sleep(5)
 
         self.scheduler.shutdown(wait=False)
         await self.engine.close()
         await self.portfolio.close()
         logger.info("Done.")
 
-# ══════════════════════════════════════════════════════════════════
-#  ENTRY POINT
-# ══════════════════════════════════════════════════════════════════
 async def main():
     await Orchestrator().run()
 
