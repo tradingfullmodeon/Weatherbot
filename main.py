@@ -631,8 +631,24 @@ class Bot:
     async def help_cmd(self,u:Update,c:ContextTypes.DEFAULT_TYPE):
         if not await self._auth(u): return
         await u.message.reply_text(
-            "❓ *Commands*\n\n/start /scan /signals /portfolio /paper /help",
+            "❓ *Commands*\n\n/start /scan /signals /portfolio /paper /debug /help",
             parse_mode="Markdown",reply_markup=mk())
+
+    async def debug_cmd(self,u:Update,c:ContextTypes.DEFAULT_TYPE):
+        if not await self._auth(u): return
+        msg = await u.message.reply_text("🔍 Fetching raw markets from Polymarket...")
+        try:
+            raw = await self.engine.gamma.get_weather_markets()
+            lines = [f"*{len(raw)} raw markets — first 8 questions:*\n"]
+            for i,m in enumerate(raw[:8],1):
+                q = m.get("question","") or m.get("title","") or "(empty)"
+                liq = float(m.get("liquidity",0) or 0)
+                prices = m.get("outcomePrices",[])
+                yp = float(prices[0]) if prices and len(prices)>=2 else 0
+                lines.append(f"{i}. {q[:70]}  liq=${liq:.0f} yes={yp:.2f}")
+            await msg.edit_text("\n\n".join(lines), parse_mode="Markdown")
+        except Exception as e:
+            await msg.edit_text(f"❌ Error: {e}")
 
     async def cb(self,u:Update,c:ContextTypes.DEFAULT_TYPE):
         if not await self._auth(u): return
@@ -697,7 +713,8 @@ class Bot:
     def build(self,token):
         self.app=Application.builder().token(token).build()
         for cmd,fn in [("start",self.start),("scan",self.scan_cmd),("signals",self.signals_cmd),
-                       ("portfolio",self.portfolio_cmd),("paper",self.paper_cmd),("help",self.help_cmd)]:
+                       ("portfolio",self.portfolio_cmd),("paper",self.paper_cmd),
+                       ("debug",self.debug_cmd),("help",self.help_cmd)]:
             self.app.add_handler(CommandHandler(cmd,fn))
         self.app.add_handler(CallbackQueryHandler(self.cb))
         return self.app
