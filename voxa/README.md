@@ -12,9 +12,18 @@ Plataforma para mejorar cómo se comunica una persona (confianza, desarrollo pro
 | [`docs/UX.md`](docs/UX.md) | Revisión de usabilidad: 14 problemas y su solución, principios de diseñadores y comunicadores aplicados, benchmark de UX con las apps mejor valoradas e indicadores antes/después. |
 | [`docs/ESTRATEGIA.md`](docs/ESTRATEGIA.md) | Metodologías de comunicación y aprendizaje, lenguaje no verbal basado en evidencia, competencias y niveles, canales, motor de evaluación, arquitectura, privacidad y regulación, sprint de 30 días, modelo de negocio, plan de desarrollo e indicadores. |
 | [`prototype/`](prototype/) | Web app instalable (PWA): **Hoy** (`index.html`), **Evaluar** (`evaluar.html`), **Roleplay** (`roleplay.html`), **Gimnasio de voz** (`gimnasio.html`), **Escritura** (`escritura.html`) y **Progreso** (`progreso.html`). Escenarios en `scenarios.js` y plan de 30 días en `plan.js`. |
+| [`artifact/`](artifact/) | Versión publicable como página de claude.ai (una sola página, coach IA vía la capacidad `sample`), generada con `build.py`. |
 | [`server/`](server/) | API FastAPI: coach IA (`/api/feedback`), roleplay con personajes (`/api/roleplay`, `/api/roleplay/evaluate`) y escritura (`/api/writing`). También sirve el prototipo. |
 
-## Ejecutar
+## Usarla ahora
+
+**Versión web publicada (claude.ai):** https://claude.ai/artifact/Q8vtmWQ5KWWXHWFnwzBNXr
+
+Incluye Hoy, Ensayar (respuesta escrita o grabación subida desde el celular), Roleplay con 6 personajes, Escritura y Progreso. El coach IA usa la cuenta de Claude de quien la abre (claude.ai pide permiso la primera vez), sin servidor ni API key. Las páginas de claude.ai no permiten usar la cámara ni el micrófono en vivo, así que la evaluación en vivo, la audiencia virtual y el gimnasio de voz están en la versión completa (abajo). El link es privado hasta que se comparte desde el menú «Compartir» de la página.
+
+Para regenerarla tras cambiar el prototipo: `python3 voxa/artifact/build.py` (combina `prototype/shared.js`, `prototype/scenarios.js`, `prototype/voxa.css` y `server/personas.py` con `artifact/app.js` en `artifact/dist/voxa.html`).
+
+## Ejecutar la versión completa
 
 ```bash
 cd voxa/server

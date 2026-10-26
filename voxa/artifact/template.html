@@ -1,0 +1,256 @@
+<title>VOXA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+{{CSS}}
+</style>
+
+<header>
+  <h1>VOXA</h1>
+  <p>Practica la conversación antes de tenerla.</p>
+  <nav class="tabs" id="topNav" aria-label="Secciones"></nav>
+</header>
+
+<main>
+  <!-- ============================ HOY ============================ -->
+  <section class="view" id="v-hoy" data-title="Hoy">
+    <div class="card full hidden" id="welcome">
+      <h2>Bienvenido a VOXA 👋</h2>
+      <p class="lead">En unos minutos al día vas a hablar y escribir con más claridad y confianza. Primero, dos preguntas rápidas.</p>
+      <h3>1. ¿Para qué quieres mejorar?</h3>
+      <div class="chips-select" id="wGoal" role="group" aria-label="Objetivo"></div>
+      <h3 style="margin-top:16px">2. ¿Cómo te sientes al hablar frente a otros?</h3>
+      <div class="chips-select" id="wNerves" role="group" aria-label="Nervios al hablar en público">
+        <button type="button" data-v="1" aria-pressed="false">😌 Cómodo/a</button>
+        <button type="button" data-v="3" aria-pressed="false">😐 Algo nervioso/a</button>
+        <button type="button" data-v="5" aria-pressed="false">😰 Me cuesta mucho</button>
+      </div>
+      <div class="btns" style="margin-top:18px"><button id="wDone" class="cta" disabled>Empezar mi primera práctica</button></div>
+      <p class="note">No necesitas crear una cuenta. Tu progreso queda guardado en este navegador.</p>
+    </div>
+
+    <div class="card full hero" id="today">
+      <div class="muted" id="tWeek"></div>
+      <h2 style="font-size:1.35rem;margin:4px 0 8px" id="tText"></h2>
+      <p class="muted" id="tWhy"></p>
+      <div class="btns"><button class="btn-link cta" id="tGo">▶ Hacer la práctica de hoy</button></div>
+      <p class="note" id="tStreak"></p>
+    </div>
+
+    <div class="card full" id="quickCard">
+      <h2>Practica lo que necesites</h2>
+      <div class="quick">
+        <button data-go="ensayar"><strong>🎤 Ensayar</strong><span>Escribe lo que dirías o sube una grabación de tu celular.</span></button>
+        <button data-go="roleplay"><strong>💬 Roleplay</strong><span>Ensaya una conversación difícil con un personaje.</span></button>
+        <button data-go="escritura"><strong>✍️ Escritura</strong><span>Mejora un correo o mensaje antes de enviarlo.</span></button>
+        <button data-go="progreso"><strong>📈 Progreso</strong><span>Tu evolución, tu racha y tu escalera de confianza.</span></button>
+      </div>
+    </div>
+
+    <div class="card" id="tipCard">
+      <h2>Consejo del día</h2>
+      <p id="tip" class="lead"></p>
+    </div>
+
+    <div class="card" id="aiCard">
+      <h2>Coach IA</h2>
+      <p id="aiState" class="note">Comprobando si Claude está disponible en esta página…</p>
+      <p class="note">La primera vez que pidas un consejo, claude.ai te pedirá permiso. Las consultas usan tu propia cuenta de Claude.</p>
+    </div>
+  </section>
+
+  <!-- ============================ ENSAYAR ============================ -->
+  <section class="view hidden" id="v-ensayar" data-title="Ensayar">
+    <div class="card">
+      <h2>1. ¿Qué quieres practicar?</h2>
+      <label for="scenario">Situación</label>
+      <select id="scenario"></select>
+      <div class="prompt" id="prompt"></div>
+      <h2 style="margin-top:14px">2. ¿Cómo te sientes ahora?</h2>
+      <div class="feel" id="feelBefore" role="group" aria-label="Nervios antes de practicar"></div>
+    </div>
+
+    <div class="card">
+      <h2>3. Ensaya</h2>
+      <div class="seg" role="tablist" aria-label="Modo de ensayo">
+        <button role="tab" id="mText" aria-selected="true">✍️ Escribir mi respuesta</button>
+        <button role="tab" id="mAudio" aria-selected="false">🎧 Subir una grabación</button>
+      </div>
+
+      <div id="paneText">
+        <label for="answer">Escribe lo que dirías, como si hablaras</label>
+        <textarea id="answer" placeholder="Ej.: Hola, soy Camila. Trabajo hace cinco años en logística…"></textarea>
+        <div class="stats" id="answerStats"></div>
+      </div>
+
+      <div id="paneAudio" class="hidden">
+        <p class="note">Graba tu respuesta con la app de notas de voz o la cámara de tu celular y súbela aquí. El audio se analiza en tu navegador y no se sube a ningún lado.</p>
+        <label for="file" class="btn-link file-btn">📁 Elegir grabación (audio o video)</label>
+        <input type="file" id="file" accept="audio/*,video/*" class="visually-hidden">
+        <p class="note" id="fileName"></p>
+        <label for="said">¿Qué dijiste? (opcional, para medir ritmo y muletillas)</label>
+        <textarea id="said" placeholder="Pega o escribe el texto de tu respuesta."></textarea>
+        <div class="progress hidden" id="anProgress" aria-hidden="true"><div id="anBar"></div></div>
+      </div>
+
+      <div class="btns"><button id="btnEval" class="cta">Evaluar</button></div>
+      <p class="note" id="evalStatus" aria-live="polite"></p>
+    </div>
+
+    <div class="card full hidden" id="report">
+      <div class="score-big">
+        <div class="ring" id="ring">–</div>
+        <div>
+          <div style="font-size:1.15rem;font-weight:700" id="levelTxt"></div>
+          <div class="lead" id="encourage"></div>
+          <div class="note" id="scoreSub"></div>
+        </div>
+      </div>
+      <div class="fb" id="fb"></div>
+      <div class="btns" style="margin-top:14px">
+        <button id="btnRetry" class="cta">↻ Repetir aplicando el foco</button>
+        <button data-go="hoy">Volver a Hoy</button>
+      </div>
+
+      <h2 style="margin-top:20px">Coach IA</h2>
+      <div class="ai-only">
+        <p class="note">Recibe la estructura de tu respuesta, cómo podrías haberla dicho y un ejercicio a tu medida.</p>
+        <div class="btns"><button id="btnCoach" class="primary">Pedir consejo al coach IA</button><button id="btnCoachStop" class="hidden">Detener</button></div>
+        <div id="aiResult" aria-live="polite"></div>
+      </div>
+      <p class="note no-ai-only">El coach IA no está disponible en esta vista. El análisis de arriba funciona igual.</p>
+
+      <h2 style="margin-top:18px">¿Y ahora cómo te sientes?</h2>
+      <div class="feel" id="feelAfter" role="group" aria-label="Nervios después de practicar"></div>
+      <p class="note" id="savedNote" aria-live="polite"></p>
+
+      <details id="detMetrics">
+        <summary>Ver todas las métricas</summary>
+        <div class="dims" id="dims"></div>
+        <div class="table-wrap"><table style="margin-top:10px">
+          <thead><tr><th>Métrica</th><th>Tu resultado</th><th>Ideal</th><th></th></tr></thead>
+          <tbody id="metricsBody"></tbody>
+        </table></div>
+      </details>
+      <details id="detChart" class="hidden">
+        <summary>Ver la línea de tiempo de tu voz</summary>
+        <canvas id="chart" width="1000" height="140" aria-label="Volumen y tono a lo largo de la grabación"></canvas>
+        <p class="note">Barras = volumen · línea = tono · rojo = silencios largos · amarillo = posibles «eeh/mmm».</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============================ ROLEPLAY ============================ -->
+  <section class="view hidden" id="v-roleplay" data-title="Roleplay">
+    <div class="card full" id="rpSetup">
+      <h2>1. Elige con quién practicar</h2>
+      <div class="personas" id="personas"></div>
+      <div style="margin-top:12px;max-width:420px">
+        <label for="difficulty">Dificultad</label>
+        <select id="difficulty">
+          <option value="1">Baja: colaborativo</option>
+          <option value="2" selected>Media: objeciones realistas</option>
+          <option value="3">Alta: escéptico e interrumpe</option>
+        </select>
+      </div>
+      <div class="prompt" id="brief"></div>
+      <details id="ctxBox" class="ai-only">
+        <summary>Personalizar con mi situación real (opcional)</summary>
+        <label for="ctx">Pega la oferta de trabajo, tu CV o notas de la reunión</label>
+        <textarea id="ctx" maxlength="8000" placeholder="Ej.: Analista de datos en una fintech. Requisitos: SQL avanzado, Power BI…"></textarea>
+        <p class="note">Se usa sólo durante esta práctica. <span id="ctxCount">0</span>/8000</p>
+      </details>
+      <p class="note no-ai-only">Sin el coach IA, practicas con un entrevistador de preguntas fijas.</p>
+      <div class="btns"><button id="btnBegin" class="cta">▶ Comenzar conversación</button></div>
+    </div>
+
+    <div class="card full hidden" id="rpStage">
+      <h2>2. Conversación</h2>
+      <div class="chat" id="chat" aria-live="polite"></div>
+      <div class="hint" id="hint"></div>
+      <form class="talk" id="talkForm">
+        <label for="txt" class="visually-hidden">Tu respuesta</label>
+        <textarea id="txt" rows="2" placeholder="Escribe tu respuesta como la dirías en voz alta…"></textarea>
+        <button id="btnSend" class="cta" type="submit">Enviar</button>
+      </form>
+      <div class="toggles">
+        <label><input type="checkbox" id="speak"> Voz del personaje</label>
+        <label><input type="checkbox" id="showHints" checked> Mostrar pistas del coach</label>
+      </div>
+      <div class="live">
+        <div class="tile"><div class="k">Cuánto hablas tú</div><div class="v" id="lRatio">–</div></div>
+        <div class="tile"><div class="k">Preguntas que hiciste</div><div class="v" id="lQs">0</div></div>
+        <div class="tile"><div class="k">Muletillas</div><div class="v" id="lFill">0</div></div>
+      </div>
+      <div class="btns">
+        <button id="btnRewind">↺ Rebobinar mi última respuesta</button>
+        <button id="btnEnd" class="primary">Terminar y evaluar</button>
+      </div>
+      <p class="note" id="rpStatus" aria-live="polite"></p>
+    </div>
+
+    <div class="card full hidden" id="rpReport">
+      <h2>3. Evaluación de la conversación</h2>
+      <div id="evalOut"></div>
+      <div class="btns"><button id="btnAgain" class="cta">Practicar de nuevo</button></div>
+    </div>
+  </section>
+
+  <!-- ============================ ESCRITURA ============================ -->
+  <section class="view hidden" id="v-escritura" data-title="Escritura">
+    <div class="card">
+      <label for="kind">¿Qué vas a escribir?</label>
+      <select id="kind"></select>
+      <div class="prompt" id="guide"></div>
+      <label for="recipient">¿Para quién es? (opcional)</label>
+      <input id="recipient" class="field" placeholder="Ej.: mi jefa, un cliente, el equipo de ventas">
+      <label for="text" style="margin-top:10px">Tu texto</label>
+      <textarea id="text" style="min-height:200px" placeholder="Escribe o pega aquí tu borrador…"></textarea>
+      <div class="stats" id="wStats" aria-live="polite"></div>
+    </div>
+    <div class="card">
+      <h2>Revisión instantánea <span class="badge-ai" id="wScore">–</span></h2>
+      <ul class="checks" id="checks"><li class="warn"><span class="i">·</span><span>Escribe tu borrador y la revisión aparecerá aquí.</span></li></ul>
+      <div class="ai-only">
+        <h2 style="margin-top:18px">Coach IA</h2>
+        <p class="note">Recibe una versión mejorada lista para enviar, sin datos inventados (lo que falte queda marcado como [así]).</p>
+        <div class="btns"><button id="btnWAI" class="cta" disabled>✨ Mejorar mi texto</button></div>
+        <div id="wOut" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ PROGRESO ============================ -->
+  <section class="view hidden" id="v-progreso" data-title="Progreso">
+    <div class="card full">
+      <h2>Resumen</h2>
+      <div class="kpis" id="kpis"></div>
+      <p class="note" id="pEmpty"></p>
+    </div>
+    <div class="card full">
+      <h2>Evolución del puntaje</h2>
+      <canvas id="trend" width="1000" height="220" aria-label="Puntaje por práctica"></canvas>
+    </div>
+    <div class="card">
+      <h2>Escalera de confianza</h2>
+      <p class="note">Exposición gradual: sube un peldaño cuando el anterior te genere poca tensión.</p>
+      <ul class="ladder" id="ladder"></ul>
+    </div>
+    <div class="card">
+      <h2>Historial</h2>
+      <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Práctica</th><th>Puntaje</th></tr></thead><tbody id="rows"></tbody></table></div>
+      <div class="btns"><button id="btnClear">Borrar mi historial</button></div>
+      <p class="note hidden" id="clearConfirm">¿Seguro? Se borrará todo tu historial de este navegador.
+        <button id="btnClearYes" class="primary">Sí, borrar</button> <button id="btnClearNo">Cancelar</button></p>
+    </div>
+    <div class="card full">
+      <h2>Versión completa con cámara y micrófono</h2>
+      <p>Esta página compartible no puede usar la cámara ni el micrófono en vivo. La versión completa, con evaluación en vivo, audiencia virtual y gimnasio de voz, está en el repositorio del proyecto (<code>voxa/</code>) y se abre en Chrome o Edge.</p>
+    </div>
+  </section>
+</main>
+
+<nav class="bottom-nav" id="bottomNav" aria-label="Secciones"></nav>
+
+<script>
+{{JS}}
+</script>
