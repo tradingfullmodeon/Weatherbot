@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VOXA Progreso</title>
+<link rel="stylesheet" href="voxa.css">
+<style>
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .kpi { border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+  .kpi .k { font-size: .78rem; color: var(--muted); }
+  .kpi .v { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .kpi .d { font-size: .8rem; }
+  .ladder li { list-style: none; margin: 6px 0; }
+  .ladder label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+  .today { border-left: 4px solid var(--accent); padding: 10px 12px; background: var(--accent-soft); border-radius: 8px; }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: .8rem; color: var(--muted); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+</style>
+</head>
+<body>
+<header>
+  <h1>VOXA · Mi progreso</h1>
+  <p>Te comparas contigo: tu línea base, tu tendencia y tu plan de hoy. Los datos viven sólo en este navegador.</p>
+</header>
+
+<main>
+  <section class="card full">
+    <h2>Resumen</h2>
+    <div class="kpis" id="kpis"></div>
+    <p class="note" id="empty"></p>
+  </section>
+
+  <section class="card">
+    <h2>Plan de hoy · Sprint 30 días</h2>
+    <div class="today" id="today"></div>
+    <p class="note" id="sprintNote"></p>
+  </section>
+
+  <section class="card">
+    <h2>Tu foco recurrente</h2>
+    <div id="focus"></div>
+  </section>
+
+  <section class="card full">
+    <h2>Evolución del puntaje</h2>
+    <canvas id="trend" width="1000" height="220" aria-label="Puntaje por sesión"></canvas>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <section class="card">
+    <h2>Nervios antes y después</h2>
+    <canvas id="anx" width="500" height="180" aria-label="Nervios antes y después de cada práctica"></canvas>
+    <p class="note" id="anxNote"></p>
+  </section>
+
+  <section class="card">
+    <h2>Escalera de confianza</h2>
+    <p class="note">Exposición gradual: sube un peldaño cuando el anterior te genere poca tensión (2/5 o menos).</p>
+    <ul class="ladder" id="ladder"></ul>
+  </section>
+
+  <section class="card full">
+    <h2>Historial</h2>
+    <table><thead><tr><th>Fecha</th><th>Práctica</th><th>Puntaje</th><th>Nervios</th></tr></thead><tbody id="rows"></tbody></table>
+    <div class="btns">
+      <button id="btnExport">Exportar mis datos (JSON)</button>
+      <button id="btnClear">Borrar historial</button>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+import { $, esc, colorFor, mean, renderNav, loadSessions, loadProfile, saveProfile } from './shared.js';
+
+renderNav();
+const sessions = loadSessions().sort((a, b) => a.date.localeCompare(b.date));
+const profile = loadProfile();
+const evals = sessions.filter(s => s.type === 'evaluacion');
+const dayKey = (iso) => iso.slice(0, 10);
+
+// ---------------------------------------------------------------- KPIs
+function streak() {
+  const days = new Set(sessions.map(s => dayKey(s.date)));
+  let n = 0; const d = new Date();
+  if (!days.has(dayKey(d.toISOString()))) d.setDate(d.getDate() - 1);   // la racha sigue viva si practicaste ayer
+  while (days.has(dayKey(d.toISOString()))) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+function kpi(k, v, d = '') { return `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d}</div></div>`; }
+if (!sessions.length) {
+  $('empty').textContent = 'Aún no hay sesiones. Haz tu diagnóstico en «Evaluar»: será tu línea base.';
+}
+const base = evals[0], last = evals[evals.length - 1];
+const best = evals.reduce((b, s) => (!b || s.total > b.total ? s : b), null);
+const delta = base && last ? last.total - base.total : 0;
+const anxDrop = mean(sessions.filter(s => s.anxietyAfter != null).map(s => s.anxietyBefore - s.anxietyAfter));
+$('kpis').innerHTML = [
+  kpi('Sesiones', sessions.length, `${evals.length} evaluaciones · ${sessions.length - evals.length} roleplays`),
+  kpi('Racha', (n => `${n} ${n === 1 ? 'día' : 'días'}`)(streak()), 'días seguidos practicando'),
+  kpi('Línea base', base ? base.total : '–', base ? esc(base.scenarioName) : ''),
+  kpi('Última', last ? last.total : '–', base && last !== base ? `<span style="color:${delta >= 0 ? 'var(--good)' : 'var(--bad)'}">${delta >= 0 ? '+' : ''}${delta} vs. línea base</span>` : ''),
+  kpi('Mejor', best ? best.total : '–', best ? esc(best.scenarioName) : ''),
+  kpi('Calma ganada', sessions.length ? (Math.abs(anxDrop) < 0.05 ? '0' : (anxDrop > 0 ? '−' : '+') + Math.abs(anxDrop).toFixed(1)) : '–', 'puntos menos de nervios al terminar'),
+].join('');
+
+// ---------------------------------------------------------------- Sprint 30 días
+const SPRINT = [
+  { week: 'Semana 1 · Voz y ritmo', tasks: ['Evalúa «Preséntate en 60 s» y anota tu ritmo.', 'Lee un texto en voz alta haciendo una pausa en cada punto (2 min) y repite la evaluación.', 'Reto: 60 s sin muletillas; cambia cada «este/o sea» por una pausa.', 'Calentamiento de voz + evaluación «Actualización ejecutiva».', 'Repite tu peor escenario de la semana.', 'Improvisación: tema sorpresa.', 'Descanso activo: escucha una charla y cuenta las pausas del orador.'] },
+  { week: 'Semana 2 · Estructura', tasks: ['Improvisación con PREP.', 'Entrevista STAR: «Cuéntame de un logro».', 'Escribe tu mensaje en una frase y preséntalo en 60 s.', 'Actualización ejecutiva con BLUF.', 'Roleplay con la reclutadora (dificultad media).', 'Pitch de proyecto con Monroe/SCQA.', 'Repite la práctica con menor puntaje en estructura.'] },
+  { week: 'Semana 3 · Presencia', tasks: ['Evalúa mirando a la cámara en apertura, idea clave y cierre.', 'Ajusta encuadre y luz; repite «Preséntate».', 'Sonríe al saludar y al cerrar; revisa tu replay.', 'Gestos dentro del marco: repite el pitch.', 'Graba sin guion durante 90 s.', 'Revisa tu replay sin audio: ¿qué dice tu cuerpo?', 'Repite tu escenario favorito buscando 80+.'] },
+  { week: 'Semana 4 · Contexto e interacción', tasks: ['Roleplay: cliente molesta (escucha activa).', 'Roleplay: colega (SBI + CNV).', 'Roleplay: jefe (pedido concreto).', 'Roleplay: inversionista en dificultad alta.', 'Networking: 3 preguntas abiertas.', 'Misión real: aplica una técnica en una conversación de verdad.', 'Re-evaluación final: el mismo escenario de tu línea base.'] },
+];
+if (sessions.length) {
+  const start = new Date(dayKey(sessions[0].date));
+  const day = Math.floor((new Date(dayKey(new Date().toISOString())) - start) / 864e5);
+  if (day < 28) {
+    const w = SPRINT[Math.floor(day / 7)];
+    $('today').innerHTML = `<strong>Día ${day + 1} de 28 · ${w.week}</strong><p>${w.tasks[day % 7]}</p>`;
+  } else {
+    $('today').innerHTML = `<strong>¡Sprint completado!</strong><p>Haz tu re-evaluación con «${esc(evals[0]?.scenarioName || 'tu línea base')}» y compara.</p>`;
+  }
+  $('sprintNote').textContent = 'El sprint empezó con tu primera sesión. Cada semana se enfoca en una sola dimensión (práctica deliberada).';
+} else {
+  $('today').innerHTML = `<strong>Día 0 · Diagnóstico</strong><p>Haz una evaluación de 60 s en «Evaluar» para crear tu línea base.</p>`;
+}
+
+// ---------------------------------------------------------------- foco recurrente
+const LABELS = { wpm: 'Ritmo', fillers: 'Muletillas', hedges: 'Atenuadores', length: 'Desarrollo del contenido', pitch: 'Variación de tono',
+  speech: 'Tiempo hablando', pauses: 'Silencios largos', volume: 'Volumen', face: 'Encuadre', gaze: 'Mirada a cámara', smile: 'Expresividad', head: 'Estabilidad' };
+const weakCount = {};
+for (const s of evals.slice(-10)) {
+  const entries = Object.entries(s.metrics || {}).sort((a, b) => a[1].s - b[1].s);
+  if (entries[0]) weakCount[entries[0][0]] = (weakCount[entries[0][0]] || 0) + 1;
+}
+const topWeak = Object.entries(weakCount).sort((a, b) => b[1] - a[1])[0];
+$('focus').innerHTML = topWeak
+  ? `<p><strong>${LABELS[topWeak[0]] || topWeak[0]}</strong> fue tu métrica más baja en ${topWeak[1]} de tus últimas ${Math.min(10, evals.length)} evaluaciones.</p>
+     <p class="note">Dedica tus próximas 3 sesiones sólo a esta métrica: es la forma más rápida de subir tu puntaje total.</p>`
+  : '<p class="note">Aparecerá cuando tengas evaluaciones.</p>';
+
+// ---------------------------------------------------------------- gráficos
+const css = getComputedStyle(document.documentElement);
+const C = { total: css.getPropertyValue('--accent').trim(), voz: '#0ea5e9', lenguaje: '#f59e0b', presencia: '#10b981' };
+function line(ctx, pts, color, W, H, pad, width = 2) {
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width; ctx.beginPath();
+  pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke();
+  pts.forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, width + 1, 0, 7); ctx.fill(); });
+}
+function axes(ctx, W, H, pad, max) {
+  ctx.strokeStyle = css.getPropertyValue('--line'); ctx.fillStyle = css.getPropertyValue('--muted');
+  ctx.font = '12px system-ui'; ctx.lineWidth = 1;
+  for (const v of [0, max / 2, max]) {
+    const y = H - pad - v / max * (H - 2 * pad);
+    ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W - 10, y); ctx.stroke(); ctx.fillText(String(v), 4, y + 4);
+  }
+}
+function drawTrend() {
+  const c = $('trend'), ctx = c.getContext('2d'), W = c.width, H = c.height, pad = 30;
+  axes(ctx, W, H, pad, 100);
+  if (!evals.length) return;
+  const x = (i) => pad + (evals.length === 1 ? (W - pad) / 2 : i / (evals.length - 1) * (W - pad - 20));
+  const y = (v) => H - pad - v / 100 * (H - 2 * pad);
+  for (const d of ['voz', 'lenguaje', 'presencia']) {
+    const pts = evals.map((s, i) => s.dims?.[d] != null ? [x(i), y(s.dims[d])] : null).filter(Boolean);
+    if (pts.length) line(ctx, pts, C[d], W, H, pad, 1.5);
+  }
+  line(ctx, evals.map((s, i) => [x(i), y(s.total)]), C.total, W, H, pad, 3);
+  $('legend').innerHTML = Object.entries({ total: 'Puntaje VOXA', voz: 'Voz', lenguaje: 'Lenguaje', presencia: 'Presencia' })
+    .map(([k, l]) => `<span><i style="background:${C[k]}"></i>${l}</span>`).join('');
+}
+function drawAnx() {
+  const data = sessions.filter(s => s.anxietyBefore != null && s.anxietyAfter != null).slice(-20);
+  const c = $('anx'), ctx = c.getContext('2d'), W = c.width, H = c.height, pad = 24;
+  axes(ctx, W, H, pad, 5);
+  if (!data.length) { $('anxNote').textContent = 'Registra tus nervios antes y después en cada evaluación.'; return; }
+  const bw = (W - pad - 10) / data.length;
+  data.forEach((s, i) => {
+    const x0 = pad + i * bw + 2, h = (v) => v / 5 * (H - 2 * pad);
+    ctx.fillStyle = '#f87171'; ctx.fillRect(x0, H - pad - h(s.anxietyBefore), bw / 2 - 2, h(s.anxietyBefore));
+    ctx.fillStyle = '#4ade80'; ctx.fillRect(x0 + bw / 2, H - pad - h(s.anxietyAfter), bw / 2 - 2, h(s.anxietyAfter));
+  });
+  const firstHalf = mean(data.slice(0, Math.ceil(data.length / 2)).map(s => s.anxietyBefore));
+  const secondHalf = mean(data.slice(Math.ceil(data.length / 2)).map(s => s.anxietyBefore));
+  $('anxNote').innerHTML = `<span style="color:#f87171">■</span> antes · <span style="color:#4ade80">■</span> después. ` +
+    (data.length >= 4 && secondHalf < firstHalf ? `Tus nervios al empezar bajaron de ${firstHalf.toFixed(1)} a ${secondHalf.toFixed(1)}: la exposición repetida funciona.` : 'Con más sesiones verás si tus nervios al empezar bajan.');
+}
+drawTrend(); drawAnx();
+
+// ---------------------------------------------------------------- escalera de confianza
+const LADDER = [
+  'Hablar 60 s a solas en voz alta (sin grabar).',
+  'Grabar sólo audio y escucharte.',
+  'Grabar video y ver el replay completo.',
+  'Roleplay con IA en dificultad baja.',
+  'Roleplay con IA en dificultad alta.',
+  'Practicar frente a una persona de confianza.',
+  'Intervenir una vez en una reunión real.',
+  'Presentar 3 minutos ante un grupo pequeño.',
+  'Presentar ante un público o en un evento.',
+];
+profile.ladder ||= {};
+$('ladder').innerHTML = LADDER.map((t, i) =>
+  `<li><label><input type="checkbox" data-i="${i}" ${profile.ladder[i] ? 'checked' : ''}> <span>${i + 1}. ${t}</span></label></li>`).join('');
+$('ladder').addEventListener('change', (e) => {
+  profile.ladder[e.target.dataset.i] = e.target.checked; saveProfile(profile);
+});
+
+// ---------------------------------------------------------------- historial
+$('rows').innerHTML = [...sessions].reverse().slice(0, 50).map(s =>
+  `<tr><td>${new Date(s.date).toLocaleString('es')}</td><td>${esc(s.scenarioName)}</td>
+   <td><span class="pill" style="color:${colorFor(s.total)}">${s.total}</span></td>
+   <td>${s.anxietyBefore != null ? `${s.anxietyBefore} → ${s.anxietyAfter ?? '–'}` : '–'}</td></tr>`).join('');
+$('btnExport').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify({ profile, sessions }, null, 2)], { type: 'application/json' });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'voxa-datos.json' });
+  a.click();
+});
+$('btnClear').addEventListener('click', () => {
+  if (!confirm('¿Borrar todo tu historial de este navegador?')) return;
+  try { localStorage.removeItem('voxa.sessions.v1'); } catch {}
+  location.reload();
+});
+</script>
+</body>
+</html>

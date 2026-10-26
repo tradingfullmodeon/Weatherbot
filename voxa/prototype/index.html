@@ -4,84 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VOXA Evaluador</title>
-<style>
-  :root {
-    --bg: #f6f7fb; --card: #ffffff; --text: #1b1f2a; --muted: #5d6475;
-    --line: #e3e6ee; --accent: #4f46e5; --accent-soft: #eef0ff;
-    --good: #15803d; --mid: #b45309; --bad: #b91c1c;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #0f1117; --card: #181b24; --text: #e8eaf0; --muted: #9aa1b2;
-      --line: #2a2f3c; --accent: #8b85ff; --accent-soft: #23244a;
-      --good: #4ade80; --mid: #fbbf24; --bad: #f87171;
-    }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-         background: var(--bg); color: var(--text); line-height: 1.5; }
-  header { padding: 20px 16px 8px; max-width: 1100px; margin: 0 auto; }
-  header h1 { margin: 0; font-size: 1.6rem; letter-spacing: .02em; }
-  header p { margin: 4px 0 0; color: var(--muted); }
-  main { max-width: 1100px; margin: 0 auto; padding: 8px 16px 40px; display: grid; gap: 16px;
-         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  @media (max-width: 860px) { main { grid-template-columns: minmax(0, 1fr); } }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
-  .full { grid-column: 1 / -1; }
-  h2 { font-size: 1.05rem; margin: 0 0 10px; }
-  label { font-size: .85rem; color: var(--muted); display: block; margin-bottom: 4px; }
-  select, button { font: inherit; }
-  select { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--line);
-           background: var(--card); color: var(--text); }
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-  .prompt { background: var(--accent-soft); border-radius: 10px; padding: 12px; margin: 10px 0; }
-  .prompt strong { display: block; margin-bottom: 4px; }
-  .btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-  button { padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line); cursor: pointer;
-           background: var(--card); color: var(--text); }
-  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-  button:disabled { opacity: .5; cursor: not-allowed; }
-  .stage { position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4/3; }
-  .stage video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
-  .timer { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,.6); color: #fff;
-           padding: 4px 10px; border-radius: 999px; font-variant-numeric: tabular-nums; }
-  .rec { position: absolute; top: 10px; right: 10px; color: #fff; background: #dc2626;
-         padding: 4px 10px; border-radius: 999px; display: none; }
-  .live { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
-  .tile { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
-  .tile .k { font-size: .75rem; color: var(--muted); }
-  .tile .v { font-size: 1.25rem; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .meter { height: 6px; background: var(--line); border-radius: 3px; margin-top: 10px; overflow: hidden; }
-  .meter > div { height: 100%; width: 0; background: var(--accent); transition: width .08s; }
-  .transcript { min-height: 80px; max-height: 220px; overflow: auto; border: 1px solid var(--line);
-                border-radius: 10px; padding: 10px; font-size: .95rem; }
-  .transcript .interim { color: var(--muted); }
-  mark.filler { background: #fde68a; color: #111; border-radius: 3px; padding: 0 2px; }
-  mark.hedge { background: #bfdbfe; color: #111; border-radius: 3px; padding: 0 2px; }
-  .note { font-size: .8rem; color: var(--muted); }
-  .score-big { display: flex; align-items: center; gap: 16px; }
-  .ring { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center;
-          font-size: 1.8rem; font-weight: 700; }
-  .dims { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 14px; }
-  .dim .bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; margin-top: 4px; }
-  .dim .bar > div { height: 100%; }
-  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
-  th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
-  td.num { font-variant-numeric: tabular-nums; }
-  .pill { font-size: .75rem; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; }
-  .fb { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 10px; }
-  .fb div { border-radius: 10px; padding: 12px; border: 1px solid var(--line); }
-  .fb h3 { margin: 0 0 4px; font-size: .9rem; }
-  canvas { width: 100%; height: 140px; display: block; }
-  textarea { width: 100%; min-height: 120px; font: .8rem ui-monospace, monospace; border-radius: 8px;
-             border: 1px solid var(--line); background: var(--bg); color: var(--text); padding: 8px; }
-  #report { display: none; }
-  #replay { width: 100%; max-height: 420px; border-radius: 10px; margin-top: 8px; background: #000; }
-</style>
+<link rel="stylesheet" href="voxa.css">
 </head>
 <body>
 <header>
   <h1>VOXA · Evaluador de comunicación</h1>
+  <!-- La navegación entre páginas se inserta desde shared.js -->
+
   <p>Graba una práctica con cámara y micrófono y recibe un análisis de voz, lenguaje y presencia. Todo se procesa en tu dispositivo.</p>
 </header>
 
@@ -107,6 +36,17 @@
       </div>
     </div>
     <div class="prompt" id="prompt"></div>
+    <div class="row">
+      <div>
+        <label for="goal">Tu objetivo</label>
+        <select id="goal"></select>
+      </div>
+      <div>
+        <label for="anxBefore">Nervios ahora: <strong id="anxBeforeV">3</strong>/5</label>
+        <input type="range" id="anxBefore" min="1" max="5" value="3">
+        <div class="scale"><span>Tranquilo/a</span><span>Muy nervioso/a</span></div>
+      </div>
+    </div>
     <div class="btns">
       <button id="btnCam">Activar cámara y micrófono</button>
       <button id="btnStart" class="primary" disabled>Comenzar</button>
@@ -166,10 +106,23 @@
       <button id="btnRetry" class="primary">Reintentar mismo escenario</button>
     </div>
 
-    <h2 style="margin-top:18px">Prompt para coach IA</h2>
-    <p class="note">Copia este bloque en tu asistente de IA (o envíalo a la API del coach en la versión de producción) para obtener feedback cualitativo y una reescritura de ejemplo.</p>
-    <textarea id="aiPrompt" readonly></textarea>
-    <div class="btns"><button id="btnCopy">Copiar prompt</button></div>
+    <h2 style="margin-top:18px">Coach IA <span class="badge-ai" id="aiBadge">comprobando…</span></h2>
+    <div id="aiOnline" class="hidden">
+      <p class="note">El coach analiza tu transcripción y métricas: estructura según el método, reescritura de ejemplo y un ejercicio a medida.</p>
+      <div class="btns"><button id="btnCoach" class="primary">Pedir feedback del coach IA</button></div>
+      <div id="aiResult"></div>
+    </div>
+    <div id="aiOffline" class="hidden">
+      <p class="note">El coach IA requiere el servidor de VOXA con credenciales de Anthropic (ver README). Mientras tanto, copia este bloque en tu asistente de IA:</p>
+      <textarea id="aiPrompt" readonly></textarea>
+      <div class="btns"><button id="btnCopy">Copiar prompt</button></div>
+    </div>
+
+    <h2 style="margin-top:18px">¿Cómo te sientes ahora?</h2>
+    <label for="anxAfter">Nervios después de practicar: <strong id="anxAfterV">3</strong>/5</label>
+    <input type="range" id="anxAfter" min="1" max="5" value="3">
+    <div class="scale"><span>Tranquilo/a</span><span>Muy nervioso/a</span></div>
+    <p class="note" id="savedNote"></p>
   </section>
 </main>
 
@@ -202,19 +155,22 @@ const IMPRO_TOPICS = [
   'Convence al público de leer más', '¿Trabajo remoto o presencial?',
 ];
 
-// Muletillas frecuentes en español (incluye variantes regionales).
-const FILLERS = ['eh+', 'em+', 'ehm+', 'mm+', 'este', 'o sea', 'bueno', 'pues', 'como que', 'digamos',
-  'tipo', 'básicamente', 'literalmente', 'en plan', 'vale', 'sabes', 'cachai', 'me explico',
-  'onda', 'viste', 'osea', 'güey', 'po'];
-// Atenuadores que restan asertividad cuando se abusa de ellos.
-const HEDGES = ['creo que', 'tal vez', 'quizás', 'quizá', 'un poco', 'un poquito', 'perdón',
-  'no sé si', 'más o menos', 'de alguna manera', 'supongo', 'disculpa', 'solo quería', 'sólo quería'];
+import {
+  $, FILLER_RE, HEDGE_RE, countMatches, wordCount, mean, std, esc, colorFor, highlight,
+  renderNav, saveSession, loadProfile, saveProfile, aiStatus, postJSON, GOALS,
+} from './shared.js';
 
-const $ = (id) => document.getElementById(id);
-const escRe = (s) => s.replace(/[.*?^${}()|[\]\\]/g, '\\$&');
-const wordRe = (list) => new RegExp(`(^|[^\\p{L}])(${list.map(w => w.endsWith('+') ? escRe(w.slice(0, -1)) + '+' : escRe(w)).join('|')})(?=$|[^\\p{L}])`, 'giu');
-const FILLER_RE = wordRe(FILLERS);
-const HEDGE_RE = wordRe(HEDGES);
+renderNav();
+const profile = loadProfile();
+for (const [id, label] of GOALS) $('goal').add(new Option(label, id));
+if (profile.goal) $('goal').value = profile.goal;
+$('goal').addEventListener('change', () => { profile.goal = $('goal').value; saveProfile(profile); });
+for (const k of ['anxBefore', 'anxAfter']) $(k).addEventListener('input', () => { $(k + 'V').textContent = $(k).value; });
+$('anxAfter').addEventListener('change', persistSession);
+aiStatus().then(s => {
+  $('aiBadge').textContent = s.ai ? 'conectado' : 'sin conexión';
+  $(s.ai ? 'aiOnline' : 'aiOffline').classList.remove('hidden');
+});
 
 // ---------------------------------------------------------------------------
 // Estado
@@ -352,17 +308,11 @@ function startRecognition() {
   try { recognition.start(); } catch {}
 }
 
-function highlight(text) {
-  const esc = text.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
-  return esc.replace(FILLER_RE, '$1<mark class="filler">$2</mark>').replace(HEDGE_RE, '$1<mark class="hedge">$2</mark>');
-}
 function renderTranscript() {
   $('transcript').innerHTML = highlight(finalText) + `<span class="interim">${interimText.replace(/</g, '&lt;')}</span>`;
   $('transcript').scrollTop = $('transcript').scrollHeight;
   $('lFill').textContent = countMatches(finalText + ' ' + interimText, FILLER_RE);
 }
-const countMatches = (t, re) => (t.match(re) || []).length;
-const wordCount = (t) => (t.trim().match(/\p{L}+/gu) || []).length;
 
 // ---------------------------------------------------------------------------
 // Bucle de análisis: audio (~cada frame) y visión (~10 fps)
@@ -428,8 +378,6 @@ function analyzeFace(res) {
 // ---------------------------------------------------------------------------
 // Métricas y puntaje
 // ---------------------------------------------------------------------------
-const mean = (a) => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
-const std = (a) => { const m = mean(a); return Math.sqrt(mean(a.map(x => (x - m) ** 2))); };
 // Puntaje 100 dentro de [lo, hi]; decae linealmente hasta 0 a una distancia "soft".
 const band = (v, lo, hi, soft) => v >= lo && v <= hi ? 100 : Math.max(0, 100 - 100 * (v < lo ? lo - v : v - hi) / soft);
 
@@ -545,7 +493,6 @@ const STRENGTH = {
 // ---------------------------------------------------------------------------
 // Reporte
 // ---------------------------------------------------------------------------
-function colorFor(s) { return s >= 75 ? 'var(--good)' : s >= 50 ? 'var(--mid)' : 'var(--bad)'; }
 function levelFor(s) { return s >= 85 ? 'Nivel Referente' : s >= 70 ? 'Nivel Hábil' : s >= 55 ? 'Nivel Competente' : s >= 40 ? 'Nivel Practicante' : 'Nivel Explorador'; }
 
 function buildReport() {
@@ -574,7 +521,65 @@ function buildReport() {
 
   drawChart(m);
   $('aiPrompt').value = aiPrompt(m, r);
+  $('aiResult').innerHTML = '';
+  $('anxAfter').value = $('anxBefore').value; $('anxAfterV').textContent = $('anxAfter').value;
+  lastReport = { m, r, session: {
+    id: Date.now().toString(36), date: new Date().toISOString(), type: 'evaluacion',
+    scenario: scenario().id, scenarioName: scenario().name, goal: $('goal').value,
+    total: r.total, dims: r.dims, duration: Math.round(m.dur),
+    metrics: Object.fromEntries(r.items.map(i => [i.key, { value: i.value, s: i.s }])),
+    anxietyBefore: +$('anxBefore').value, anxietyAfter: null,
+  } };
+  persistSession();
   $('report').scrollIntoView({ behavior: 'smooth' });
+}
+
+let lastReport = null;
+function persistSession() {
+  if (!lastReport) return;
+  lastReport.session.anxietyAfter = +$('anxAfter').value;
+  $('savedNote').textContent = saveSession(lastReport.session)
+    ? 'Sesión guardada en tu historial (sólo en este navegador). Mírala en «Mi progreso».'
+    : 'No se pudo guardar el historial en este navegador.';
+}
+
+$('btnCoach').addEventListener('click', async () => {
+  if (!lastReport) return;
+  const { m, r } = lastReport;
+  $('btnCoach').disabled = true;
+  $('aiResult').innerHTML = '<p class="note">El coach está analizando tu práctica…</p>';
+  try {
+    const fb = await postJSON('api/feedback', {
+      scenario: scenario().name, method: scenario().method, prompt: currentPrompt,
+      goal: $('goal').selectedOptions[0]?.text || '', locale: $('lang').value, duration_s: m.dur,
+      transcript: (finalText + interimText).trim(), total: r.total, dims: r.dims,
+      metrics: r.items.map(i => ({ label: i.label, display: i.display, target: i.target, score: i.s })),
+      anxiety_before: +$('anxBefore').value,
+    });
+    lastReport.session.ai = { rubric: fb.rubric, focus: fb.focus.area };
+    persistSession();
+    $('aiResult').innerHTML = renderCoach(fb);
+  } catch (e) {
+    $('aiResult').innerHTML = `<p class="note">No se pudo obtener feedback: ${esc(e.message)}</p>`;
+  } finally { $('btnCoach').disabled = false; }
+});
+
+function renderCoach(fb) {
+  const rubric = Object.entries(fb.rubric).map(([k, v]) =>
+    `<div class="dim"><div>${esc(k)} <strong style="float:right">${v}</strong></div><div class="bar"><div style="width:${v}%;background:${colorFor(v)}"></div></div></div>`).join('');
+  return `<div class="ai-box">
+    <h3 style="color:var(--good)">Fortaleza</h3><p>${esc(fb.strength.text)}</p>${fb.strength.quote ? `<blockquote>«${esc(fb.strength.quote)}»</blockquote>` : ''}
+    <h3 style="color:var(--mid)">Foco: ${esc(fb.focus.area)}</h3><p>${esc(fb.focus.why)}</p>
+    <h3>Estructura (${esc(fb.structure.method)})</h3>
+    <div class="chips">${fb.structure.present.map(x => `<span class="chip">✓ ${esc(x)}</span>`).join('')}${fb.structure.missing.map(x => `<span class="chip miss">✗ ${esc(x)}</span>`).join('')}</div>
+    <p>${esc(fb.structure.comment)}</p>
+    <h3>Así podrías decirlo</h3><blockquote>${esc(fb.rewrite)}</blockquote>
+    <h3 style="color:var(--accent)">Ejercicio: ${esc(fb.exercise.title)} (${fb.exercise.minutes} min)</h3>
+    <ol>${fb.exercise.steps.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
+    <h3>Rúbrica cualitativa</h3><div class="dims">${rubric}</div>
+    <h3>Próximo reto</h3><p>${esc(fb.next_challenge)}</p>
+    ${fb.safety_note ? `<p class="note">${esc(fb.safety_note)}</p>` : ''}
+  </div>`;
 }
 
 function drawChart(m) {

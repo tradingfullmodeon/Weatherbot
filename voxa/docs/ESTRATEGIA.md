@@ -86,6 +86,8 @@
 | **Gong / Chorus** | Análisis de llamadas reales: ratio habla/escucha, monólogos, preguntas, interrupciones. |
 | **Headspace / Calm** | Rutinas guiadas de respiración/ansiedad antes de un evento. |
 
+> **Benchmark ampliado:** el análisis exhaustivo por región (Norteamérica, Europa, Asia y mundo hispanohablante), las necesidades de los usuarios y las 20 mejoras diferenciadoras están en [`BENCHMARK.md`](BENCHMARK.md).
+
 ### 2.6 Conclusión del benchmark
 
 Nadie combina en un solo producto, **en español nativo**:
@@ -430,6 +432,12 @@ orgs / teams / seats                               -- B2B
 - Métricas visuales (MediaPipe Face Landmarker): presencia en cuadro, contacto visual aproximado, sonrisa, estabilidad de cabeza.
 - Puntaje VOXA ponderado por escenario, feedback "fortaleza / foco / ejercicio", línea de tiempo de voz y prompt listo para un coach IA.
 - Todo el análisis ocurre **localmente en el dispositivo**.
+
+**v2 (servidor `voxa/server`):**
+
+- **Coach IA** (`/api/feedback`): fortaleza con cita, un foco, chequeo de estructura según el método, reescritura de la respuesta, ejercicio y rúbrica cualitativa, con salida JSON validada por esquema.
+- **Roleplay por voz** (`roleplay.html`, `/api/roleplay`): 6 personajes (reclutadora, jefe, clienta molesta, inversionista, colega, networking), 3 niveles de dificultad, pistas en vivo, **rebobinar y reintentar**, métricas de conversación y evaluación final (`/api/roleplay/evaluate`). Sin IA funciona un entrevistador con preguntas fijas.
+- **Mi progreso** (`progreso.html`): línea base, tendencia por dimensión, racha, nervios antes/después, foco recurrente, sprint de 30 días con la tarea del día, escalera de confianza y exportación o borrado de datos.
 
 ---
 

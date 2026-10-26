@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VOXA Roleplay</title>
+<link rel="stylesheet" href="voxa.css">
+<style>
+  .personas { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .persona { text-align: left; padding: 12px; border-radius: 12px; }
+  .persona.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+  .persona small { display: block; color: var(--muted); }
+  .chat { display: flex; flex-direction: column; gap: 8px; min-height: 220px; max-height: 420px; overflow: auto;
+          border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+  .msg { max-width: 85%; padding: 8px 12px; border-radius: 12px; }
+  .msg.persona { background: var(--accent-soft); align-self: flex-start; }
+  .msg.user { border: 1px solid var(--line); align-self: flex-end; }
+  .msg .who { font-size: .72rem; color: var(--muted); }
+  .hint { font-size: .85rem; color: var(--accent); margin-top: 6px; min-height: 1.2em; }
+  .talk { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .talk input { flex: 1; min-width: 180px; padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; }
+  button.rec-on { background: #dc2626; color: #fff; border-color: #dc2626; }
+  .toggles { display: flex; gap: 14px; flex-wrap: wrap; font-size: .85rem; color: var(--muted); margin-top: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>VOXA · Roleplay con IA</h1>
+  <p>Practica conversaciones reales por voz con personajes que reaccionan a cómo hablas. Si algo no salió bien, rebobina y vuelve a intentarlo.</p>
+</header>
+
+<main>
+  <section class="card full">
+    <h2>1. Elige con quién practicar <span class="badge-ai" id="aiBadge">comprobando…</span></h2>
+    <div class="personas" id="personas"></div>
+    <div class="row" style="margin-top:12px">
+      <div>
+        <label for="difficulty">Dificultad</label>
+        <select id="difficulty">
+          <option value="1">Baja: colaborativo</option>
+          <option value="2" selected>Media: objeciones realistas</option>
+          <option value="3">Alta: escéptico e interrumpe</option>
+        </select>
+      </div>
+      <div>
+        <label for="lang">Variante de español</label>
+        <select id="lang">
+          <option value="es-419">Latinoamérica</option><option value="es-CL">Chile</option>
+          <option value="es-MX">México</option><option value="es-AR">Argentina</option>
+          <option value="es-CO">Colombia</option><option value="es-PE">Perú</option><option value="es-ES">España</option>
+        </select>
+      </div>
+    </div>
+    <div class="prompt" id="brief"></div>
+    <div class="btns"><button id="btnBegin" class="primary">Comenzar conversación</button></div>
+  </section>
+
+  <section class="card full" id="stage" style="display:none">
+    <h2>2. Conversación</h2>
+    <div class="chat" id="chat" aria-live="polite"></div>
+    <div class="hint" id="hint"></div>
+    <div class="talk">
+      <button id="btnMic" class="primary">🎙 Mantén para hablar</button>
+      <input id="txt" placeholder="…o escribe tu respuesta y pulsa Enter">
+      <button id="btnSend">Enviar</button>
+    </div>
+    <div class="toggles">
+      <label><input type="checkbox" id="speak" checked> Voz del personaje</label>
+      <label><input type="checkbox" id="showHints" checked> Mostrar pistas del coach</label>
+    </div>
+    <div class="live">
+      <div class="tile"><div class="k">Tu tiempo de habla</div><div class="v" id="lRatio">–</div></div>
+      <div class="tile"><div class="k">Preguntas que hiciste</div><div class="v" id="lQs">0</div></div>
+      <div class="tile"><div class="k">Muletillas</div><div class="v" id="lFill">0</div></div>
+    </div>
+    <div class="btns">
+      <button id="btnRewind">↺ Rebobinar mi última respuesta</button>
+      <button id="btnEnd" class="primary">Terminar y evaluar</button>
+    </div>
+    <p class="note" id="status"></p>
+  </section>
+
+  <section class="card full" id="report" style="display:none">
+    <h2>3. Evaluación de la conversación</h2>
+    <div id="evalOut"></div>
+    <div class="btns"><button id="btnAgain" class="primary">Practicar de nuevo</button></div>
+  </section>
+</main>
+
+<script type="module">
+import {
+  $, FILLER_RE, countMatches, wordCount, mean, esc, colorFor, highlight, renderNav, saveSession, aiStatus, postJSON,
+} from './shared.js';
+
+renderNav();
+
+// Modo sin IA: entrevista con banco de preguntas por competencias.
+const OFFLINE_PERSONA = {
+  id: 'offline', name: 'Entrevistador VOXA', role: 'entrevista por competencias (modo sin IA)',
+  scenario: 'Entrevista de trabajo con preguntas fijas.', goal: 'Responder cada pregunta con STAR y resultados concretos.',
+  skills: ['STAR', 'resultados medibles'], opening: 'Hola, gracias por tu tiempo. Cuéntame brevemente sobre ti.',
+};
+const OFFLINE_QUESTIONS = [
+  'Gracias. ¿Por qué te interesa este puesto?',
+  'Cuéntame de un logro del que estés orgulloso u orgullosa. ¿Qué hiciste tú, concretamente?',
+  'Háblame de un conflicto con un compañero o compañera y cómo lo resolviste.',
+  '¿Cuál es un error que cometiste y qué aprendiste?',
+  'Para terminar, ¿tienes alguna pregunta para mí?',
+];
+
+let personas = [], persona = null, ai = false;
+let history = [];               // {role: 'user'|'persona', text, ms?}
+let userSpeechMs = 0, recStart = 0, recognition = null, heard = '';
+
+const status = await aiStatus();
+ai = status.ai;
+$('aiBadge').textContent = ai ? 'IA conectada' : 'modo sin IA';
+if (ai) {
+  try { personas = await (await fetch('api/personas')).json(); } catch { ai = false; }
+}
+if (!ai) { personas = [OFFLINE_PERSONA]; $('difficulty').disabled = true; }
+renderPersonas();
+
+function renderPersonas() {
+  $('personas').innerHTML = personas.map(p =>
+    `<button class="persona" data-id="${p.id}"><strong>${esc(p.name)}</strong><small>${esc(p.role)}</small></button>`).join('');
+  $('personas').querySelectorAll('.persona').forEach(b => b.addEventListener('click', () => pick(b.dataset.id)));
+  pick(personas[0].id);
+}
+function pick(id) {
+  persona = personas.find(p => p.id === id);
+  $('personas').querySelectorAll('.persona').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+  $('brief').innerHTML = `<strong>${esc(persona.scenario)}</strong>Tu objetivo: ${esc(persona.goal)}
+    <div class="note">Técnicas a practicar: ${persona.skills.map(esc).join(' · ')}</div>
+    ${ai ? '' : '<div class="note">Sin servidor IA: el entrevistador usa preguntas fijas y la evaluación es sólo por métricas.</div>'}`;
+}
+
+$('btnBegin').addEventListener('click', () => {
+  history = []; userSpeechMs = 0;
+  $('chat').innerHTML = ''; $('hint').textContent = '';
+  $('stage').style.display = 'block'; $('report').style.display = 'none';
+  addTurn('persona', persona.opening);
+  $('stage').scrollIntoView({ behavior: 'smooth' });
+});
+
+function addTurn(role, text, ms = 0) {
+  history.push({ role, text, ms });
+  renderChat();
+  if (role === 'persona') say(text);
+}
+function renderChat() {
+  $('chat').innerHTML = history.map(t =>
+    `<div class="msg ${t.role}"><div class="who">${t.role === 'user' ? 'Tú' : esc(persona.name)}</div>${t.role === 'user' ? highlight(t.text) : esc(t.text)}</div>`).join('');
+  $('chat').scrollTop = $('chat').scrollHeight;
+  updateLive();
+}
+
+// ---------------------------------------------------------------- métricas de conversación
+const QUESTION_RE = /\?|(^|[.!¡¿,]\s*)(qué|que|cómo|como|cuál|cuáles|por qué|cuándo|dónde|quién|quiénes|cuánto|cuánta|te parece|podrías|puedo)\b/giu;
+function convoMetrics() {
+  const user = history.filter(t => t.role === 'user'), other = history.filter(t => t.role === 'persona');
+  const uw = user.reduce((s, t) => s + wordCount(t.text), 0);
+  const pw = other.reduce((s, t) => s + wordCount(t.text), 0);
+  const text = user.map(t => t.text).join(' ');
+  const minutes = Math.max(userSpeechMs / 60000, uw / 150, 1 / 60);   // si escribió, estima a 150 ppm
+  return {
+    talkRatio: uw + pw ? uw / (uw + pw) : 0,
+    questions: user.reduce((s, t) => s + ((t.text.match(QUESTION_RE) || []).length ? 1 : 0), 0),
+    fillers: countMatches(text, FILLER_RE), fillersPerMin: countMatches(text, FILLER_RE) / minutes,
+    userTurns: user.length, userWords: uw,
+  };
+}
+function updateLive() {
+  const c = convoMetrics();
+  $('lRatio').textContent = c.userWords ? Math.round(c.talkRatio * 100) + '%' : '–';
+  $('lQs').textContent = c.questions;
+  $('lFill').textContent = c.fillers;
+}
+
+// ---------------------------------------------------------------- voz: reconocimiento y síntesis
+function say(text) {
+  if (!$('speak').checked || !('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = $('lang').value;
+  const voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('es'));
+  u.voice = voices.find(v => v.lang === $('lang').value) || voices[0] || null;
+  u.rate = 1.02;
+  speechSynthesis.speak(u);
+}
+
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SR) { $('btnMic').disabled = true; $('btnMic').textContent = '🎙 No disponible en este navegador'; }
+function startListening() {
+  if (!SR || recognition) return;
+  speechSynthesis?.cancel();
+  heard = '';
+  recognition = new SR();
+  recognition.lang = $('lang').value; recognition.continuous = true; recognition.interimResults = true;
+  recognition.onresult = (ev) => {
+    let interim = '';
+    for (let i = ev.resultIndex; i < ev.results.length; i++) {
+      const r = ev.results[i];
+      r.isFinal ? (heard += r[0].transcript.trim() + ' ') : (interim += r[0].transcript);
+    }
+    $('txt').value = (heard + interim).trim();
+  };
+  recognition.onerror = (e) => { $('status').textContent = 'Micrófono: ' + e.error; };
+  recStart = performance.now();
+  recognition.start();
+  $('btnMic').classList.add('rec-on'); $('btnMic').textContent = '● Escuchando… suelta para enviar';
+}
+function stopListening() {
+  if (!recognition) return;
+  const r = recognition; recognition = null;
+  const ms = performance.now() - recStart;
+  $('btnMic').classList.remove('rec-on'); $('btnMic').textContent = '🎙 Mantén para hablar';
+  r.onend = () => send(ms);
+  r.stop();
+}
+$('btnMic').addEventListener('pointerdown', (e) => { e.preventDefault(); startListening(); });
+for (const ev of ['pointerup', 'pointerleave']) $('btnMic').addEventListener(ev, stopListening);
+$('btnSend').addEventListener('click', () => send(0));
+$('txt').addEventListener('keydown', (e) => { if (e.key === 'Enter') send(0); });
+
+let busy = false;
+async function send(ms) {
+  const text = $('txt').value.trim();
+  if (!text || busy || !persona) return;
+  $('txt').value = '';
+  userSpeechMs += ms;
+  addTurn('user', text, ms);
+  busy = true; $('status').textContent = `${persona.name} está pensando…`;
+  try {
+    if (ai) {
+      const out = await postJSON('api/roleplay', { persona_id: persona.id, difficulty: +$('difficulty').value, history: history.map(({ role, text }) => ({ role, text })) });
+      addTurn('persona', out.reply);
+      $('hint').textContent = $('showHints').checked && out.coach_hint ? '💡 ' + out.coach_hint : '';
+      if (out.end) $('status').textContent = 'La conversación llegó a un cierre. Pulsa «Terminar y evaluar».';
+      else $('status').textContent = '';
+    } else {
+      const n = history.filter(t => t.role === 'user').length;
+      const next = OFFLINE_QUESTIONS[n - 1];
+      if (next) addTurn('persona', next);
+      $('hint').textContent = $('showHints').checked ? '💡 ' + offlineHint(text) : '';
+      $('status').textContent = next ? '' : 'Fin de la entrevista. Pulsa «Terminar y evaluar».';
+    }
+  } catch (e) {
+    $('status').textContent = 'Error: ' + e.message;
+  } finally { busy = false; }
+}
+function offlineHint(text) {
+  const w = wordCount(text);
+  if (w < 25) return 'Desarrolla más: da un ejemplo concreto (Situación y Acción).';
+  if (!/\d/.test(text)) return 'Añade un resultado medible: un número, porcentaje o plazo.';
+  if (countMatches(text, FILLER_RE) > 2) return 'Cambia las muletillas por una pausa breve.';
+  return 'Buen desarrollo. Cierra cada respuesta con el resultado.';
+}
+
+// Rebobinar: elimina tu última intervención (y la respuesta que provocó) para intentarlo otra vez.
+$('btnRewind').addEventListener('click', () => {
+  const i = history.map(t => t.role).lastIndexOf('user');
+  if (i < 0) return;
+  const removed = history.splice(i);
+  userSpeechMs = Math.max(0, userSpeechMs - (removed[0].ms || 0));
+  renderChat(); $('hint').textContent = '';
+  $('status').textContent = 'Rebobinado. Responde de nuevo a la última intervención.';
+  const lastPersona = [...history].reverse().find(t => t.role === 'persona');
+  if (lastPersona) say(lastPersona.text);
+});
+
+// ---------------------------------------------------------------- evaluación
+$('btnEnd').addEventListener('click', async () => {
+  const c = convoMetrics();
+  if (!c.userTurns) { $('status').textContent = 'Responde al menos una vez antes de evaluar.'; return; }
+  speechSynthesis?.cancel();
+  $('report').style.display = 'block';
+  $('evalOut').innerHTML = '<p class="note">Evaluando…</p>';
+  $('report').scrollIntoView({ behavior: 'smooth' });
+  const local = localScores(c);
+  let ev = null;
+  if (ai) {
+    try {
+      ev = await postJSON('api/roleplay/evaluate', {
+        persona_id: persona.id, difficulty: +$('difficulty').value, history: history.map(({ role, text }) => ({ role, text })),
+        talk_ratio: +c.talkRatio.toFixed(2), questions_asked: c.questions, fillers_per_min: +c.fillersPerMin.toFixed(1),
+      });
+    } catch (e) { $('status').textContent = 'Evaluación IA no disponible: ' + e.message; }
+  }
+  const scores = ev ? ev.scores : local;
+  const total = Math.round(mean(Object.values(scores)));
+  saveSession({
+    id: Date.now().toString(36), date: new Date().toISOString(), type: 'roleplay',
+    scenario: 'roleplay:' + persona.id, scenarioName: 'Roleplay: ' + persona.name, total, dims: scores,
+    difficulty: +$('difficulty').value, metrics: { talkRatio: c.talkRatio, questions: c.questions, fillersPerMin: c.fillersPerMin },
+  });
+  $('evalOut').innerHTML = renderEval(total, scores, c, ev);
+});
+
+function localScores(c) {
+  const band = (v, lo, hi, soft) => Math.round(v >= lo && v <= hi ? 100 : Math.max(0, 100 - 100 * (v < lo ? lo - v : v - hi) / soft));
+  const avgWords = c.userWords / c.userTurns;
+  return {
+    equilibrio_de_habla: band(c.talkRatio * 100, 40, 65, 30),
+    preguntas: band(c.questions, Math.min(2, c.userTurns), 99, 3),
+    fluidez: band(c.fillersPerMin, 0, 3, 7),
+    desarrollo: band(avgWords, 35, 130, 40),
+  };
+}
+
+function renderEval(total, scores, c, ev) {
+  const bars = Object.entries(scores).map(([k, v]) =>
+    `<div class="dim"><div>${esc(k.replace(/_/g, ' '))} <strong style="float:right">${v}</strong></div><div class="bar"><div style="width:${v}%;background:${colorFor(v)}"></div></div></div>`).join('');
+  const head = `<div class="score-big"><div class="ring" style="border:8px solid ${colorFor(total)}">${total}</div>
+    <div><div style="font-weight:600">${esc(persona.name)} · dificultad ${$('difficulty').value}/3</div>
+    <div class="note">Hablaste el ${Math.round(c.talkRatio * 100)}% del tiempo · ${c.questions} ${c.questions === 1 ? 'intervención' : 'intervenciones'} con preguntas · ${c.fillers} muletillas</div></div></div>
+    <div class="dims">${bars}</div>`;
+  if (!ev) return head + `<div class="fb"><div><h3>Siguiente paso</h3>${c.talkRatio > 0.7
+    ? 'Hablaste mucho más que tu interlocutor: practica hacer una pregunta abierta y escuchar.'
+    : c.questions === 0 ? 'No hiciste preguntas: en tu próxima práctica incluye al menos dos preguntas abiertas.'
+    : 'Repite la conversación en dificultad más alta y apunta a respuestas con resultados concretos.'}</div></div>`;
+  return head + `<div class="ai-box">
+    <p>${esc(ev.summary)}</p>
+    <h3 style="color:var(--good)">Tu mejor momento</h3><blockquote>«${esc(ev.best_moment.quote)}»</blockquote><p>${esc(ev.best_moment.why)}</p>
+    <h3 style="color:var(--mid)">Oportunidad perdida</h3><blockquote>«${esc(ev.missed_moment.quote)}»</blockquote><p><strong>Mejor:</strong> ${esc(ev.missed_moment.better)}</p>
+    <h3>Técnicas que usaste</h3><div class="chips">${ev.techniques_used.map(t => `<span class="chip">${esc(t)}</span>`).join('') || '<span class="note">Ninguna identificada</span>'}</div>
+    <h3 style="color:var(--accent)">Siguiente paso</h3><p>${esc(ev.next_step)}</p>
+    ${ev.safety_note ? `<p class="note">${esc(ev.safety_note)}</p>` : ''}</div>`;
+}
+
+$('btnAgain').addEventListener('click', () => $('btnBegin').click());
+</script>
+</body>
+</html>
