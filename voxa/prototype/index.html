@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VOXA Evaluador</title>
+<style>
+  :root {
+    --bg: #f6f7fb; --card: #ffffff; --text: #1b1f2a; --muted: #5d6475;
+    --line: #e3e6ee; --accent: #4f46e5; --accent-soft: #eef0ff;
+    --good: #15803d; --mid: #b45309; --bad: #b91c1c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1117; --card: #181b24; --text: #e8eaf0; --muted: #9aa1b2;
+      --line: #2a2f3c; --accent: #8b85ff; --accent-soft: #23244a;
+      --good: #4ade80; --mid: #fbbf24; --bad: #f87171;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         background: var(--bg); color: var(--text); line-height: 1.5; }
+  header { padding: 20px 16px 8px; max-width: 1100px; margin: 0 auto; }
+  header h1 { margin: 0; font-size: 1.6rem; letter-spacing: .02em; }
+  header p { margin: 4px 0 0; color: var(--muted); }
+  main { max-width: 1100px; margin: 0 auto; padding: 8px 16px 40px; display: grid; gap: 16px;
+         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  @media (max-width: 860px) { main { grid-template-columns: minmax(0, 1fr); } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+  .full { grid-column: 1 / -1; }
+  h2 { font-size: 1.05rem; margin: 0 0 10px; }
+  label { font-size: .85rem; color: var(--muted); display: block; margin-bottom: 4px; }
+  select, button { font: inherit; }
+  select { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--card); color: var(--text); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .prompt { background: var(--accent-soft); border-radius: 10px; padding: 12px; margin: 10px 0; }
+  .prompt strong { display: block; margin-bottom: 4px; }
+  .btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  button { padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line); cursor: pointer;
+           background: var(--card); color: var(--text); }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .stage { position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4/3; }
+  .stage video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+  .timer { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,.6); color: #fff;
+           padding: 4px 10px; border-radius: 999px; font-variant-numeric: tabular-nums; }
+  .rec { position: absolute; top: 10px; right: 10px; color: #fff; background: #dc2626;
+         padding: 4px 10px; border-radius: 999px; display: none; }
+  .live { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+  .tile { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+  .tile .k { font-size: .75rem; color: var(--muted); }
+  .tile .v { font-size: 1.25rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .meter { height: 6px; background: var(--line); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+  .meter > div { height: 100%; width: 0; background: var(--accent); transition: width .08s; }
+  .transcript { min-height: 80px; max-height: 220px; overflow: auto; border: 1px solid var(--line);
+                border-radius: 10px; padding: 10px; font-size: .95rem; }
+  .transcript .interim { color: var(--muted); }
+  mark.filler { background: #fde68a; color: #111; border-radius: 3px; padding: 0 2px; }
+  mark.hedge { background: #bfdbfe; color: #111; border-radius: 3px; padding: 0 2px; }
+  .note { font-size: .8rem; color: var(--muted); }
+  .score-big { display: flex; align-items: center; gap: 16px; }
+  .ring { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center;
+          font-size: 1.8rem; font-weight: 700; }
+  .dims { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 14px; }
+  .dim .bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; margin-top: 4px; }
+  .dim .bar > div { height: 100%; }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+  td.num { font-variant-numeric: tabular-nums; }
+  .pill { font-size: .75rem; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; }
+  .fb { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 10px; }
+  .fb div { border-radius: 10px; padding: 12px; border: 1px solid var(--line); }
+  .fb h3 { margin: 0 0 4px; font-size: .9rem; }
+  canvas { width: 100%; height: 140px; display: block; }
+  textarea { width: 100%; min-height: 120px; font: .8rem ui-monospace, monospace; border-radius: 8px;
+             border: 1px solid var(--line); background: var(--bg); color: var(--text); padding: 8px; }
+  #report { display: none; }
+  #replay { width: 100%; max-height: 420px; border-radius: 10px; margin-top: 8px; background: #000; }
+</style>
+</head>
+<body>
+<header>
+  <h1>VOXA · Evaluador de comunicación</h1>
+  <p>Graba una práctica con cámara y micrófono y recibe un análisis de voz, lenguaje y presencia. Todo se procesa en tu dispositivo.</p>
+</header>
+
+<main>
+  <section class="card">
+    <h2>1. Elige tu práctica</h2>
+    <div class="row">
+      <div>
+        <label for="scenario">Escenario</label>
+        <select id="scenario"></select>
+      </div>
+      <div>
+        <label for="lang">Variante de español</label>
+        <select id="lang">
+          <option value="es-419">Latinoamérica</option>
+          <option value="es-CL">Chile</option>
+          <option value="es-MX">México</option>
+          <option value="es-AR">Argentina</option>
+          <option value="es-CO">Colombia</option>
+          <option value="es-PE">Perú</option>
+          <option value="es-ES">España</option>
+        </select>
+      </div>
+    </div>
+    <div class="prompt" id="prompt"></div>
+    <div class="btns">
+      <button id="btnCam">Activar cámara y micrófono</button>
+      <button id="btnStart" class="primary" disabled>Comenzar</button>
+      <button id="btnStop" disabled>Terminar y evaluar</button>
+    </div>
+    <p class="note" id="status">Funciona mejor en Chrome o Edge (la transcripción usa el reconocimiento de voz del navegador). Requiere HTTPS o localhost.</p>
+  </section>
+
+  <section class="card">
+    <h2>2. En vivo</h2>
+    <div class="stage">
+      <video id="video" playsinline muted></video>
+      <div class="timer" id="timer">00:00</div>
+      <div class="rec" id="recBadge">● REC</div>
+    </div>
+    <div class="meter"><div id="vol"></div></div>
+    <div class="live">
+      <div class="tile"><div class="k">Palabras/min</div><div class="v" id="lWpm">–</div></div>
+      <div class="tile"><div class="k">Muletillas</div><div class="v" id="lFill">0</div></div>
+      <div class="tile"><div class="k">Mirada a cámara</div><div class="v" id="lGaze">–</div></div>
+    </div>
+  </section>
+
+  <section class="card full">
+    <h2>Transcripción</h2>
+    <div class="transcript" id="transcript"><span class="note">Aparecerá aquí mientras hablas.</span></div>
+    <p class="note"><mark class="filler">amarillo</mark> = muletilla · <mark class="hedge">azul</mark> = atenuador (baja asertividad). Nota: el reconocimiento del navegador suele omitir sonidos como "eh" o "em"; una versión de producción usaría ASR en modo literal.</p>
+  </section>
+
+  <section class="card full" id="report">
+    <h2>3. Tu reporte</h2>
+    <div class="score-big">
+      <div class="ring" id="ring">–</div>
+      <div>
+        <div style="font-size:1.1rem;font-weight:600" id="levelTxt"></div>
+        <div class="note" id="scoreSub"></div>
+      </div>
+    </div>
+    <div class="dims" id="dims"></div>
+
+    <div class="fb" id="fb"></div>
+
+    <h2 style="margin-top:18px">Métricas detalladas</h2>
+    <table>
+      <thead><tr><th>Métrica</th><th>Tu resultado</th><th>Rango objetivo</th><th></th></tr></thead>
+      <tbody id="metricsBody"></tbody>
+    </table>
+
+    <h2 style="margin-top:18px">Línea de tiempo de voz</h2>
+    <canvas id="chart" width="1000" height="140" aria-label="Volumen y tono a lo largo de la práctica"></canvas>
+    <p class="note">Barras = volumen · línea = tono (semitonos relativos a tu media) · zonas rojas = pausas largas.</p>
+
+    <h2 style="margin-top:18px">Replay</h2>
+    <video id="replay" controls playsinline></video>
+    <div class="btns">
+      <a id="download" download="voxa-practica.webm"><button>Descargar grabación</button></a>
+      <button id="btnRetry" class="primary">Reintentar mismo escenario</button>
+    </div>
+
+    <h2 style="margin-top:18px">Prompt para coach IA</h2>
+    <p class="note">Copia este bloque en tu asistente de IA (o envíalo a la API del coach en la versión de producción) para obtener feedback cualitativo y una reescritura de ejemplo.</p>
+    <textarea id="aiPrompt" readonly></textarea>
+    <div class="btns"><button id="btnCopy">Copiar prompt</button></div>
+  </section>
+</main>
+
+<script type="module">
+// ---------------------------------------------------------------------------
+// Escenarios: cada uno define consigna, duración sugerida y pesos por dimensión.
+// ---------------------------------------------------------------------------
+const SCENARIOS = [
+  { id: 'intro', name: 'Preséntate en 60 segundos', seconds: 60,
+    prompt: 'Quién eres, qué haces y qué te apasiona. Cierra con una frase memorable.',
+    method: 'PREP', weights: { voz: .35, lenguaje: .3, presencia: .35 } },
+  { id: 'interview', name: 'Entrevista: "Cuéntame de un logro"', seconds: 120,
+    prompt: 'Responde con el método STAR: Situación, Tarea, Acción y Resultado (con un número si puedes).',
+    method: 'STAR', weights: { voz: .3, lenguaje: .4, presencia: .3 } },
+  { id: 'pitch', name: 'Pitch de proyecto (2 min)', seconds: 120,
+    prompt: 'Problema, solución, por qué ahora, por qué tú y qué pides. Usa una historia breve al inicio.',
+    method: 'Monroe / SCQA', weights: { voz: .35, lenguaje: .35, presencia: .3 } },
+  { id: 'meeting', name: 'Actualización ejecutiva (BLUF)', seconds: 90,
+    prompt: 'Da el estado de un proyecto a tu jefatura: conclusión primero, luego 3 puntos clave y un pedido concreto.',
+    method: 'BLUF / Pirámide de Minto', weights: { voz: .3, lenguaje: .45, presencia: .25 } },
+  { id: 'feedback', name: 'Feedback difícil a un colega', seconds: 90,
+    prompt: 'Usa SBI: Situación, Comportamiento observable, Impacto; termina con una pregunta abierta.',
+    method: 'SBI + CNV', weights: { voz: .3, lenguaje: .4, presencia: .3 } },
+  { id: 'impro', name: 'Improvisación: tema sorpresa', seconds: 60,
+    prompt: null, method: 'PREP', weights: { voz: .4, lenguaje: .3, presencia: .3 } },
+];
+const IMPRO_TOPICS = [
+  '¿Qué cambiarías de tu ciudad?', 'Un error que te enseñó algo', 'Defiende tu comida favorita',
+  'Si tuvieras un día libre extra a la semana', 'La mejor decisión que has tomado',
+  'Convence al público de leer más', '¿Trabajo remoto o presencial?',
+];
+
+// Muletillas frecuentes en español (incluye variantes regionales).
+const FILLERS = ['eh+', 'em+', 'ehm+', 'mm+', 'este', 'o sea', 'bueno', 'pues', 'como que', 'digamos',
+  'tipo', 'básicamente', 'literalmente', 'en plan', 'vale', 'sabes', 'cachai', 'me explico',
+  'onda', 'viste', 'osea', 'güey', 'po'];
+// Atenuadores que restan asertividad cuando se abusa de ellos.
+const HEDGES = ['creo que', 'tal vez', 'quizás', 'quizá', 'un poco', 'un poquito', 'perdón',
+  'no sé si', 'más o menos', 'de alguna manera', 'supongo', 'disculpa', 'solo quería', 'sólo quería'];
+
+const $ = (id) => document.getElementById(id);
+const escRe = (s) => s.replace(/[.*?^${}()|[\]\\]/g, '\\$&');
+const wordRe = (list) => new RegExp(`(^|[^\\p{L}])(${list.map(w => w.endsWith('+') ? escRe(w.slice(0, -1)) + '+' : escRe(w)).join('|')})(?=$|[^\\p{L}])`, 'giu');
+const FILLER_RE = wordRe(FILLERS);
+const HEDGE_RE = wordRe(HEDGES);
+
+// ---------------------------------------------------------------------------
+// Estado
+// ---------------------------------------------------------------------------
+let stream = null, audioCtx = null, analyser = null, recorder = null, chunks = [];
+let recognition = null, faceLandmarker = null, running = false, startT = 0, rafId = 0;
+let finalText = '', interimText = '', currentPrompt = '';
+let samples = [];      // {t, rms, pitch}
+let faceSamples = [];  // {t, present, gaze, smile, yaw, pitch}
+let lastVideoTime = -1;
+
+// ---------------------------------------------------------------------------
+// UI de escenario
+// ---------------------------------------------------------------------------
+for (const s of SCENARIOS) $('scenario').add(new Option(`${s.name} · ${s.seconds}s`, s.id));
+function scenario() { return SCENARIOS.find(s => s.id === $('scenario').value); }
+function renderPrompt() {
+  const s = scenario();
+  currentPrompt = s.prompt ?? `Tema: «${IMPRO_TOPICS[Math.floor(Math.random() * IMPRO_TOPICS.length)]}». Tienes 10 s para pensar; usa Punto–Razón–Ejemplo–Punto.`;
+  $('prompt').innerHTML = `<strong>${s.name}</strong>${currentPrompt}<div class="note">Método sugerido: ${s.method} · Duración: ${s.seconds} s</div>`;
+}
+$('scenario').addEventListener('change', renderPrompt);
+renderPrompt();
+
+// ---------------------------------------------------------------------------
+// Cámara, micrófono y visión
+// ---------------------------------------------------------------------------
+$('btnCam').addEventListener('click', async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: 640, height: 480, facingMode: 'user' },
+      audio: { echoCancellation: true, noiseSuppression: true },
+    });
+  } catch (e) {
+    $('status').textContent = 'No se pudo acceder a la cámara/micrófono: ' + e.message;
+    return;
+  }
+  $('video').srcObject = stream;
+  await $('video').play();
+  audioCtx = new AudioContext();
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 2048;
+  audioCtx.createMediaStreamSource(stream).connect(analyser);
+  $('btnCam').disabled = true;
+  $('btnStart').disabled = false;
+  $('status').textContent = 'Listo. Cargando análisis visual…';
+  loadVision();
+});
+
+async function loadVision() {
+  try {
+    const base = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+    const vision = await import(`${base}/vision_bundle.mjs`);
+    const fileset = await vision.FilesetResolver.forVisionTasks(`${base}/wasm`);
+    faceLandmarker = await vision.FaceLandmarker.createFromOptions(fileset, {
+      baseOptions: {
+        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+        delegate: 'GPU',
+      },
+      runningMode: 'VIDEO', numFaces: 1, outputFaceBlendshapes: true,
+    });
+    $('status').textContent = 'Listo. Análisis de voz y visual activo.';
+  } catch (e) {
+    console.warn('Visión no disponible', e);
+    $('status').textContent = 'Listo. (Análisis visual no disponible en este navegador/red; se evaluará sólo voz y lenguaje.)';
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Grabación
+// ---------------------------------------------------------------------------
+$('btnStart').addEventListener('click', start);
+$('btnStop').addEventListener('click', stop);
+$('btnRetry').addEventListener('click', () => { $('report').style.display = 'none'; start(); });
+
+function start() {
+  if (!stream) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  finalText = ''; interimText = ''; samples = []; faceSamples = []; chunks = [];
+  $('transcript').innerHTML = '';
+  $('lFill').textContent = '0'; $('lWpm').textContent = '–'; $('lGaze').textContent = '–';
+  running = true; startT = performance.now();
+  $('btnStart').disabled = true; $('btnStop').disabled = false; $('recBadge').style.display = 'block';
+
+  const mime = ['video/webm;codecs=vp9,opus', 'video/webm', 'video/mp4'].find(m => MediaRecorder.isTypeSupported(m));
+  recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+  recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+  recorder.start(1000);
+
+  startRecognition();
+  loop();
+}
+
+function stop() {
+  if (!running) return;
+  running = false;
+  cancelAnimationFrame(rafId);
+  try { recognition && recognition.stop(); } catch {}
+  $('btnStop').disabled = true; $('btnStart').disabled = false; $('recBadge').style.display = 'none';
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    $('replay').src = url; $('download').href = url;
+  };
+  recorder.stop();
+  // Pequeña espera para recibir el último resultado final del reconocimiento.
+  setTimeout(buildReport, 700);
+}
+
+// ---------------------------------------------------------------------------
+// Reconocimiento de voz (Web Speech API)
+// ---------------------------------------------------------------------------
+function startRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    $('transcript').innerHTML = '<span class="note">Este navegador no ofrece transcripción; se evaluará voz y presencia.</span>';
+    recognition = null; return;
+  }
+  recognition = new SR();
+  recognition.lang = $('lang').value;
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.onresult = (ev) => {
+    interimText = '';
+    for (let i = ev.resultIndex; i < ev.results.length; i++) {
+      const r = ev.results[i];
+      if (r.isFinal) finalText += r[0].transcript.trim() + ' ';
+      else interimText += r[0].transcript;
+    }
+    renderTranscript();
+  };
+  // Chrome corta la sesión tras silencios: se reinicia mientras sigamos grabando.
+  recognition.onend = () => { if (running) try { recognition.start(); } catch {} };
+  recognition.onerror = (e) => { if (e.error === 'not-allowed') $('status').textContent = 'Permiso de reconocimiento de voz denegado.'; };
+  try { recognition.start(); } catch {}
+}
+
+function highlight(text) {
+  const esc = text.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  return esc.replace(FILLER_RE, '$1<mark class="filler">$2</mark>').replace(HEDGE_RE, '$1<mark class="hedge">$2</mark>');
+}
+function renderTranscript() {
+  $('transcript').innerHTML = highlight(finalText) + `<span class="interim">${interimText.replace(/</g, '&lt;')}</span>`;
+  $('transcript').scrollTop = $('transcript').scrollHeight;
+  $('lFill').textContent = countMatches(finalText + ' ' + interimText, FILLER_RE);
+}
+const countMatches = (t, re) => (t.match(re) || []).length;
+const wordCount = (t) => (t.trim().match(/\p{L}+/gu) || []).length;
+
+// ---------------------------------------------------------------------------
+// Bucle de análisis: audio (~cada frame) y visión (~10 fps)
+// ---------------------------------------------------------------------------
+const buf = new Float32Array(2048);
+let lastFaceT = 0;
+function loop() {
+  if (!running) return;
+  const t = (performance.now() - startT) / 1000;
+  analyser.getFloatTimeDomainData(buf);
+  let sum = 0; for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+  const rms = Math.sqrt(sum / buf.length);
+  const pitch = rms > 0.01 ? detectPitch(buf, audioCtx.sampleRate) : 0;
+  samples.push({ t, rms, pitch });
+  $('vol').style.width = Math.min(100, rms * 600) + '%';
+
+  const secs = Math.floor(t);
+  $('timer').textContent = `${String(Math.floor(secs / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}`;
+  if (t > 5) $('lWpm').textContent = Math.round(wordCount(finalText + ' ' + interimText) / (t / 60));
+
+  const v = $('video');
+  if (faceLandmarker && t - lastFaceT > 0.1 && v.currentTime !== lastVideoTime) {
+    lastFaceT = t; lastVideoTime = v.currentTime;
+    try { faceSamples.push({ t, ...analyzeFace(faceLandmarker.detectForVideo(v, performance.now())) }); } catch {}
+    const recent = faceSamples.slice(-30);
+    if (recent.length) $('lGaze').textContent = Math.round(100 * recent.filter(f => f.gaze).length / recent.length) + '%';
+  }
+  if (t >= scenario().seconds + 30) return stop(); // tope de seguridad
+  rafId = requestAnimationFrame(loop);
+}
+
+// Autocorrelación normalizada simple; suficiente para F0 de voz hablada (70–400 Hz).
+function detectPitch(x, sr) {
+  const minLag = Math.floor(sr / 400), maxLag = Math.floor(sr / 70);
+  let best = -1, bestLag = 0;
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    let c = 0, e1 = 0, e2 = 0;
+    for (let i = 0; i + lag < x.length; i++) { c += x[i] * x[i + lag]; e1 += x[i] * x[i]; e2 += x[i + lag] * x[i + lag]; }
+    const r = c / Math.sqrt(e1 * e2 + 1e-12);
+    if (r > best) { best = r; bestLag = lag; }
+  }
+  return best > 0.8 ? sr / bestLag : 0;
+}
+
+// Conductas observables (no emociones): presencia, mirada aproximada a cámara, sonrisa, giro de cabeza.
+function analyzeFace(res) {
+  if (!res.faceLandmarks || !res.faceLandmarks.length) return { present: false, gaze: false, smile: 0, yaw: 0, pitch: 0 };
+  const lm = res.faceLandmarks[0];
+  const bs = Object.fromEntries((res.faceBlendshapes?.[0]?.categories || []).map(c => [c.categoryName, c.score]));
+  const left = lm[234], right = lm[454], nose = lm[1], top = lm[10], chin = lm[152];
+  const yaw = (nose.x - left.x) / (right.x - left.x + 1e-6) - 0.5;      // ~0 = de frente
+  const pitch = (nose.y - top.y) / (chin.y - top.y + 1e-6) - 0.55;       // ~0 = de frente
+  const eyeOff = Math.max(
+    ((bs.eyeLookOutLeft || 0) + (bs.eyeLookInRight || 0)) / 2,
+    ((bs.eyeLookInLeft || 0) + (bs.eyeLookOutRight || 0)) / 2,
+    ((bs.eyeLookUpLeft || 0) + (bs.eyeLookUpRight || 0)) / 2,
+    ((bs.eyeLookDownLeft || 0) + (bs.eyeLookDownRight || 0)) / 2);
+  const gaze = Math.abs(yaw) < 0.12 && Math.abs(pitch) < 0.15 && eyeOff < 0.45;
+  const smile = ((bs.mouthSmileLeft || 0) + (bs.mouthSmileRight || 0)) / 2;
+  return { present: true, gaze, smile, yaw, pitch };
+}
+
+// ---------------------------------------------------------------------------
+// Métricas y puntaje
+// ---------------------------------------------------------------------------
+const mean = (a) => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
+const std = (a) => { const m = mean(a); return Math.sqrt(mean(a.map(x => (x - m) ** 2))); };
+// Puntaje 100 dentro de [lo, hi]; decae linealmente hasta 0 a una distancia "soft".
+const band = (v, lo, hi, soft) => v >= lo && v <= hi ? 100 : Math.max(0, 100 - 100 * (v < lo ? lo - v : v - hi) / soft);
+
+function computeMetrics() {
+  const dur = samples.length ? samples[samples.length - 1].t : 0;
+  const minutes = Math.max(dur / 60, 1 / 60);
+  const text = finalText + ' ' + interimText;
+  const words = wordCount(text);
+  const fillers = countMatches(text, FILLER_RE);
+  const hedges = countMatches(text, HEDGE_RE);
+
+  // Umbral de silencio adaptativo: 30% sobre el piso de ruido.
+  const rmsSorted = samples.map(s => s.rms).sort((a, b) => a - b);
+  const noise = rmsSorted[Math.floor(rmsSorted.length * 0.1)] || 0;
+  const thr = Math.max(0.008, noise * 1.3 + 0.004);
+  let speechFrames = 0, longPauses = 0, pauseStart = null;
+  const pauseZones = [];
+  for (const s of samples) {
+    if (s.rms > thr) {
+      speechFrames++;
+      if (pauseStart !== null && s.t - pauseStart > 2.5) { longPauses++; pauseZones.push([pauseStart, s.t]); }
+      pauseStart = null;
+    } else if (pauseStart === null) pauseStart = s.t;
+  }
+  const speechRatio = samples.length ? speechFrames / samples.length : 0;
+
+  const voiced = samples.filter(s => s.pitch > 0).map(s => s.pitch);
+  const medF0 = voiced.length ? [...voiced].sort((a, b) => a - b)[Math.floor(voiced.length / 2)] : 0;
+  const semis = voiced.map(f => 12 * Math.log2(f / medF0)).filter(x => Math.abs(x) < 12);
+  const pitchVar = std(semis);
+  const speechRms = samples.filter(s => s.rms > thr).map(s => s.rms);
+  const volume = mean(speechRms);
+  const volCv = volume ? std(speechRms) / volume : 0;
+
+  const faces = faceSamples;
+  const present = faces.filter(f => f.present);
+  const hasVision = faces.length > 5;
+  const facePct = hasVision ? present.length / faces.length : null;
+  const gazePct = hasVision && present.length ? present.filter(f => f.gaze).length / present.length : null;
+  const smileAvg = hasVision ? mean(present.map(f => f.smile)) : null;
+  const smilePct = hasVision && present.length ? present.filter(f => f.smile > 0.35).length / present.length : null;
+  const headMove = hasVision ? std(present.map(f => f.yaw)) + std(present.map(f => f.pitch)) : null;
+
+  return {
+    dur, words, wpm: words / minutes, fillers, fillersPerMin: fillers / minutes, hedges, hedgesPerMin: hedges / minutes,
+    longPauses, speechRatio, pitchVar, medF0, volume, volCv, hasText: words > 0,
+    hasVision, facePct, gazePct, smileAvg, smilePct, headMove, pauseZones, thr,
+  };
+}
+
+function score(m) {
+  const items = [];
+  const add = (dim, key, label, value, display, target, s) => items.push({ dim, key, label, value, display, target, s: Math.round(s) });
+  if (m.hasText) {
+    add('voz', 'wpm', 'Ritmo', m.wpm, `${Math.round(m.wpm)} ppm`, '120–165 ppm', band(m.wpm, 120, 165, 60));
+    add('voz', 'fillers', 'Muletillas', m.fillersPerMin, `${m.fillersPerMin.toFixed(1)} /min (${m.fillers})`, '< 3 /min', band(m.fillersPerMin, 0, 3, 7));
+    add('lenguaje', 'hedges', 'Atenuadores', m.hedgesPerMin, `${m.hedgesPerMin.toFixed(1)} /min (${m.hedges})`, '< 1,5 /min', band(m.hedgesPerMin, 0, 1.5, 4));
+    add('lenguaje', 'length', 'Contenido desarrollado', m.words, `${m.words} palabras`, `≥ ${Math.round(scenario().seconds * 1.7)} palabras`, band(m.words, scenario().seconds * 1.7, 1e6, scenario().seconds * 1.7));
+  }
+  add('voz', 'pitch', 'Variación de tono', m.pitchVar, m.medF0 ? `${m.pitchVar.toFixed(1)} semitonos` : 'sin datos', '2–6 semitonos', m.medF0 ? band(m.pitchVar, 2, 6, 1.8) : 50);
+  add('voz', 'speech', 'Tiempo hablando', m.speechRatio, `${Math.round(m.speechRatio * 100)}%`, '55–90%', band(m.speechRatio * 100, 55, 90, 35));
+  add('voz', 'pauses', 'Silencios largos (> 2,5 s)', m.longPauses, `${m.longPauses}`, '0–2', band(m.longPauses, 0, 2, 4));
+  add('voz', 'volume', 'Estabilidad de volumen', m.volCv, `CV ${m.volCv.toFixed(2)}`, '0,3–0,9 (con énfasis)', band(m.volCv, 0.3, 0.9, 0.6));
+  if (m.hasVision) {
+    add('presencia', 'face', 'Rostro en cuadro', m.facePct, `${Math.round(m.facePct * 100)}%`, '≥ 90%', band(m.facePct * 100, 90, 100, 50));
+    add('presencia', 'gaze', 'Mirada a cámara', m.gazePct, `${Math.round(m.gazePct * 100)}%`, '≥ 60%', band(m.gazePct * 100, 60, 100, 50));
+    add('presencia', 'smile', 'Expresividad (sonrisa)', m.smilePct, `${Math.round(m.smilePct * 100)}% del tiempo`, '10–60%', band(m.smilePct * 100, 10, 60, 15));
+    add('presencia', 'head', 'Estabilidad de cabeza', m.headMove, m.headMove.toFixed(3), '0,01–0,08', band(m.headMove, 0.01, 0.08, 0.08));
+  }
+  const dims = {};
+  for (const d of ['voz', 'lenguaje', 'presencia']) {
+    const xs = items.filter(i => i.dim === d);
+    if (xs.length) dims[d] = Math.round(mean(xs.map(i => i.s)));
+  }
+  const w = scenario().weights;
+  const wsum = Object.keys(dims).reduce((s, d) => s + w[d], 0);
+  const total = Math.round(Object.keys(dims).reduce((s, d) => s + dims[d] * w[d], 0) / (wsum || 1));
+  return { items, dims, total };
+}
+
+// Banco de feedback accionable: fortaleza + foco + ejercicio.
+const TIPS = {
+  wpm: (m) => m.wpm > 165
+    ? ['Hablas rápido: el público pierde ideas clave.', 'Lee un párrafo marcando una pausa de 1 s en cada punto. Repite la práctica apuntando a 140 ppm.']
+    : ['Tu ritmo es lento; puede bajar la energía.', 'Repite la práctica imaginando que hablas con alguien entusiasmado. Apunta a 130–150 ppm.'],
+  fillers: () => ['Las muletillas restan autoridad.', 'Ejercicio "pausa en vez de muletilla": habla 60 s y cada vez que sientas un "este/o sea", cierra la boca y respira. El silencio suena seguro.'],
+  hedges: () => ['Usas atenuadores ("creo que", "un poco") que debilitan tus ideas.', 'Reformula 3 frases quitando el atenuador: "Creo que deberíamos…" → "Propongo…". Repite la práctica con esa intención.'],
+  length: () => ['El mensaje quedó corto o poco desarrollado.', `Estructura con ${scenario().method}: escribe 1 línea por bloque y vuelve a intentarlo sin leer.`],
+  pitch: () => ['Tu voz suena monótona; cuesta sostener la atención.', 'Lee la misma frase 3 veces enfatizando una palabra distinta cada vez. Sube el tono en preguntas y bájalo al cerrar afirmaciones.'],
+  speech: (m) => m.speechRatio < 0.55
+    ? ['Hubo mucho tiempo sin voz.', 'Prepara 3 palabras clave antes de empezar y úsalas como anclas para no quedarte en blanco.']
+    : ['Casi no hiciste pausas.', 'Agrega una pausa de 2 s después de tu idea principal: deja que aterrice.'],
+  pauses: () => ['Tuviste silencios largos que parecen bloqueos.', 'Practica PREP con temas sorpresa durante 5 días: entrena tu "piloto automático" de estructura.'],
+  volume: (m) => m.volCv < 0.3
+    ? ['Volumen muy plano.', 'Sube el volumen en la palabra más importante de cada frase.']
+    : ['Volumen irregular (te apagas al final de las frases).', 'Respira antes de cada frase y sostén el aire hasta la última palabra.'],
+  face: () => ['Saliste del cuadro con frecuencia.', 'Ajusta la cámara a la altura de los ojos y deja un espacio de una mano sobre tu cabeza.'],
+  gaze: () => ['Poco contacto visual con la cámara.', 'Pega una nota junto a la cámara y mírala al decir tu frase de apertura, tu idea clave y tu cierre.'],
+  smile: (m) => m.smilePct < 0.1
+    ? ['Expresión facial seria y constante.', 'Sonríe al saludar y al cerrar; ensaya la primera frase frente al espejo.']
+    : ['Sonrisa casi permanente: puede restar seriedad.', 'Alinea la expresión con el contenido: sonríe en lo positivo, neutral en los datos.'],
+  head: (m) => m.headMove > 0.08
+    ? ['Mucho movimiento de cabeza.', 'Ancla los pies y la espalda; mueve la cabeza sólo para enfatizar.']
+    : ['Postura muy rígida.', 'Permite asentir y gesticular con naturalidad en las ideas clave.'],
+};
+const STRENGTH = {
+  wpm: 'Ritmo cómodo de seguir.', fillers: 'Discurso limpio, casi sin muletillas.', hedges: 'Lenguaje asertivo y directo.',
+  length: 'Desarrollaste bien el contenido.', pitch: 'Voz expresiva con buena variación de tono.', speech: 'Buen equilibrio entre voz y pausa.',
+  pauses: 'Fluidez: sin bloqueos largos.', volume: 'Volumen sólido con énfasis.', face: 'Buen encuadre.',
+  gaze: 'Excelente contacto visual con la cámara.', smile: 'Expresividad facial adecuada.', head: 'Presencia estable y natural.',
+};
+
+// ---------------------------------------------------------------------------
+// Reporte
+// ---------------------------------------------------------------------------
+function colorFor(s) { return s >= 75 ? 'var(--good)' : s >= 50 ? 'var(--mid)' : 'var(--bad)'; }
+function levelFor(s) { return s >= 85 ? 'Nivel Referente' : s >= 70 ? 'Nivel Hábil' : s >= 55 ? 'Nivel Competente' : s >= 40 ? 'Nivel Practicante' : 'Nivel Explorador'; }
+
+function buildReport() {
+  const m = computeMetrics();
+  const r = score(m);
+  $('report').style.display = 'block';
+  $('ring').textContent = r.total;
+  $('ring').style.border = `8px solid ${colorFor(r.total)}`;
+  $('levelTxt').textContent = levelFor(r.total);
+  $('scoreSub').textContent = `Puntaje VOXA · ${scenario().name} · ${Math.round(m.dur)} s · ${m.hasVision ? 'voz + lenguaje + presencia' : 'sin análisis visual'}`;
+
+  const names = { voz: 'Voz', lenguaje: 'Lenguaje', presencia: 'Presencia' };
+  $('dims').innerHTML = Object.entries(r.dims).map(([d, s]) =>
+    `<div class="dim"><div>${names[d]} <strong style="float:right">${s}</strong></div><div class="bar"><div style="width:${s}%;background:${colorFor(s)}"></div></div></div>`).join('');
+
+  $('metricsBody').innerHTML = r.items.map(i =>
+    `<tr><td>${i.label}</td><td class="num">${i.display}</td><td>${i.target}</td><td><span class="pill" style="color:${colorFor(i.s)}">${i.s}</span></td></tr>`).join('');
+
+  const sorted = [...r.items].sort((a, b) => b.s - a.s);
+  const best = sorted[0], worst = sorted[sorted.length - 1];
+  const [why, exercise] = worst.s < 100 ? TIPS[worst.key](m) : ['Todas tus métricas están en rango.', 'Sube la dificultad: prueba "Improvisación" o reduce el tiempo de preparación.'];
+  $('fb').innerHTML = `
+    <div><h3 style="color:var(--good)">Fortaleza</h3>${STRENGTH[best.key]}</div>
+    <div><h3 style="color:var(--mid)">Tu foco: ${worst.label}</h3>${why}</div>
+    <div><h3 style="color:var(--accent)">Ejercicio (2 min)</h3>${exercise}</div>`;
+
+  drawChart(m);
+  $('aiPrompt').value = aiPrompt(m, r);
+  $('report').scrollIntoView({ behavior: 'smooth' });
+}
+
+function drawChart(m) {
+  const c = $('chart'), ctx = c.getContext('2d');
+  const W = c.width, H = c.height, dur = Math.max(m.dur, 1);
+  const css = getComputedStyle(document.documentElement);
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(220,38,38,.15)';
+  for (const [a, b] of m.pauseZones) ctx.fillRect(a / dur * W, 0, (b - a) / dur * W, H);
+  // Volumen agregado en 200 columnas.
+  const cols = 200, bucket = Array.from({ length: cols }, () => []);
+  for (const s of samples) bucket[Math.min(cols - 1, Math.floor(s.t / dur * cols))].push(s);
+  const maxR = Math.max(...samples.map(s => s.rms), 0.01);
+  ctx.fillStyle = css.getPropertyValue('--accent');
+  ctx.globalAlpha = .45;
+  bucket.forEach((b, i) => { const h = mean(b.map(s => s.rms)) / maxR * (H - 10); ctx.fillRect(i * W / cols, H - h, W / cols - 1, h); });
+  ctx.globalAlpha = 1;
+  // Tono en semitonos relativos a la mediana.
+  if (m.medF0) {
+    ctx.strokeStyle = css.getPropertyValue('--text'); ctx.lineWidth = 2; ctx.beginPath();
+    let started = false;
+    bucket.forEach((b, i) => {
+      const p = b.filter(s => s.pitch > 0).map(s => 12 * Math.log2(s.pitch / m.medF0));
+      if (!p.length) { started = false; return; }
+      const y = H / 2 - Math.max(-8, Math.min(8, mean(p))) / 8 * (H / 2 - 6);
+      const x = i * W / cols;
+      started ? ctx.lineTo(x, y) : ctx.moveTo(x, y); started = true;
+    });
+    ctx.stroke();
+  }
+}
+
+function aiPrompt(m, r) {
+  return `Eres un coach de comunicación experto, cálido y directo. Habla de conductas observables; no infieras emociones ni personalidad.
+Escenario: ${scenario().name}. Consigna: ${currentPrompt}
+Método esperado: ${scenario().method}. Duración: ${Math.round(m.dur)} s.
+Métricas: ${r.items.map(i => `${i.label}=${i.display} (objetivo ${i.target})`).join('; ')}.
+Puntaje VOXA: ${r.total}/100 (${Object.entries(r.dims).map(([d, s]) => `${d} ${s}`).join(', ')}).
+Transcripción: """${(finalText + interimText).trim() || '(no disponible)'}"""
+
+Devuelve:
+1) Una fortaleza concreta citando una frase textual.
+2) UN solo foco de mejora y por qué importa para este escenario.
+3) Evaluación de la estructura según ${scenario().method} (qué bloque faltó).
+4) Una reescritura de mi respuesta mejorada (misma duración aproximada).
+5) Un ejercicio de 2 minutos para practicar ahora.`;
+}
+
+$('btnCopy').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText($('aiPrompt').value); $('btnCopy').textContent = 'Copiado ✓'; }
+  catch { $('aiPrompt').select(); }
+  setTimeout(() => $('btnCopy').textContent = 'Copiar prompt', 1500);
+});
+</script>
+</body>
+</html>
