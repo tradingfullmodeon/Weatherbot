@@ -74,3 +74,19 @@ export const SCENARIOS = [
 ];
 
 export const GROUPS = [...new Set(SCENARIOS.map(s => s.group))];
+
+// Explicación en lenguaje simple de cada método, para no dar por sabido el vocabulario técnico.
+const METHOD_HELP = [
+  ['STAR', 'Cuenta la Situación, tu Tarea, la Acción que tomaste tú y el Resultado (mejor con un número).'],
+  ['PREP', 'Di tu Punto, la Razón, un Ejemplo y vuelve a tu Punto para cerrar.'],
+  ['BLUF', 'Lo más importante primero: la conclusión o el pedido en la primera frase; el detalle después.'],
+  ['SBI', 'Describe la Situación, el Comportamiento concreto (sin juicios) y su Impacto.'],
+  ['CNV', 'Comunicación No Violenta: lo que observaste, cómo te sientes, qué necesitas y una petición concreta.'],
+  ['Monroe', 'Capta la atención, muestra el problema, presenta la solución, haz que la imaginen y pide una acción.'],
+  ['SCQA', 'Situación, Complicación, Pregunta y Respuesta: un relato que lleva a tu propuesta.'],
+  ['DESC', 'Describe el hecho, Expresa cómo te afecta, Especifica lo que quieres y nombra las Consecuencias positivas.'],
+  ['Story Spine', 'Había una vez… todos los días… hasta que un día… por eso… y desde entonces…'],
+];
+export function methodHelp(method) {
+  return METHOD_HELP.filter(([k]) => method.includes(k)).map(([, v]) => v).join(' ');
+}

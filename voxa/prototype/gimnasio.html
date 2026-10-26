@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>VOXA Gimnasio de voz</title>
 <link rel="stylesheet" href="voxa.css">
 <link rel="manifest" href="manifest.webmanifest">
@@ -53,7 +53,7 @@
 </main>
 
 <script type="module">
-import { $, esc, mean, std, colorFor, detectPitch, rmsOf, renderNav, saveSession, loadSessions } from './shared.js';
+import { $, esc, mean, std, colorFor, detectPitch, rmsOf, renderNav, saveSession, loadSessions, userLocale } from './shared.js';
 
 renderNav();
 
@@ -90,7 +90,7 @@ const EXERCISES = [
     tip: 'Si te cuesta callar, cuenta mentalmente «uno» en cada pausa y mira a tu audiencia (o a la cámara) mientras tanto.' },
 ];
 
-let ex = EXERCISES[0], stream, ctx, analyser, running = false, t0 = 0, raf = 0, samples = [], twister = 0, heard = '', rec = null;
+let ex = EXERCISES.find(e => e.id === new URLSearchParams(location.search).get('ejercicio')) || EXERCISES[0], stream, ctx, analyser, running = false, t0 = 0, raf = 0, samples = [], twister = 0, heard = '', rec = null;
 const buf = new Float32Array(2048);
 
 function bests() {
@@ -143,7 +143,7 @@ $('btnStop').addEventListener('click', finish);
 function startRecognition() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { $('status').textContent = 'Este navegador no ofrece reconocimiento de voz: la precisión no se puede medir.'; return; }
-  rec = new SR(); rec.lang = 'es-419'; rec.continuous = true; rec.interimResults = true;
+  rec = new SR(); rec.lang = userLocale(); rec.continuous = true; rec.interimResults = true;
   rec.onresult = (e) => { heard = [...e.results].map(r => r[0].transcript).join(' '); };
   try { rec.start(); } catch {}
 }

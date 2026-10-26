@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VOXA Evaluar</title>
+<link rel="stylesheet" href="voxa.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#4f46e5">
+</head>
+<body>
+<header>
+  <h1>Evaluar</h1>
+  <p>Elige una situación, habla a la cámara y recibe un consejo concreto. El análisis ocurre en tu dispositivo.</p>
+</header>
+
+<main>
+  <section class="card" id="setup">
+    <h2>1. ¿Qué quieres practicar?</h2>
+    <label for="scenario">Situación</label>
+    <select id="scenario"></select>
+    <div class="prompt" id="prompt" aria-live="polite"></div>
+
+    <h2 style="margin-top:14px">2. ¿Cómo te sientes ahora?</h2>
+    <div class="feel" id="feelBefore" role="group" aria-label="Nervios antes de empezar"></div>
+
+    <label style="display:flex;gap:10px;align-items:flex-start;margin-top:14px;cursor:pointer">
+      <input type="checkbox" id="audToggle" style="width:22px;height:22px;margin-top:2px">
+      <span><strong style="color:var(--text)">Audiencia virtual</strong><br>Un público simulado que presta más o menos atención según cómo hablas.</span>
+    </label>
+
+    <div class="btns" style="margin-top:16px">
+      <button id="btnStart" class="cta">▶ Empezar</button>
+    </div>
+    <p class="note" id="status" aria-live="polite">Te pediremos permiso para usar la cámara y el micrófono. Nada se sube a internet.</p>
+  </section>
+
+  <section class="card" id="stageCard">
+    <div class="stage">
+      <video id="video" playsinline muted></video>
+      <div class="stage-empty" id="stageEmpty">Tu cámara aparecerá aquí.<br>Ubícala a la altura de tus ojos.</div>
+      <div class="timer" id="timer">00:00</div>
+      <div class="rec" id="recBadge">● Grabando</div>
+      <div class="countdown" id="countdown" aria-live="assertive"></div>
+      <div class="overlay-prompt hidden" id="overlayPrompt"></div>
+    </div>
+    <div class="bar-label"><span>Tiempo</span><span id="timeLeft"></span></div>
+    <div class="progress" aria-hidden="true"><div id="progressBar"></div></div>
+    <div class="bar-label"><span>Volumen de tu voz</span></div>
+    <div class="meter vol" aria-hidden="true"><div id="vol"></div></div>
+    <div class="live">
+      <div class="tile"><div class="k">Ritmo (palabras/min)</div><div class="v" id="lWpm">–</div></div>
+      <div class="tile"><div class="k">Muletillas</div><div class="v" id="lFill">0</div></div>
+      <div class="tile"><div class="k">Mirada a cámara</div><div class="v" id="lGaze">–</div></div>
+    </div>
+    <div id="audBox" class="hidden">
+      <div class="audience" id="audience" aria-hidden="true"></div>
+      <div class="aud-label" id="audLabel" aria-live="polite">El público te espera.</div>
+    </div>
+    <div class="btns"><button id="btnStop" class="hidden">■ Terminar ahora</button></div>
+    <details id="liveTranscript">
+      <summary>Ver lo que voy diciendo</summary>
+      <div class="transcript" id="transcript"><span class="note">Aparecerá aquí mientras hablas.</span></div>
+      <p class="note"><mark class="filler">amarillo</mark> = muletilla · <mark class="hedge">azul</mark> = frase que resta seguridad («creo que», «un poquito»).</p>
+    </details>
+  </section>
+
+  <section class="card full" id="report">
+    <div class="score-big">
+      <div class="ring" id="ring">–</div>
+      <div>
+        <div style="font-size:1.15rem;font-weight:700" id="levelTxt"></div>
+        <div class="lead" id="encourage"></div>
+        <div class="note" id="scoreSub"></div>
+      </div>
+    </div>
+
+    <div class="fb" id="fb"></div>
+
+    <div class="btns" style="margin-top:14px">
+      <button id="btnRetry" class="cta">↻ Repetir aplicando el foco</button>
+      <a class="btn-link" href="index.html" style="border:1px solid var(--line)">Volver a Hoy</a>
+    </div>
+
+    <h2 style="margin-top:20px">¿Y ahora cómo te sientes?</h2>
+    <div class="feel" id="feelAfter" role="group" aria-label="Nervios después de practicar"></div>
+    <p class="note" id="savedNote" aria-live="polite"></p>
+
+    <h2 style="margin-top:18px">Coach IA <span class="badge-ai" id="aiBadge">comprobando…</span></h2>
+    <div id="aiOnline" class="hidden">
+      <p class="note">Recibe la estructura de tu respuesta, cómo podrías haberla dicho y un ejercicio a tu medida.</p>
+      <div class="btns"><button id="btnCoach" class="primary">Pedir consejo al coach IA</button></div>
+      <div id="aiResult" aria-live="polite"></div>
+    </div>
+    <div id="aiOffline" class="hidden">
+      <p class="note">El coach IA necesita el servidor de VOXA conectado. Mientras tanto, puedes copiar tu práctica a cualquier asistente de IA.</p>
+      <details><summary>Copiar mi práctica para un asistente de IA</summary>
+        <textarea id="aiPrompt" readonly></textarea>
+        <div class="btns"><button id="btnCopy">Copiar</button></div>
+      </details>
+    </div>
+
+    <details>
+      <summary>Ver todas las métricas</summary>
+      <div class="dims" id="dims"></div>
+      <table style="margin-top:10px">
+        <thead><tr><th>Métrica</th><th>Tu resultado</th><th>Ideal</th><th></th></tr></thead>
+        <tbody id="metricsBody"></tbody>
+      </table>
+    </details>
+    <details>
+      <summary>Ver la línea de tiempo y mi video</summary>
+      <canvas id="chart" width="1000" height="140" aria-label="Volumen y tono a lo largo de la práctica"></canvas>
+      <p class="note">Barras = volumen · línea = tono · rojo = silencios largos · amarillo = posibles «eeh/mmm».</p>
+      <video id="replay" controls playsinline></video>
+      <div class="btns"><a id="download" class="btn-link" style="border:1px solid var(--line)" download="voxa-practica.webm">Descargar mi video</a></div>
+    </details>
+    <details>
+      <summary>Ver la transcripción</summary>
+      <div class="transcript" id="finalTranscript"></div>
+    </details>
+  </section>
+</main>
+
+<script type="module">
+import {
+  $, FILLER_RE, HEDGE_RE, countMatches, wordCount, mean, std, esc, colorFor, highlight,
+  renderNav, saveSession, loadSessions, loadProfile, aiStatus, postJSON, GOALS, detectPitch, findFilledPauses, userLocale, LOCALES,
+} from './shared.js';
+import { SCENARIOS, GROUPS, IMPRO_TOPICS, methodHelp } from './scenarios.js';
+
+renderNav();
+const profile = loadProfile();
+const locale = userLocale(profile);
+const params = new URLSearchParams(location.search);
+
+// ---------------------------------------------------------------- escala de nervios (5 botones)
+const FEEL = [['😌', 'Tranquilo'], ['🙂', 'Bien'], ['😐', 'Algo'], ['😟', 'Nervioso'], ['😰', 'Mucho']];
+function feelScale(id, initial, onChange) {
+  const box = $(id); let value = initial;
+  box.innerHTML = FEEL.map(([e, l], i) => `<button type="button" data-v="${i + 1}" aria-pressed="${i + 1 === value}" aria-label="${i + 1} de 5: ${l}">${e}<small>${l}</small></button>`).join('');
+  box.addEventListener('click', (ev) => {
+    const b = ev.target.closest('button'); if (!b) return;
+    value = +b.dataset.v;
+    box.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.v === value)));
+    onChange?.(value);
+  });
+  return { get: () => value, set: (v) => { value = v; box.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.v === v))); } };
+}
+const feelBefore = feelScale('feelBefore', 3);
+const feelAfter = feelScale('feelAfter', 3, () => persistSession());
+
+aiStatus().then(s => {
+  $('aiBadge').textContent = s.ai ? 'conectado' : 'sin conexión';
+  $(s.ai ? 'aiOnline' : 'aiOffline').classList.remove('hidden');
+});
+
+// ---------------------------------------------------------------- estado
+let stream = null, audioCtx = null, analyser = null, recorder = null, chunks = [];
+let recognition = null, faceLandmarker = null, running = false, startT = 0, rafId = 0;
+let finalText = '', interimText = '', currentPrompt = '';
+let samples = [];      // {t, rms, pitch}
+let faceSamples = [];  // {t, present, gaze, smile, yaw, pitch}
+let attention = [];    // atención de la audiencia virtual (0–1) por segundo
+let lastVideoTime = -1;
+
+// ---------------------------------------------------------------- escenario
+for (const g of GROUPS) {
+  const og = document.createElement('optgroup');
+  og.label = g;
+  for (const s of SCENARIOS.filter(x => x.group === g)) og.appendChild(new Option(`${s.name} · ${s.seconds} s`, s.id));
+  $('scenario').appendChild(og);
+}
+$('scenario').value = SCENARIOS.some(s => s.id === params.get('escenario')) ? params.get('escenario') : 'intro';
+$('audToggle').checked = params.get('audiencia') === '1';
+function scenario() { return SCENARIOS.find(s => s.id === $('scenario').value); }
+function renderPrompt() {
+  const s = scenario();
+  currentPrompt = s.prompt ?? `Tema: «${IMPRO_TOPICS[Math.floor(Math.random() * IMPRO_TOPICS.length)]}». Piensa 10 segundos y responde con Punto, Razón, Ejemplo y Punto.`;
+  const help = methodHelp(s.method);
+  $('prompt').innerHTML = `<strong>${esc(s.name)}</strong>${esc(currentPrompt)}
+    <div class="note">Duración: ${s.seconds} s · Método: ${esc(s.method)}${help ? ` — ${esc(help)}` : ''}</div>`;
+}
+$('scenario').addEventListener('change', renderPrompt);
+renderPrompt();
+const localeName = LOCALES.find(([id]) => id === locale)?.[1] || locale;
+$('status').innerHTML += ` Español: ${esc(localeName)} (<a href="index.html#ajustes">cambiar</a>).`;
+
+// ---------------------------------------------------------------- cámara, micrófono y visión
+async function ensureMedia() {
+  if (stream) return true;
+  $('status').textContent = 'Esperando tu permiso para usar la cámara y el micrófono…';
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: 640, height: 480, facingMode: 'user' },
+      audio: { echoCancellation: true, noiseSuppression: true },
+    });
+  } catch (e) {
+    $('status').innerHTML = e.name === 'NotAllowedError'
+      ? 'Sin permiso no podemos escucharte. Actívalo en el candado de la barra de direcciones y vuelve a pulsar «Empezar».'
+      : 'No encontramos cámara o micrófono disponibles: ' + esc(e.message);
+    return false;
+  }
+  $('video').srcObject = stream;
+  await $('video').play();
+  $('stageEmpty').classList.add('hidden');
+  audioCtx = new AudioContext();
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 2048;
+  audioCtx.createMediaStreamSource(stream).connect(analyser);
+  loadVision();
+  return true;
+}
+
+async function loadVision() {
+  try {
+    const base = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+    const vision = await import(`${base}/vision_bundle.mjs`);
+    const fileset = await vision.FilesetResolver.forVisionTasks(`${base}/wasm`);
+    faceLandmarker = await vision.FaceLandmarker.createFromOptions(fileset, {
+      baseOptions: {
+        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+        delegate: 'GPU',
+      },
+      runningMode: 'VIDEO', numFaces: 1, outputFaceBlendshapes: true,
+    });
+  } catch (e) {
+    console.warn('Visión no disponible', e);
+    $('lGaze').textContent = 'n/d';
+  }
+}
+
+// ---------------------------------------------------------------- flujo: un solo botón, cuenta regresiva y fin automático
+$('btnStart').addEventListener('click', begin);
+$('btnStop').addEventListener('click', stop);
+$('btnRetry').addEventListener('click', () => { $('report').style.display = 'none'; begin(); });
+
+async function begin() {
+  if (running) return;
+  $('btnStart').disabled = true;
+  if (!(await ensureMedia())) { $('btnStart').disabled = false; return; }
+  $('status').textContent = '';
+  $('overlayPrompt').textContent = currentPrompt;
+  $('overlayPrompt').classList.remove('hidden');
+  $('stageCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const cd = $('countdown');
+  cd.style.display = 'grid';
+  for (const n of ['3', '2', '1']) { cd.textContent = n; await new Promise(r => setTimeout(r, 800)); }
+  cd.style.display = 'none';
+  start();
+}
+
+function start() {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  finalText = ''; interimText = ''; samples = []; faceSamples = []; chunks = []; attention = [];
+  $('transcript').innerHTML = '';
+  $('lFill').textContent = '0'; $('lWpm').textContent = '–'; if (faceLandmarker) $('lGaze').textContent = '–';
+  running = true; startT = performance.now();
+  $('btnStop').classList.remove('hidden'); $('recBadge').style.display = 'block';
+  $('audBox').classList.toggle('hidden', !$('audToggle').checked);
+  renderAudience(1);
+
+  const mime = ['video/webm;codecs=vp9,opus', 'video/webm', 'video/mp4'].find(m => MediaRecorder.isTypeSupported(m));
+  recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+  recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+  recorder.start(1000);
+
+  startRecognition();
+  loop();
+}
+
+function stop() {
+  if (!running) return;
+  running = false;
+  cancelAnimationFrame(rafId);
+  try { recognition && recognition.stop(); } catch {}
+  $('btnStop').classList.add('hidden'); $('btnStart').disabled = false; $('recBadge').style.display = 'none';
+  $('overlayPrompt').classList.add('hidden');
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    $('replay').src = url; $('download').href = url;
+  };
+  recorder.stop();
+  // Pequeña espera para recibir el último resultado final del reconocimiento.
+  setTimeout(buildReport, 700);
+}
+
+// ---------------------------------------------------------------- reconocimiento de voz (Web Speech API)
+function startRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    $('transcript').innerHTML = '<span class="note">Este navegador no ofrece transcripción; evaluaremos tu voz y tu presencia.</span>';
+    recognition = null; return;
+  }
+  recognition = new SR();
+  recognition.lang = locale;
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.onresult = (ev) => {
+    interimText = '';
+    for (let i = ev.resultIndex; i < ev.results.length; i++) {
+      const r = ev.results[i];
+      if (r.isFinal) finalText += r[0].transcript.trim() + ' ';
+      else interimText += r[0].transcript;
+    }
+    renderTranscript();
+  };
+  // Chrome corta la sesión tras silencios: se reinicia mientras sigamos grabando.
+  recognition.onend = () => { if (running) try { recognition.start(); } catch {} };
+  recognition.onerror = (e) => { if (e.error === 'not-allowed') $('status').textContent = 'Permiso de reconocimiento de voz denegado.'; };
+  try { recognition.start(); } catch {}
+}
+
+function renderTranscript() {
+  $('transcript').innerHTML = highlight(finalText) + `<span class="interim">${esc(interimText)}</span>`;
+  $('transcript').scrollTop = $('transcript').scrollHeight;
+  $('lFill').textContent = countMatches(finalText + ' ' + interimText, FILLER_RE);
+}
+
+// ---------------------------------------------------------------- bucle de análisis: audio (~cada frame) y visión (~10 fps)
+const buf = new Float32Array(2048);
+let lastFaceT = 0, lastAudT = 0;
+function loop() {
+  if (!running) return;
+  const t = (performance.now() - startT) / 1000;
+  const total = scenario().seconds;
+  analyser.getFloatTimeDomainData(buf);
+  let sum = 0; for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+  const rms = Math.sqrt(sum / buf.length);
+  const pitch = rms > 0.01 ? detectPitch(buf, audioCtx.sampleRate) : 0;
+  samples.push({ t, rms, pitch });
+  $('vol').style.width = Math.min(100, rms * 600) + '%';
+
+  const left = Math.max(0, Math.ceil(total - t));
+  $('timer').textContent = `${String(Math.floor(left / 60)).padStart(2, '0')}:${String(left % 60).padStart(2, '0')}`;
+  $('timeLeft').textContent = `quedan ${left} s`;
+  $('progressBar').style.width = Math.min(100, t / total * 100) + '%';
+  if (left === 10) $('overlayPrompt').textContent = 'Quedan 10 segundos: ve cerrando con tu idea principal.';
+  const said = wordCount(finalText + ' ' + interimText);
+  if (t > 5 && said) $('lWpm').textContent = Math.round(said / (t / 60));
+
+  const v = $('video');
+  if (faceLandmarker && t - lastFaceT > 0.1 && v.currentTime !== lastVideoTime) {
+    lastFaceT = t; lastVideoTime = v.currentTime;
+    try { faceSamples.push({ t, ...analyzeFace(faceLandmarker.detectForVideo(v, performance.now())) }); } catch {}
+    const recent = faceSamples.slice(-30);
+    if (recent.length) $('lGaze').textContent = Math.round(100 * recent.filter(f => f.gaze).length / recent.length) + '%';
+  }
+  if (t - lastAudT >= 1) { lastAudT = t; updateAudience(t); }
+  if (t >= total) return stop();
+  rafId = requestAnimationFrame(loop);
+}
+
+// Conductas observables (no emociones): presencia, mirada aproximada a cámara, sonrisa, giro de cabeza.
+function analyzeFace(res) {
+  if (!res.faceLandmarks || !res.faceLandmarks.length) return { present: false, gaze: false, smile: 0, yaw: 0, pitch: 0 };
+  const lm = res.faceLandmarks[0];
+  const bs = Object.fromEntries((res.faceBlendshapes?.[0]?.categories || []).map(c => [c.categoryName, c.score]));
+  const left = lm[234], right = lm[454], nose = lm[1], top = lm[10], chin = lm[152];
+  const yaw = (nose.x - left.x) / (right.x - left.x + 1e-6) - 0.5;      // ~0 = de frente
+  const pitch = (nose.y - top.y) / (chin.y - top.y + 1e-6) - 0.55;       // ~0 = de frente
+  const eyeOff = Math.max(
+    ((bs.eyeLookOutLeft || 0) + (bs.eyeLookInRight || 0)) / 2,
+    ((bs.eyeLookInLeft || 0) + (bs.eyeLookOutRight || 0)) / 2,
+    ((bs.eyeLookUpLeft || 0) + (bs.eyeLookUpRight || 0)) / 2,
+    ((bs.eyeLookDownLeft || 0) + (bs.eyeLookDownRight || 0)) / 2);
+  const gaze = Math.abs(yaw) < 0.12 && Math.abs(pitch) < 0.15 && eyeOff < 0.45;
+  const smile = ((bs.mouthSmileLeft || 0) + (bs.mouthSmileRight || 0)) / 2;
+  return { present: true, gaze, smile, yaw, pitch };
+}
+
+// ---------------------------------------------------------------- audiencia virtual
+// La atención del público sube o baja con señales de entrega de los últimos segundos. Cada persona
+// tiene una sensibilidad distinta, así que el público se "apaga" de a poco y no todo a la vez.
+const AUDIENCE = ['🧑', '👩', '👨‍🦱', '👩‍🦰', '🧔', '👵', '👨‍🦳', '👩‍🦱'];
+const SENS = [0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.72, 0.8];
+let fillersAtLast = 0;
+function updateAudience(t) {
+  const win = samples.filter(s => s.t > t - 3);
+  const thr = Math.max(0.008, mean(samples.slice(0, 30).map(s => s.rms)) * 1.3 + 0.004);
+  const speaking = win.filter(s => s.rms > thr).length / (win.length || 1);
+  const silentFor = t - ([...samples].reverse().find(s => s.rms > thr)?.t ?? 0);
+  const recentPitch = samples.filter(s => s.t > t - 6 && s.pitch).map(s => 12 * Math.log2(s.pitch));
+  const fillersNow = countMatches(finalText + ' ' + interimText, FILLER_RE);
+  const newFillers = fillersNow - fillersAtLast; fillersAtLast = fillersNow;
+  const gazeWin = faceSamples.filter(f => f.t > t - 3);
+  let a = 1, why = 'El público te sigue con atención.';
+  const hit = (p, msg) => { if (p > 0) { a -= p; if (p >= 0.2) why = msg; } };
+  hit(silentFor > 3 ? Math.min(0.5, (silentFor - 3) * 0.15) : 0, `Llevas ${Math.round(silentFor)} s en silencio: algunos miran el celular.`);
+  hit(speaking < 0.25 && silentFor <= 3 ? 0.15 : 0, 'Habla con más continuidad para sostener la atención.');
+  hit(recentPitch.length > 30 && std(recentPitch) < 1.2 ? 0.25 : 0, 'Tu voz suena monótona: varía el tono para recuperarlos.');
+  hit(newFillers > 0 ? 0.12 * newFillers : 0, 'Las muletillas distraen: cambia una por una pausa.');
+  hit(gazeWin.length > 5 && gazeWin.filter(f => f.gaze).length / gazeWin.length < 0.4 ? 0.25 : 0, 'Mira a la cámara: el público siente que les hablas a ellos.');
+  // Suavizado: la atención se recupera o se pierde gradualmente.
+  const prev = attention.length ? attention[attention.length - 1] : 1;
+  const next = Math.max(0, Math.min(1, prev * 0.6 + Math.max(0, a) * 0.4));
+  attention.push(next);
+  renderAudience(next, why);
+}
+function renderAudience(level, why = 'El público te espera.') {
+  $('audience').innerHTML = AUDIENCE.map((e, i) => `<div class="p ${level < SENS[i] ? 'off' : ''}">${e}</div>`).join('');
+  $('audLabel').textContent = `Atención del público: ${Math.round(level * 100)}% · ${why}`;
+}
+
+// ---------------------------------------------------------------- métricas y puntaje
+// Puntaje 100 dentro de [lo, hi]; decae linealmente hasta 0 a una distancia "soft".
+const band = (v, lo, hi, soft) => v >= lo && v <= hi ? 100 : Math.max(0, 100 - 100 * (v < lo ? lo - v : v - hi) / soft);
+
+function computeMetrics() {
+  const dur = samples.length ? samples[samples.length - 1].t : 0;
+  const minutes = Math.max(dur / 60, 1 / 60);
+  const text = finalText + ' ' + interimText;
+  const words = wordCount(text);
+  const fillers = countMatches(text, FILLER_RE);
+  const hedges = countMatches(text, HEDGE_RE);
+
+  // Umbral de silencio adaptativo: 30% sobre el piso de ruido.
+  const rmsSorted = samples.map(s => s.rms).sort((a, b) => a - b);
+  const noise = rmsSorted[Math.floor(rmsSorted.length * 0.1)] || 0;
+  const thr = Math.max(0.008, noise * 1.3 + 0.004);
+  let speechFrames = 0, longPauses = 0, pauseStart = null;
+  const pauseZones = [];
+  for (const s of samples) {
+    if (s.rms > thr) {
+      speechFrames++;
+      if (pauseStart !== null && s.t - pauseStart > 2.5) { longPauses++; pauseZones.push([pauseStart, s.t]); }
+      pauseStart = null;
+    } else if (pauseStart === null) pauseStart = s.t;
+  }
+  const speechRatio = samples.length ? speechFrames / samples.length : 0;
+  const humZones = findFilledPauses(samples);
+
+  const voiced = samples.filter(s => s.pitch > 0).map(s => s.pitch);
+  const medF0 = voiced.length ? [...voiced].sort((a, b) => a - b)[Math.floor(voiced.length / 2)] : 0;
+  const semis = voiced.map(f => 12 * Math.log2(f / medF0)).filter(x => Math.abs(x) < 12);
+  const pitchVar = std(semis);
+  const speechRms = samples.filter(s => s.rms > thr).map(s => s.rms);
+  const volume = mean(speechRms);
+  const volCv = volume ? std(speechRms) / volume : 0;
+
+  const faces = faceSamples;
+  const present = faces.filter(f => f.present);
+  const hasVision = faces.length > 5;
+  const facePct = hasVision ? present.length / faces.length : null;
+  const gazePct = hasVision && present.length ? present.filter(f => f.gaze).length / present.length : null;
+  const smilePct = hasVision && present.length ? present.filter(f => f.smile > 0.35).length / present.length : null;
+  const headMove = hasVision ? std(present.map(f => f.yaw)) + std(present.map(f => f.pitch)) : null;
+
+  return {
+    dur, words, wpm: words / minutes, fillers, fillersPerMin: fillers / minutes, hedges, hedgesPerMin: hedges / minutes,
+    longPauses, speechRatio, humZones, humsPerMin: humZones.length / minutes, pitchVar, medF0, volume, volCv, hasText: words > 0,
+    hasVision, facePct, gazePct, smilePct, headMove, pauseZones, thr,
+    attention: attention.length ? mean(attention) : null,
+  };
+}
+
+const level3 = (v, lo, hi) => v < lo ? 'poco' : v > hi ? 'mucho' : 'adecuado';
+function score(m) {
+  const items = [];
+  const add = (dim, key, label, value, display, target, s) => items.push({ dim, key, label, value, display, target, s: Math.round(s) });
+  if (m.hasText) {
+    add('voz', 'wpm', 'Ritmo', m.wpm, `${Math.round(m.wpm)} palabras/min`, '120–165', band(m.wpm, 120, 165, 60));
+    add('voz', 'fillers', 'Muletillas («este», «o sea»…)', m.fillersPerMin, `${m.fillersPerMin.toFixed(1)} por min (${m.fillers})`, 'menos de 3 por min', band(m.fillersPerMin, 0, 3, 7));
+    add('lenguaje', 'hedges', 'Frases que restan seguridad', m.hedgesPerMin, `${m.hedgesPerMin.toFixed(1)} por min (${m.hedges})`, 'menos de 1,5 por min', band(m.hedgesPerMin, 0, 1.5, 4));
+    add('lenguaje', 'length', 'Contenido desarrollado', m.words, `${m.words} palabras`, `${Math.round(scenario().seconds * 1.7)} o más`, band(m.words, scenario().seconds * 1.7, 1e6, scenario().seconds * 1.7));
+  }
+  add('voz', 'hums', 'Sonidos de duda «eeh/mmm» (estimado)', m.humsPerMin, `${m.humsPerMin.toFixed(1)} por min (${m.humZones.length})`, 'menos de 2 por min', band(m.humsPerMin, 0, 2, 6));
+  add('voz', 'pitch', 'Variación de tono', m.pitchVar, m.medF0 ? `${m.pitchVar.toFixed(1)} semitonos` : 'sin datos', '2 a 6 semitonos', m.medF0 ? band(m.pitchVar, 2, 6, 1.8) : 50);
+  add('voz', 'speech', 'Tiempo hablando', m.speechRatio, `${Math.round(m.speechRatio * 100)}% del tiempo`, '55–90%', band(m.speechRatio * 100, 55, 90, 35));
+  add('voz', 'pauses', 'Silencios largos (más de 2,5 s)', m.longPauses, `${m.longPauses}`, '0 a 2', band(m.longPauses, 0, 2, 4));
+  add('voz', 'volume', 'Énfasis con el volumen', m.volCv, `${level3(m.volCv, 0.3, 0.9)} (${Math.round(m.volCv * 100)}%)`, 'adecuado', band(m.volCv, 0.3, 0.9, 0.6));
+  if (m.hasVision) {
+    add('presencia', 'face', 'Rostro en cuadro', m.facePct, `${Math.round(m.facePct * 100)}% del tiempo`, '90% o más', band(m.facePct * 100, 90, 100, 50));
+    add('presencia', 'gaze', 'Mirada a cámara', m.gazePct, `${Math.round(m.gazePct * 100)}% del tiempo`, '60% o más', band(m.gazePct * 100, 60, 100, 50));
+    add('presencia', 'smile', 'Sonrisa', m.smilePct, `${Math.round(m.smilePct * 100)}% del tiempo`, '10–60%', band(m.smilePct * 100, 10, 60, 15));
+    add('presencia', 'head', 'Movimiento de cabeza', m.headMove, level3(m.headMove, 0.01, 0.08), 'adecuado', band(m.headMove, 0.01, 0.08, 0.08));
+  }
+  const dims = {};
+  for (const d of ['voz', 'lenguaje', 'presencia']) {
+    const xs = items.filter(i => i.dim === d);
+    if (xs.length) dims[d] = Math.round(mean(xs.map(i => i.s)));
+  }
+  const w = scenario().weights;
+  const wsum = Object.keys(dims).reduce((s, d) => s + w[d], 0);
+  const total = Math.round(Object.keys(dims).reduce((s, d) => s + dims[d] * w[d], 0) / (wsum || 1));
+  return { items, dims, total };
+}
+
+// Banco de feedback accionable: fortaleza + foco + ejercicio.
+const TIPS = {
+  wpm: (m) => m.wpm > 165
+    ? ['Hablas rápido y el público puede perder ideas clave.', 'Lee un párrafo haciendo una pausa de 1 segundo en cada punto. Después repite la práctica apuntando a unas 140 palabras por minuto.']
+    : ['Tu ritmo es lento y puede bajar la energía.', 'Repite la práctica imaginando que se lo cuentas a alguien que está entusiasmado. Apunta a 130–150 palabras por minuto.'],
+  hums: () => ['Rellenas los silencios con «eeh» o «mmm» (marcas amarillas en la línea de tiempo).', 'Al terminar cada idea, cierra los labios y respira por la nariz: con la boca cerrada no sale el «eeh». Repite la práctica.'],
+  fillers: () => ['Las muletillas le quitan fuerza a tu mensaje.', 'Habla 60 segundos y, cada vez que sientas venir un «este» u «o sea», cierra la boca y respira. El silencio suena seguro.'],
+  hedges: () => ['Frases como «creo que» o «un poquito» debilitan tus ideas.', 'Reformula tres frases sin ellas: «Creo que deberíamos…» pasa a ser «Propongo…». Repite la práctica con esa intención.'],
+  length: () => ['El mensaje quedó corto o poco desarrollado.', `Antes de repetir, escribe una línea por cada parte del método (${scenario().method}) y habla sin leer.`],
+  pitch: () => ['Tu voz suena plana y cuesta sostener la atención.', 'Lee la misma frase tres veces enfatizando una palabra distinta cada vez. Sube el tono en las preguntas y bájalo al cerrar.'],
+  speech: (m) => m.speechRatio < 0.55
+    ? ['Hubo mucho tiempo sin voz.', 'Prepara tres palabras clave antes de empezar y úsalas como anclas para no quedarte en blanco.']
+    : ['Casi no hiciste pausas.', 'Después de tu idea principal, haz una pausa de 2 segundos: deja que se asiente.'],
+  pauses: () => ['Tuviste silencios largos que parecen bloqueos.', 'Practica improvisación con PREP durante 5 días: entrena tu «piloto automático» para ordenar ideas.'],
+  volume: (m) => m.volCv < 0.3
+    ? ['Tu volumen es muy parejo y no marca lo importante.', 'Sube el volumen en la palabra más importante de cada frase.']
+    : ['Tu volumen es irregular: te apagas al final de las frases.', 'Respira antes de cada frase y sostén el aire hasta la última palabra.'],
+  face: () => ['Saliste del cuadro varias veces.', 'Pon la cámara a la altura de los ojos y deja el espacio de una mano sobre tu cabeza.'],
+  gaze: () => ['Miraste poco a la cámara.', 'Pega una nota junto a la cámara y mírala al decir tu apertura, tu idea clave y tu cierre.'],
+  smile: (m) => m.smilePct < 0.1
+    ? ['Tu expresión se mantuvo seria todo el tiempo.', 'Sonríe al saludar y al cerrar. Ensaya tu primera frase frente a un espejo.']
+    : ['Sonreíste casi todo el tiempo y eso puede restar seriedad.', 'Acompaña el contenido: sonrisa en lo positivo, expresión neutra en los datos.'],
+  head: (m) => m.headMove > 0.08
+    ? ['Moviste mucho la cabeza.', 'Apoya bien los pies y la espalda; mueve la cabeza sólo para enfatizar.']
+    : ['Tu postura se vio muy rígida.', 'Permítete asentir y gesticular con naturalidad en las ideas clave.'],
+};
+const STRENGTH = {
+  hums: 'Silencios limpios, sin «eeh» de relleno.', wpm: 'Tu ritmo es cómodo de seguir.', fillers: 'Hablaste casi sin muletillas.', hedges: 'Tu lenguaje es seguro y directo.',
+  length: 'Desarrollaste bien tus ideas.', pitch: 'Tu voz es expresiva y varía bien el tono.', speech: 'Buen equilibrio entre hablar y hacer pausas.',
+  pauses: 'Hablaste con fluidez, sin bloqueos largos.', volume: 'Usas el volumen para marcar lo importante.', face: 'Buen encuadre.',
+  gaze: 'Excelente contacto visual con la cámara.', smile: 'Tu expresión acompaña lo que dices.', head: 'Presencia estable y natural.',
+};
+
+// ---------------------------------------------------------------- reporte
+// Mensaje de mentalidad de crecimiento: se compara con tu intento anterior, no con otras personas.
+function levelFor(s) { return s >= 85 ? 'Nivel Referente' : s >= 70 ? 'Nivel Hábil' : s >= 55 ? 'Nivel Competente' : s >= 40 ? 'Nivel Practicante' : 'Nivel Explorador'; }
+function encouragement(total, prev) {
+  if (prev == null) return 'Este es tu punto de partida: desde aquí medimos tu progreso.';
+  const d = total - prev;
+  if (d >= 5) return `+${d} puntos respecto a tu intento anterior. Vas por buen camino.`;
+  if (d <= -5) return `${d} puntos respecto a tu intento anterior. Es normal: el progreso no es lineal. Enfócate en un solo punto.`;
+  return 'Similar a tu intento anterior. Elige un solo foco y repite.';
+}
+
+let lastReport = null;
+function buildReport() {
+  const m = computeMetrics();
+  const r = score(m);
+  const prev = loadSessions().filter(s => s.type === 'evaluacion' && s.scenario === scenario().id).pop()?.total;
+  $('report').style.display = 'block';
+  $('ring').textContent = r.total;
+  $('ring').style.border = `8px solid ${colorFor(r.total)}`;
+  $('levelTxt').textContent = levelFor(r.total);
+  $('encourage').textContent = encouragement(r.total, prev);
+  $('scoreSub').textContent = `${scenario().name} · ${Math.round(m.dur)} s${m.attention != null ? ` · atención del público ${Math.round(m.attention * 100)}%` : ''}${m.hasVision ? '' : ' · sin análisis visual'}`;
+
+  const names = { voz: 'Voz', lenguaje: 'Lenguaje', presencia: 'Presencia' };
+  $('dims').innerHTML = Object.entries(r.dims).map(([d, s]) =>
+    `<div class="dim"><div>${names[d]} <strong style="float:right">${s}</strong></div><div class="bar"><div style="width:${s}%;background:${colorFor(s)}"></div></div></div>`).join('');
+  $('metricsBody').innerHTML = r.items.map(i =>
+    `<tr><td>${esc(i.label)}</td><td class="num">${esc(i.display)}</td><td>${esc(i.target)}</td><td><span class="pill" style="color:${colorFor(i.s)}">${i.s}</span></td></tr>`).join('');
+
+  const sorted = [...r.items].sort((a, b) => b.s - a.s);
+  const best = sorted[0], worst = sorted[sorted.length - 1];
+  const [why, exercise] = worst.s < 100 ? TIPS[worst.key](m) : ['Todas tus métricas están en rango.', 'Sube la dificultad: prueba una improvisación o una situación nueva.'];
+  $('fb').innerHTML = `
+    <div><h3 style="color:var(--good)">✓ Lo que hiciste bien</h3>${STRENGTH[best.key]}</div>
+    <div><h3 style="color:var(--mid)">→ Tu único foco: ${esc(worst.label)}</h3>${why}</div>
+    <div><h3 style="color:var(--accent)">⏱ Ejercicio de 2 minutos</h3>${exercise}</div>`;
+
+  $('finalTranscript').innerHTML = highlight(finalText + interimText) || '<span class="note">Sin transcripción.</span>';
+  drawChart(m);
+  $('aiPrompt').value = aiPrompt(m, r);
+  $('aiResult').innerHTML = '';
+  feelAfter.set(feelBefore.get());
+  lastReport = { m, r, session: {
+    id: Date.now().toString(36), date: new Date().toISOString(), type: 'evaluacion',
+    scenario: scenario().id, scenarioName: scenario().name, goal: profile.goal,
+    total: r.total, dims: r.dims, duration: Math.round(m.dur), attention: m.attention,
+    metrics: Object.fromEntries(r.items.map(i => [i.key, { value: i.value, s: i.s }])),
+    anxietyBefore: feelBefore.get(), anxietyAfter: null,
+  } };
+  persistSession();
+  $('report').scrollIntoView({ behavior: 'smooth' });
+}
+
+function persistSession() {
+  if (!lastReport) return;
+  lastReport.session.anxietyAfter = feelAfter.get();
+  $('savedNote').textContent = saveSession(lastReport.session)
+    ? 'Guardado en tu progreso (sólo en este dispositivo).'
+    : 'No se pudo guardar el historial en este navegador.';
+}
+
+$('btnCoach').addEventListener('click', async () => {
+  if (!lastReport) return;
+  const { m, r } = lastReport;
+  $('btnCoach').disabled = true;
+  $('aiResult').innerHTML = '<p class="note">El coach está analizando tu práctica…</p>';
+  try {
+    const fb = await postJSON('api/feedback', {
+      scenario: scenario().name, method: scenario().method, prompt: currentPrompt,
+      goal: GOALS.find(([id]) => id === profile.goal)?.[1] || '', locale, duration_s: m.dur,
+      transcript: (finalText + interimText).trim(), total: r.total, dims: r.dims,
+      metrics: r.items.map(i => ({ label: i.label, display: i.display, target: i.target, score: i.s })),
+      anxiety_before: feelBefore.get(),
+    });
+    lastReport.session.ai = { rubric: fb.rubric, focus: fb.focus.area };
+    persistSession();
+    $('aiResult').innerHTML = renderCoach(fb);
+  } catch (e) {
+    $('aiResult').innerHTML = `<p class="note">No se pudo obtener el consejo: ${esc(e.message)}</p>`;
+  } finally { $('btnCoach').disabled = false; }
+});
+
+function renderCoach(fb) {
+  const rubric = Object.entries(fb.rubric).map(([k, v]) =>
+    `<div class="dim"><div>${esc(k)} <strong style="float:right">${v}</strong></div><div class="bar"><div style="width:${v}%;background:${colorFor(v)}"></div></div></div>`).join('');
+  return `<div class="ai-box">
+    <h3 style="color:var(--good)">Lo que hiciste bien</h3><p>${esc(fb.strength.text)}</p>${fb.strength.quote ? `<blockquote>«${esc(fb.strength.quote)}»</blockquote>` : ''}
+    <h3 style="color:var(--mid)">Tu foco: ${esc(fb.focus.area)}</h3><p>${esc(fb.focus.why)}</p>
+    <h3>Estructura (${esc(fb.structure.method)})</h3>
+    <div class="chips">${fb.structure.present.map(x => `<span class="chip">✓ ${esc(x)}</span>`).join('')}${fb.structure.missing.map(x => `<span class="chip miss">✗ ${esc(x)}</span>`).join('')}</div>
+    <p>${esc(fb.structure.comment)}</p>
+    <h3>Así podrías decirlo</h3><blockquote>${esc(fb.rewrite)}</blockquote>
+    <h3 style="color:var(--accent)">Ejercicio: ${esc(fb.exercise.title)} (${fb.exercise.minutes} min)</h3>
+    <ol>${fb.exercise.steps.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
+    <details><summary>Rúbrica del coach</summary><div class="dims">${rubric}</div></details>
+    <h3>Próximo reto</h3><p>${esc(fb.next_challenge)}</p>
+    ${fb.safety_note ? `<p class="note">${esc(fb.safety_note)}</p>` : ''}
+  </div>`;
+}
+
+function drawChart(m) {
+  const c = $('chart'), ctx = c.getContext('2d');
+  const W = c.width, H = c.height, dur = Math.max(m.dur, 1);
+  const css = getComputedStyle(document.documentElement);
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(220,38,38,.15)';
+  for (const [a, b] of m.pauseZones) ctx.fillRect(a / dur * W, 0, (b - a) / dur * W, H);
+  ctx.fillStyle = 'rgba(234,179,8,.35)';
+  for (const [a, b] of m.humZones) ctx.fillRect(a / dur * W, 0, Math.max(3, (b - a) / dur * W), H);
+  // Volumen agregado en 200 columnas.
+  const cols = 200, bucket = Array.from({ length: cols }, () => []);
+  for (const s of samples) bucket[Math.min(cols - 1, Math.floor(s.t / dur * cols))].push(s);
+  const maxR = Math.max(...samples.map(s => s.rms), 0.01);
+  ctx.fillStyle = css.getPropertyValue('--accent');
+  ctx.globalAlpha = .45;
+  bucket.forEach((b, i) => { const h = mean(b.map(s => s.rms)) / maxR * (H - 10); ctx.fillRect(i * W / cols, H - h, W / cols - 1, h); });
+  ctx.globalAlpha = 1;
+  // Tono en semitonos relativos a la mediana.
+  if (m.medF0) {
+    ctx.strokeStyle = css.getPropertyValue('--text'); ctx.lineWidth = 2; ctx.beginPath();
+    let started = false;
+    bucket.forEach((b, i) => {
+      const p = b.filter(s => s.pitch > 0).map(s => 12 * Math.log2(s.pitch / m.medF0));
+      if (!p.length) { started = false; return; }
+      const y = H / 2 - Math.max(-8, Math.min(8, mean(p))) / 8 * (H / 2 - 6);
+      const x = i * W / cols;
+      started ? ctx.lineTo(x, y) : ctx.moveTo(x, y); started = true;
+    });
+    ctx.stroke();
+  }
+}
+
+function aiPrompt(m, r) {
+  return `Eres un coach de comunicación experto, cálido y directo. Habla de conductas observables; no infieras emociones ni personalidad.
+Escenario: ${scenario().name}. Consigna: ${currentPrompt}
+Método esperado: ${scenario().method}. Duración: ${Math.round(m.dur)} s.
+Métricas: ${r.items.map(i => `${i.label}=${i.display} (ideal ${i.target})`).join('; ')}.
+Puntaje VOXA: ${r.total}/100 (${Object.entries(r.dims).map(([d, s]) => `${d} ${s}`).join(', ')}).
+Transcripción: """${(finalText + interimText).trim() || '(no disponible)'}"""
+
+Devuelve:
+1) Una fortaleza concreta citando una frase textual.
+2) UN solo foco de mejora y por qué importa para este escenario.
+3) Evaluación de la estructura según ${scenario().method} (qué bloque faltó).
+4) Una reescritura de mi respuesta mejorada (misma duración aproximada).
+5) Un ejercicio de 2 minutos para practicar ahora.`;
+}
+
+$('btnCopy').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText($('aiPrompt').value); $('btnCopy').textContent = 'Copiado ✓'; }
+  catch { $('aiPrompt').select(); }
+  setTimeout(() => $('btnCopy').textContent = 'Copiar', 1500);
+});
+</script>
+</body>
+</html>

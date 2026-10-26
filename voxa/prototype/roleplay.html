@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>VOXA Roleplay</title>
 <link rel="stylesheet" href="voxa.css">
 <link rel="manifest" href="manifest.webmanifest">
@@ -35,7 +35,7 @@
   <section class="card full">
     <h2>1. Elige con quién practicar <span class="badge-ai" id="aiBadge">comprobando…</span></h2>
     <div class="personas" id="personas"></div>
-    <div class="row" style="margin-top:12px">
+    <div style="margin-top:12px;max-width:420px">
       <div>
         <label for="difficulty">Dificultad</label>
         <select id="difficulty">
@@ -44,22 +44,15 @@
           <option value="3">Alta: escéptico e interrumpe</option>
         </select>
       </div>
-      <div>
-        <label for="lang">Variante de español</label>
-        <select id="lang">
-          <option value="es-419">Latinoamérica</option><option value="es-CL">Chile</option>
-          <option value="es-MX">México</option><option value="es-AR">Argentina</option>
-          <option value="es-CO">Colombia</option><option value="es-PE">Perú</option><option value="es-ES">España</option>
-        </select>
-      </div>
     </div>
     <div class="prompt" id="brief"></div>
-    <div id="ctxBox">
+    <details id="ctxBox">
+      <summary>Personalizar con mi situación real (opcional)</summary>
       <label for="ctx">Personaliza con tu situación real (opcional): pega la oferta de trabajo, tu CV o notas de la reunión</label>
       <textarea id="ctx" maxlength="8000" placeholder="Ej.: Analista de datos en una fintech. Requisitos: SQL avanzado, Power BI, comunicación con áreas de negocio…"></textarea>
       <p class="note">Se envía al personaje sólo durante esta práctica y no se guarda. <span id="ctxCount">0</span>/8000</p>
-    </div>
-    <div class="btns"><button id="btnBegin" class="primary">Comenzar conversación</button></div>
+    </details>
+    <div class="btns"><button id="btnBegin" class="cta">▶ Comenzar conversación</button></div>
   </section>
 
   <section class="card full" id="stage" style="display:none">
@@ -67,7 +60,7 @@
     <div class="chat" id="chat" aria-live="polite"></div>
     <div class="hint" id="hint"></div>
     <div class="talk">
-      <button id="btnMic" class="primary">🎙 Mantén para hablar</button>
+      <button id="btnMic" class="cta" aria-pressed="false">🎙 Tocar para hablar</button>
       <input id="txt" placeholder="…o escribe tu respuesta y pulsa Enter">
       <button id="btnSend">Enviar</button>
     </div>
@@ -96,10 +89,11 @@
 
 <script type="module">
 import {
-  $, FILLER_RE, countMatches, wordCount, mean, esc, colorFor, highlight, renderNav, saveSession, aiStatus, postJSON,
+  $, FILLER_RE, countMatches, wordCount, mean, esc, colorFor, highlight, renderNav, saveSession, aiStatus, postJSON, userLocale,
 } from './shared.js';
 
 renderNav();
+const locale = userLocale();
 
 // Modo sin IA: entrevista con banco de preguntas por competencias.
 const OFFLINE_PERSONA = {
@@ -133,7 +127,8 @@ function renderPersonas() {
   $('personas').innerHTML = personas.map(p =>
     `<button class="persona" data-id="${p.id}"><strong>${esc(p.name)}</strong><small>${esc(p.role)}</small></button>`).join('');
   $('personas').querySelectorAll('.persona').forEach(b => b.addEventListener('click', () => pick(b.dataset.id)));
-  pick(personas[0].id);
+  const wanted = new URLSearchParams(location.search).get('personaje');
+  pick(personas.some(p => p.id === wanted) ? wanted : personas[0].id);
 }
 function pick(id) {
   persona = personas.find(p => p.id === id);
@@ -190,9 +185,9 @@ function say(text) {
   if (!$('speak').checked || !('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = $('lang').value;
+  u.lang = locale;
   const voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('es'));
-  u.voice = voices.find(v => v.lang === $('lang').value) || voices[0] || null;
+  u.voice = voices.find(v => v.lang === locale) || voices[0] || null;
   u.rate = 1.02;
   speechSynthesis.speak(u);
 }
@@ -204,7 +199,7 @@ function startListening() {
   speechSynthesis?.cancel();
   heard = '';
   recognition = new SR();
-  recognition.lang = $('lang').value; recognition.continuous = true; recognition.interimResults = true;
+  recognition.lang = locale; recognition.continuous = true; recognition.interimResults = true;
   recognition.onresult = (ev) => {
     let interim = '';
     for (let i = ev.resultIndex; i < ev.results.length; i++) {
@@ -216,18 +211,18 @@ function startListening() {
   recognition.onerror = (e) => { $('status').textContent = 'Micrófono: ' + e.error; };
   recStart = performance.now();
   recognition.start();
-  $('btnMic').classList.add('rec-on'); $('btnMic').textContent = '● Escuchando… suelta para enviar';
+  $('btnMic').classList.add('rec-on'); $('btnMic').setAttribute('aria-pressed', 'true'); $('btnMic').textContent = '■ Tocar para enviar';
 }
 function stopListening() {
   if (!recognition) return;
   const r = recognition; recognition = null;
   const ms = performance.now() - recStart;
-  $('btnMic').classList.remove('rec-on'); $('btnMic').textContent = '🎙 Mantén para hablar';
+  $('btnMic').classList.remove('rec-on'); $('btnMic').setAttribute('aria-pressed', 'false'); $('btnMic').textContent = '🎙 Tocar para hablar';
   r.onend = () => send(ms);
   r.stop();
 }
-$('btnMic').addEventListener('pointerdown', (e) => { e.preventDefault(); startListening(); });
-for (const ev of ['pointerup', 'pointerleave']) $('btnMic').addEventListener(ev, stopListening);
+// Un toque para empezar y otro para enviar: más fácil que mantener pulsado en el móvil (WCAG 2.5.1).
+$('btnMic').addEventListener('click', () => (recognition ? stopListening() : startListening()));
 $('btnSend').addEventListener('click', () => send(0));
 $('txt').addEventListener('keydown', (e) => { if (e.key === 'Enter') send(0); });
 

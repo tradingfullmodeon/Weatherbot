@@ -9,9 +9,10 @@ Plataforma para mejorar cómo se comunica una persona (confianza, desarrollo pro
 | Ruta | Qué es |
 |---|---|
 | [`docs/BENCHMARK.md`](docs/BENCHMARK.md) | Benchmark global (Norteamérica, Europa, Asia, mundo hispanohablante), matriz de funcionalidades, necesidades de los usuarios, quejas recurrentes y 23 mejoras diferenciadoras, con fuentes. |
+| [`docs/UX.md`](docs/UX.md) | Revisión de usabilidad: 14 problemas y su solución, principios de diseñadores y comunicadores aplicados, benchmark de UX con las apps mejor valoradas e indicadores antes/después. |
 | [`docs/ESTRATEGIA.md`](docs/ESTRATEGIA.md) | Metodologías de comunicación y aprendizaje, lenguaje no verbal basado en evidencia, competencias y niveles, canales, motor de evaluación, arquitectura, privacidad y regulación, sprint de 30 días, modelo de negocio, plan de desarrollo e indicadores. |
-| [`prototype/`](prototype/) | Web app instalable (PWA): **Evaluar** (`index.html`), **Roleplay IA** (`roleplay.html`), **Gimnasio de voz** (`gimnasio.html`) y **Mi progreso** (`progreso.html`). Escenarios en `scenarios.js`. |
-| [`server/`](server/) | API FastAPI: coach IA (`/api/feedback`), roleplay con personajes (`/api/roleplay`, `/api/roleplay/evaluate`). También sirve el prototipo. |
+| [`prototype/`](prototype/) | Web app instalable (PWA): **Hoy** (`index.html`), **Evaluar** (`evaluar.html`), **Roleplay** (`roleplay.html`), **Gimnasio de voz** (`gimnasio.html`), **Escritura** (`escritura.html`) y **Progreso** (`progreso.html`). Escenarios en `scenarios.js` y plan de 30 días en `plan.js`. |
+| [`server/`](server/) | API FastAPI: coach IA (`/api/feedback`), roleplay con personajes (`/api/roleplay`, `/api/roleplay/evaluate`) y escritura (`/api/writing`). También sirve el prototipo. |
 
 ## Ejecutar
 
@@ -23,7 +24,7 @@ uvicorn app:app --port 8000
 # abrir http://localhost:8000 en Chrome o Edge
 ```
 
-Sólo el prototipo, sin servidor: `cd voxa/prototype && python3 -m http.server 8000`. El evaluador, el progreso y el roleplay en modo sin IA funcionan igual.
+Sólo el prototipo, sin servidor: `cd voxa/prototype && python3 -m http.server 8000`. Todo funciona igual menos el coach IA (el roleplay usa un entrevistador con preguntas fijas y la escritura sólo hace la revisión instantánea).
 
 El modelo se configura con `VOXA_MODEL` (por defecto `claude-opus-5-5`). Las llamadas usan salida JSON con esquema estricto y `fallbacks: "default"` ante rechazos del modelo.
 
@@ -31,14 +32,18 @@ Pruebas del servidor (con un cliente de Anthropic simulado, sin consumir la API)
 
 ## Qué incluye
 
-**Evaluar.** Elige entre 22 escenarios en 6 ambientes (Confianza, Profesional, Liderazgo, Público, Social, Digital); se puede enlazar uno directo con `index.html?escenario=toast`. Graba con cámara y micrófono y mide localmente:
+**Hoy.** La primera vez, una bienvenida de 3 preguntas (objetivo, nervios y variante de español), sin crear cuenta. Después, la práctica del día del plan de 30 días a un toque, tu racha, accesos rápidos, un consejo del día y los ajustes.
+
+**Evaluar.** Elige entre 22 escenarios en 6 ambientes (Confianza, Profesional, Liderazgo, Público, Social, Digital); se puede enlazar uno directo con `evaluar.html?escenario=toast` (y `&audiencia=1`). Un solo botón «Empezar» pide permisos, hace una cuenta regresiva, muestra la consigna sobre el video y termina solo al acabar el tiempo. La **audiencia virtual** opcional reacciona en vivo a cómo hablas. Mide localmente:
 - **Voz:** ritmo, muletillas regionales, **sonidos de duda «eh/mmm» detectados en el audio** (los que la transcripción borra), tiempo hablando, silencios largos, variación de tono, volumen.
 - **Lenguaje:** atenuadores y desarrollo del contenido.
 - **Presencia:** encuadre, mirada a cámara, sonrisa y estabilidad (MediaPipe).
 
-Entrega un puntaje ponderado por escenario, una fortaleza, un foco y un ejercicio, una línea de tiempo, el replay y el **coach IA** (estructura según el método y reescritura de tu respuesta). También registra tus nervios antes y después.
+El reporte empieza con el puntaje, la comparación con tu intento anterior y tres tarjetas (lo que hiciste bien, tu único foco y un ejercicio de 2 minutos), más «Repetir aplicando el foco». Métricas, línea de tiempo, video y transcripción quedan en secciones desplegables. El **coach IA** analiza la estructura según el método y reescribe tu respuesta. También registra tus nervios antes y después.
 
-**Roleplay IA.** Conversaciones por voz (o texto) con 6 personajes con objetivo: reclutadora, jefe, clienta molesta, inversionista, colega y networking. Tiene 3 niveles de dificultad, pistas del coach en vivo, la opción de **rebobinar tu última respuesta y reintentar**, y mide tiempo de habla, preguntas y muletillas. Puedes pegar la oferta de trabajo, tu CV o notas de la reunión para que el personaje base sus preguntas en tu situación real. Al final hay una evaluación de escucha, empatía, claridad, asertividad, manejo de objeciones y logro del objetivo.
+**Roleplay.** Conversaciones por voz («tocar para hablar») o por texto con 6 personajes con objetivo: reclutadora, jefe, clienta molesta, inversionista, colega y networking. Tiene 3 niveles de dificultad, pistas del coach en vivo, la opción de **rebobinar tu última respuesta y reintentar**, y mide tiempo de habla, preguntas y muletillas. Puedes pegar la oferta de trabajo, tu CV o notas de la reunión para que el personaje base sus preguntas en tu situación real. Al final hay una evaluación de escucha, empatía, claridad, asertividad, manejo de objeciones y logro del objetivo.
+
+**Escritura.** Seis tipos de texto (pedir algo, decir que no, feedback, disculpa, mensaje breve y LinkedIn). La revisión instantánea en el dispositivo comprueba si hay un pedido explícito y al inicio, un plazo, el largo de las frases, la legibilidad (Fernández Huerta), frases que restan seguridad, disculpas innecesarias y mayúsculas. Con el servidor conectado, la IA entrega una versión lista para enviar y un asunto sugerido.
 
 **Gimnasio de voz.** Cinco calentamientos medidos en vivo con mejores marcas:
 - **Sostén la vocal:** segundos y estabilidad del tono.

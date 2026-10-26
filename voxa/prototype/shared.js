@@ -75,17 +75,45 @@ export function highlight(text) {
 }
 
 // ---------------------------------------------------------------- navegación
+// Escritorio: barra superior con todas las secciones. Móvil: barra inferior fija con 5 destinos
+// (zona del pulgar, como en las apps de hábito mejor valoradas) e iconos con etiqueta.
+const ICONS = {
+  home: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  rec: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/>',
+  chat: '<path d="M4 5h16v11H8l-4 4z"/>',
+  wave: '<path d="M3 12h2M7 8v8M11 5v14M15 8v8M19 10v4M21 12h0"/>',
+  chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  pen: '<path d="M4 20l4-1 11-11-3-3L5 16z"/>',
+};
 const PAGES = [
-  ['index.html', 'Evaluar'], ['roleplay.html', 'Roleplay IA'], ['gimnasio.html', 'Gimnasio de voz'], ['progreso.html', 'Mi progreso'],
+  ['index.html', 'Hoy', 'home', true], ['evaluar.html', 'Evaluar', 'rec', true], ['roleplay.html', 'Roleplay', 'chat', true],
+  ['gimnasio.html', 'Gimnasio', 'wave', true], ['escritura.html', 'Escritura', 'pen', false], ['progreso.html', 'Progreso', 'chart', true],
 ];
+const icon = (k) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k]}</svg>`;
 export function renderNav() {
   const here = location.pathname.split('/').pop() || 'index.html';
-  const nav = document.createElement('nav');
-  nav.className = 'tabs';
-  nav.innerHTML = PAGES.map(([href, label]) => `<a href="${href}" class="${href === here ? 'on' : ''}">${label}</a>`).join('');
-  document.querySelector('header').appendChild(nav);
+  const top = document.createElement('nav');
+  top.className = 'tabs'; top.setAttribute('aria-label', 'Secciones');
+  top.innerHTML = PAGES.map(([href, label]) => `<a href="${href}" ${href === here ? 'class="on" aria-current="page"' : ''}>${label}</a>`).join('');
+  document.querySelector('header').appendChild(top);
+  const bottom = document.createElement('nav');
+  bottom.className = 'bottom-nav'; bottom.setAttribute('aria-label', 'Secciones');
+  bottom.innerHTML = PAGES.filter(p => p[3]).map(([href, label, ic]) =>
+    `<a href="${href}" ${href === here ? 'class="on" aria-current="page"' : ''}>${icon(ic)}<span>${label}</span></a>`).join('');
+  document.body.appendChild(bottom);
   // App instalable y disponible sin conexión (sólo en http/https; el registro puede fallar sin consecuencias).
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+export const LOCALES = [
+  ['es-419', 'Latinoamérica'], ['es-AR', 'Argentina'], ['es-CL', 'Chile'], ['es-CO', 'Colombia'],
+  ['es-MX', 'México'], ['es-PE', 'Perú'], ['es-ES', 'España'], ['es-US', 'Estados Unidos'],
+];
+// Variante de español del perfil o, si no hay, la del navegador.
+export function userLocale(profile = loadProfile()) {
+  if (profile.locale) return profile.locale;
+  const nav = (navigator.language || '').toLowerCase();
+  return LOCALES.find(([id]) => id.toLowerCase() === nav)?.[0] || 'es-419';
 }
 
 // ---------------------------------------------------------------- historial local
@@ -105,7 +133,7 @@ export function saveSession(session) {
   i >= 0 ? (all[i] = session) : all.push(session);
   return write(KEY, all.slice(-300));
 }
-export const loadProfile = () => read(PROFILE_KEY, { goal: '', ladder: {} });
+export const loadProfile = () => read(PROFILE_KEY, { goal: '', ladder: {}, locale: '', onboarded: false });
 export const saveProfile = (p) => write(PROFILE_KEY, p);
 
 // ---------------------------------------------------------------- API del coach IA

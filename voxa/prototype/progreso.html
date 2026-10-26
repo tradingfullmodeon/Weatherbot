@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>VOXA Progreso</title>
 <link rel="stylesheet" href="voxa.css">
 <link rel="manifest" href="manifest.webmanifest">
@@ -79,59 +79,37 @@
 
 <script type="module">
 import { $, esc, colorFor, mean, renderNav, loadSessions, loadProfile, saveProfile } from './shared.js';
+import { todayTask, streak } from './plan.js';
 
 renderNav();
 const sessions = loadSessions().sort((a, b) => a.date.localeCompare(b.date));
 const profile = loadProfile();
 const evals = sessions.filter(s => s.type === 'evaluacion');
-const dayKey = (iso) => iso.slice(0, 10);
 
 // ---------------------------------------------------------------- KPIs
-function streak() {
-  const days = new Set(sessions.map(s => dayKey(s.date)));
-  let n = 0; const d = new Date();
-  if (!days.has(dayKey(d.toISOString()))) d.setDate(d.getDate() - 1);   // la racha sigue viva si practicaste ayer
-  while (days.has(dayKey(d.toISOString()))) { n++; d.setDate(d.getDate() - 1); }
-  return n;
-}
 const count = (type) => sessions.filter(s => s.type === type).length;
 function kpi(k, v, d = '') { return `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d}</div></div>`; }
-if (!sessions.length) {
-  $('empty').textContent = 'Aún no hay sesiones. Haz tu diagnóstico en «Evaluar»: será tu línea base.';
-}
 const base = evals[0], last = evals[evals.length - 1];
 const best = evals.reduce((b, s) => (!b || s.total > b.total ? s : b), null);
 const delta = base && last ? last.total - base.total : 0;
 const anxDrop = mean(sessions.filter(s => s.anxietyAfter != null).map(s => s.anxietyBefore - s.anxietyAfter));
 $('kpis').innerHTML = [
-  kpi('Sesiones', sessions.length, `${evals.length} evaluaciones · ${count('roleplay')} roleplays · ${count('gimnasio')} de gimnasio`),
-  kpi('Racha', (n => `${n} ${n === 1 ? 'día' : 'días'}`)(streak()), 'días seguidos practicando'),
-  kpi('Línea base', base ? base.total : '–', base ? esc(base.scenarioName) : ''),
-  kpi('Última', last ? last.total : '–', base && last !== base ? `<span style="color:${delta >= 0 ? 'var(--good)' : 'var(--bad)'}">${delta >= 0 ? '+' : ''}${delta} vs. línea base</span>` : ''),
+  kpi('Sesiones', sessions.length, `${evals.length} evaluaciones · ${count('roleplay')} roleplays · ${count('gimnasio')} de gimnasio · ${count('escritura')} escritos`),
+  kpi('Racha', (n => `${n} ${n === 1 ? 'día' : 'días'}`)(streak(sessions)), 'días seguidos practicando'),
+  kpi('Punto de partida', base ? base.total : '–', base ? esc(base.scenarioName) : ''),
+  kpi('Última', last ? last.total : '–', base && last !== base ? `<span style="color:${delta >= 0 ? 'var(--good)' : 'var(--bad)'}">${delta >= 0 ? '+' : ''}${delta} vs. tu punto de partida</span>` : ''),
   kpi('Mejor', best ? best.total : '–', best ? esc(best.scenarioName) : ''),
   kpi('Calma ganada', sessions.length ? (Math.abs(anxDrop) < 0.05 ? '0' : (anxDrop > 0 ? '−' : '+') + Math.abs(anxDrop).toFixed(1)) : '–', 'puntos menos de nervios al terminar'),
 ].join('');
 
 // ---------------------------------------------------------------- Sprint 30 días
-const SPRINT = [
-  { week: 'Semana 1 · Voz y ritmo', tasks: ['Evalúa «Preséntate en 60 s» y anota tu ritmo.', 'Gimnasio de voz: «Lectura con pausas» y «Sostén la vocal»; luego repite la evaluación.', 'Reto: 60 s sin muletillas; cambia cada «este/o sea» por una pausa.', 'Gimnasio: «Sirena de tono» + evaluación «Actualización ejecutiva».', 'Repite tu peor escenario de la semana.', 'Improvisación: tema sorpresa.', 'Gimnasio: trabalenguas nivel 1 a 3. Descanso activo: escucha una charla y cuenta las pausas del orador.'] },
-  { week: 'Semana 2 · Estructura', tasks: ['Improvisación con PREP.', 'Entrevista STAR: «Cuéntame de un logro».', 'Escribe tu mensaje en una frase y preséntalo en 60 s.', 'Actualización ejecutiva con BLUF.', 'Roleplay con la reclutadora (dificultad media).', 'Pitch de proyecto con Monroe/SCQA.', 'Repite la práctica con menor puntaje en estructura.'] },
-  { week: 'Semana 3 · Presencia', tasks: ['Evalúa mirando a la cámara en apertura, idea clave y cierre.', 'Ajusta encuadre y luz; repite «Preséntate».', 'Sonríe al saludar y al cerrar; revisa tu replay.', 'Gestos dentro del marco: repite el pitch.', 'Graba sin guion durante 90 s.', 'Social: «Brindis en una celebración». Revisa el replay sin audio: ¿qué dice tu cuerpo?', 'Repite tu escenario favorito buscando 80+.'] },
-  { week: 'Semana 4 · Contexto e interacción', tasks: ['Roleplay: cliente molesta (escucha activa).', 'Roleplay: colega (SBI + CNV).', 'Roleplay: jefe (pedido concreto).', 'Roleplay: inversionista en dificultad alta.', 'Roleplay de networking con 3 preguntas abiertas, o «Pedir disculpas de verdad».', 'Misión real: aplica una técnica en una conversación de verdad.', 'Re-evaluación final: el mismo escenario de tu línea base.'] },
-];
-if (sessions.length) {
-  const start = new Date(dayKey(sessions[0].date));
-  const day = Math.floor((new Date(dayKey(new Date().toISOString())) - start) / 864e5);
-  if (day < 28) {
-    const w = SPRINT[Math.floor(day / 7)];
-    $('today').innerHTML = `<strong>Día ${day + 1} de 28 · ${w.week}</strong><p>${w.tasks[day % 7]}</p>`;
-  } else {
-    $('today').innerHTML = `<strong>¡Sprint completado!</strong><p>Haz tu re-evaluación con «${esc(evals[0]?.scenarioName || 'tu línea base')}» y compara.</p>`;
-  }
-  $('sprintNote').textContent = 'El sprint empezó con tu primera sesión. Cada semana se enfoca en una sola dimensión (práctica deliberada).';
-} else {
-  $('today').innerHTML = `<strong>Día 0 · Diagnóstico</strong><p>Haz una evaluación de 60 s en «Evaluar» para crear tu línea base.</p>`;
-}
+const task = todayTask(sessions);
+$('today').innerHTML = `<strong>${esc(task.week)}${task.day ? ` · día ${task.day} de 28` : ''}</strong><p>${esc(task.text)}</p>
+  <a class="btn-link primary" href="${task.href}">▶ Hacer la práctica de hoy</a>`;
+$('sprintNote').textContent = sessions.length
+  ? 'El sprint empezó con tu primera sesión. Cada semana se enfoca en una sola dimensión (práctica deliberada).'
+  : 'Tu primera práctica será tu punto de partida.';
+$('empty').innerHTML = sessions.length ? '' : 'Aún no hay prácticas. <a href="evaluar.html?escenario=intro">Haz tu primera evaluación de 60 segundos</a>: será tu punto de partida.';
 
 // ---------------------------------------------------------------- foco recurrente
 const LABELS = { hums: 'Sonidos de duda', wpm: 'Ritmo', fillers: 'Muletillas', hedges: 'Atenuadores', length: 'Desarrollo del contenido', pitch: 'Variación de tono',
@@ -218,7 +196,7 @@ const LADDER = [
   'Presentar ante un público o en un evento.',
 ];
 // Peldaños que se pueden practicar dentro de VOXA.
-const LADDER_LINKS = { 1: 'gimnasio.html', 2: 'index.html?escenario=passion', 3: 'roleplay.html', 4: 'roleplay.html' };
+const LADDER_LINKS = { 1: 'gimnasio.html', 2: 'evaluar.html?escenario=passion', 3: 'roleplay.html', 4: 'roleplay.html' };
 profile.ladder ||= {};
 $('ladder').innerHTML = LADDER.map((t, i) =>
   `<li><label><input type="checkbox" data-i="${i}" ${profile.ladder[i] ? 'checked' : ''}> <span>${i + 1}. ${t}${LADDER_LINKS[i] ? ` <a href="${LADDER_LINKS[i]}">Practicar</a>` : ''}</span></label></li>`).join('');

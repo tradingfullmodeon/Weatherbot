@@ -46,7 +46,7 @@ def walk_objects(schema):
         yield from walk_objects(schema["items"])
 
 
-@pytest.mark.parametrize("schema", [voxa.FEEDBACK_SCHEMA, voxa.ROLEPLAY_SCHEMA, voxa.EVAL_SCHEMA])
+@pytest.mark.parametrize("schema", [voxa.FEEDBACK_SCHEMA, voxa.ROLEPLAY_SCHEMA, voxa.EVAL_SCHEMA, voxa.WRITING_SCHEMA])
 def test_schemas_are_strict(schema):
     for o in walk_objects(schema):
         assert o["additionalProperties"] is False
@@ -110,3 +110,21 @@ def test_roleplay_context_length_is_limited(monkeypatch):
     history = [{"role": "persona", "text": "Hola"}, {"role": "user", "text": "Hola"}]
     r = api.post("/api/roleplay", json={"persona_id": "jefe", "history": history, "context": "x" * 8001})
     assert r.status_code == 422
+
+
+def test_writing_wraps_text_and_returns_rewrite(monkeypatch):
+    payload = {"strengths": ["Cordial"], "issues": ["Pedido al final"], "rewrite": "Hola Ana: ¿puedes enviarme el informe antes del viernes?",
+               "subject": "Informe antes del viernes", "tone": "cordial y directo", "changes": ["Pedido al inicio"], "safety_note": ""}
+    messages = fake_client(monkeypatch, payload)
+    r = api.post("/api/writing", json={"kind": "Pedir algo por correo", "method": "BLUF", "text": "Hola, ojalá estés bien... ¿me mandas el informe?",
+                                      "local_checks": ["El pedido está al final"]})
+    assert r.status_code == 200 and r.json()["subject"] == "Informe antes del viernes"
+    content = messages.calls[0]["messages"][0]["content"]
+    assert "<texto_usuario>" in content and "El pedido está al final" in content
+    assert messages.calls[0]["output_config"]["format"]["schema"] is voxa.WRITING_SCHEMA
+
+
+def test_writing_rejects_empty_or_huge_text(monkeypatch):
+    fake_client(monkeypatch, {})
+    assert api.post("/api/writing", json={"kind": "x", "text": ""}).status_code == 422
+    assert api.post("/api/writing", json={"kind": "x", "text": "a" * 6001}).status_code == 422
