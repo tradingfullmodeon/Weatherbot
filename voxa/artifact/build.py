@@ -1,6 +1,6 @@
 """Genera dist/voxa.html: la versión de VOXA publicable como Artifact de claude.ai.
 
-Toma los módulos del prototipo (prototype/shared.js, prototype/scenarios.js, prototype/voxa.css) y los
+Toma los módulos del prototipo (prototype/shared.js, prototype/scenarios.js, prototype/lessons.js, prototype/voxa.css) y los
 personajes del servidor (server/personas.py) para que la versión publicada no se desincronice del resto.
 Uso: python3 voxa/artifact/build.py
 """
@@ -30,6 +30,7 @@ def main() -> None:
         "(() => {",
         as_script(ROOT / "prototype" / "shared.js"),
         as_script(ROOT / "prototype" / "scenarios.js"),
+        as_script(ROOT / "prototype" / "lessons.js"),
         app,
         "})();",
     ])

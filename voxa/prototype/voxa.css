@@ -149,3 +149,13 @@
   .bar-label { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); margin-top: 8px; }
   .bar-label + .progress, .bar-label + .meter { margin-top: 2px; }
   .meter.vol > div { background: var(--good); }
+  /* Lecciones */
+  .lesson-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; margin-bottom: 8px; }
+  .lesson-item { display: flex; gap: 10px; align-items: center; text-align: left; padding: 12px; border-radius: 12px; }
+  .lesson-item small { display: block; color: var(--muted); font-size: .78rem; }
+  .lesson ol, .lesson ul { padding-left: 20px; }
+  .lesson li { margin: 4px 0; }
+  .quiz { display: grid; gap: 6px; }
+  .quiz button { text-align: left; }
+  .quiz button.right { border-color: var(--good); box-shadow: 0 0 0 2px var(--good) inset; }
+  .quiz button.wrong { border-color: var(--bad); box-shadow: 0 0 0 2px var(--bad) inset; }

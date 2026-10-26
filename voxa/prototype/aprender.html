@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VOXA Aprender</title>
+<link rel="stylesheet" href="voxa.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#4f46e5">
+</head>
+<body>
+<header>
+  <h1>Aprender</h1>
+  <p>Lecciones de 2 a 3 minutos. Cada una termina con una pregunta de repaso y una práctica: leer poco, hacer mucho.</p>
+</header>
+
+<main>
+  <section class="card full" id="listCard">
+    <div class="note" id="progressNote"></div>
+    <div id="list"></div>
+  </section>
+  <section class="card full hidden" id="lessonCard"></section>
+</main>
+
+<script type="module">
+import { $, renderNav, loadProfile, saveProfile } from './shared.js';
+import { LESSONS, lessonListHTML, lessonHTML, bindQuiz } from './lessons.js';
+
+renderNav();
+const profile = loadProfile();
+profile.lessons ||= {};
+
+// Destino de «Practicar ahora» en esta versión.
+function practiceHref(p) {
+  if (p.view === 'roleplay') return `roleplay.html?personaje=${p.persona}`;
+  if (p.view === 'gimnasio') return `gimnasio.html?ejercicio=${p.exercise}`;
+  if (p.view === 'escritura') return `escritura.html?tipo=${p.kind}`;
+  return `evaluar.html?escenario=${p.scenario}${p.audience ? '&audiencia=1' : ''}`;
+}
+
+function renderList() {
+  const n = Object.values(profile.lessons).filter(Boolean).length;
+  $('progressNote').textContent = `${n} de ${LESSONS.length} lecciones completadas.`;
+  $('list').innerHTML = lessonListHTML(profile.lessons);
+  $('listCard').classList.remove('hidden'); $('lessonCard').classList.add('hidden');
+}
+function open(id) {
+  const l = LESSONS.find(x => x.id === id); if (!l) return renderList();
+  $('lessonCard').innerHTML = lessonHTML(l, !!profile.lessons[l.id]);
+  $('listCard').classList.add('hidden'); $('lessonCard').classList.remove('hidden');
+  window.scrollTo(0, 0);
+}
+$('list').addEventListener('click', (e) => { const b = e.target.closest('[data-lesson]'); if (b) open(b.dataset.lesson); });
+$('lessonCard').addEventListener('click', (e) => {
+  if (e.target.closest('[data-back]')) return renderList();
+  const p = e.target.closest('[data-practice]');
+  if (p) location.href = practiceHref(LESSONS.find(x => x.id === p.dataset.practice).practice);
+});
+bindQuiz($('lessonCard'), (l) => { profile.lessons[l.id] = true; saveProfile(profile); });
+
+const wanted = new URLSearchParams(location.search).get('leccion');
+wanted ? open(wanted) : renderList();
+</script>
+</body>
+</html>

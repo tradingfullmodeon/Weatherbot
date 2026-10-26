@@ -159,6 +159,8 @@ Cada mejora responde a una brecha concreta. La columna "Estado" indica qué ya e
 | 21 | El reconocimiento de voz borra los «eh/mmm», así que nadie los cuenta bien | **Detector acústico de sonidos de duda**: tramos sonoros largos con tono plano, marcados en la línea de tiempo del replay. Complementa a la transcripción sin depender de ella. | ✅ Prototipo (estimación) |
 | 22 | Nadie entrena el instrumento (la voz) con medición | **Gimnasio de voz** con 5 ejercicios medidos en vivo: vocal sostenida (respiración), sirena (rango de tono), escalera de volumen (proyección), trabalenguas (dicción, inspirado en la cultura de 口才) y lectura con pausas, con mejores marcas. | ✅ Prototipo |
 | 23 | Apps sólo de tienda, con fricción de instalación | **App web instalable y disponible sin conexión** (PWA): se instala desde el navegador en el móvil y funciona sin red en todo lo que no es IA. | ✅ Prototipo |
+| 24 | Los cursos son pasivos: ver un video no cambia la conducta | **Aprender**: 12 micro-lecciones de 2–3 min (STAR, PREP, BLUF, pausa, voz, presencia, nervios, SBI, CNV, escucha activa, storytelling y mitos del lenguaje corporal). Cada una incluye un ejemplo «así no / así sí», una pregunta de repaso y un botón **Practicar ahora** que abre el ejercicio exacto. El reporte enlaza la lección de tu foco. | ✅ Prototipo y link |
+| 25 | El lenguaje corporal sólo se mide con hardware o software pesado | **Análisis de presencia desde tu video**: 4 fotogramas revisados por IA sólo en conductas observables (encuadre, luz, mirada, postura, gestos), sin describir rasgos físicos ni inferir emociones. Funciona en el link de claude.ai, donde no hay cámara en vivo. | ✅ Link |
 
 ---
 

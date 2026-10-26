@@ -42,6 +42,7 @@
         <button data-go="ensayar"><strong>🎤 Ensayar</strong><span>Escribe lo que dirías o sube una grabación de tu celular.</span></button>
         <button data-go="roleplay"><strong>💬 Roleplay</strong><span>Ensaya una conversación difícil con un personaje.</span></button>
         <button data-go="escritura"><strong>✍️ Escritura</strong><span>Mejora un correo o mensaje antes de enviarlo.</span></button>
+        <button data-go="aprender"><strong>📘 Aprender</strong><span>Lecciones de 2 minutos con práctica incluida.</span></button>
         <button data-go="progreso"><strong>📈 Progreso</strong><span>Tu evolución, tu racha y tu escalera de confianza.</span></button>
       </div>
     </div>
@@ -49,6 +50,7 @@
     <div class="card" id="tipCard">
       <h2>Consejo del día</h2>
       <p id="tip" class="lead"></p>
+      <div id="nextLesson"></div>
     </div>
 
     <div class="card" id="aiCard">
@@ -117,6 +119,13 @@
       <div class="btns" style="margin-top:14px">
         <button id="btnRetry" class="cta">↻ Repetir aplicando el foco</button>
         <button data-go="hoy">Volver a Hoy</button>
+      </div>
+
+      <div id="presenceBox" class="hidden">
+        <h2 style="margin-top:20px">Lenguaje corporal</h2>
+        <p class="note">VOXA toma 4 fotogramas de tu video y Claude revisa sólo lo observable: encuadre, luz, mirada hacia la cámara, postura y gestos. No se envía el video ni el audio.</p>
+        <div class="btns"><button id="btnPresence" class="primary">Analizar mi lenguaje corporal</button></div>
+        <div id="presenceOut" aria-live="polite"></div>
       </div>
 
       <h2 style="margin-top:20px">Coach IA</h2>
@@ -225,6 +234,16 @@
         <div id="wOut" aria-live="polite"></div>
       </div>
     </div>
+  </section>
+
+  <!-- ============================ APRENDER ============================ -->
+  <section class="view hidden" id="v-aprender" data-title="Aprender">
+    <div class="card full" id="lListCard">
+      <h2>Lecciones de 2 minutos</h2>
+      <p class="note" id="lProgress"></p>
+      <div id="lList"></div>
+    </div>
+    <div class="card full hidden" id="lCard"></div>
   </section>
 
   <!-- ============================ PROGRESO ============================ -->

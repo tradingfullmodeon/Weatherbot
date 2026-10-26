@@ -5,7 +5,7 @@ const profile = loadProfile();
 const params = new URLSearchParams(location.search);
 
 // ---------------------------------------------------------------- vistas y navegación
-const VIEWS = [['hoy', 'Hoy', 'home'], ['ensayar', 'Ensayar', 'rec'], ['roleplay', 'Roleplay', 'chat'], ['escritura', 'Escritura', 'pen'], ['progreso', 'Progreso', 'chart']];
+const VIEWS = [['hoy', 'Hoy', 'home'], ['ensayar', 'Ensayar', 'rec'], ['roleplay', 'Roleplay', 'chat'], ['escritura', 'Escritura', 'pen'], ['aprender', 'Aprender', 'book'], ['progreso', 'Progreso', 'chart']];
 $('topNav').innerHTML = VIEWS.map(([id, label]) => `<button data-go="${id}">${label}</button>`).join('');
 $('bottomNav').innerHTML = VIEWS.map(([id, label, ic]) => `<button data-go="${id}">${icon(ic)}<span>${label}</span></button>`).join('');
 const onShow = {};
@@ -185,6 +185,8 @@ onShow.hoy = () => {
   const last = [...sessions].reverse().find(x => x.type === 'ensayo');
   $('tStreak').textContent = (s ? `🔥 ${s} ${s === 1 ? 'día seguido' : 'días seguidos'}` : 'Empieza tu racha hoy') + (last ? ` · Último puntaje: ${last.total} en «${last.scenarioName}»` : '');
   $('tip').textContent = TIPS[Math.floor(Date.now() / 864e5) % TIPS.length];
+  const next = LESSONS.find(l => !profile.lessons?.[l.id]);
+  $('nextLesson').innerHTML = next ? `<button type="button" class="linkish" data-open-lesson="${next.id}">📘 Lección sugerida (${next.minutes} min): ${esc(next.title)}</button>` : '';
 };
 
 // ================================================================= ENSAYAR
@@ -395,7 +397,13 @@ function showReport(m, isAudio, text) {
   $('fb').innerHTML = `
     <div><h3 style="color:var(--good)">✓ Lo que hiciste bien</h3>${STRENGTH[best.key]}</div>
     <div><h3 style="color:var(--mid)">→ Tu único foco: ${esc(worst.label)}</h3>${why}</div>
-    <div><h3 style="color:var(--accent)">⏱ Ejercicio de 2 minutos</h3>${ex}</div>`;
+    <div><h3 style="color:var(--accent)">⏱ Ejercicio de 2 minutos</h3>${ex}${lessonLink(worst.key)}</div>`;
+  // Análisis de lenguaje corporal: sólo para videos y si este visor puede enviar imágenes a Claude.
+  $('presenceOut').innerHTML = '';
+  $('presenceBox').classList.add('hidden');
+  if (isAudio && file?.type?.startsWith('video/') && sample) {
+    sample.limits().then(l => { if (l?.images) $('presenceBox').classList.remove('hidden'); }).catch(() => {});
+  }
   $('dims').innerHTML = dimBars(Object.fromEntries(Object.entries(r.dims).map(([d, v]) => [d === 'voz' ? 'Voz' : 'Lenguaje', v])));
   $('metricsBody').innerHTML = r.items.map(i =>
     `<tr><td>${esc(i.label)}</td><td class="num">${esc(i.display)}</td><td>${esc(i.target)}</td><td><span class="pill" style="color:${colorFor(i.s)}">${i.s}</span></td></tr>`).join('');
@@ -411,6 +419,12 @@ function showReport(m, isAudio, text) {
   persist();
   $('report').scrollIntoView({ behavior: 'smooth' });
 }
+function lessonLink(metric) {
+  const l = LESSONS.find(x => x.id === LESSON_FOR_METRIC[metric]);
+  return l ? `<p style="margin-top:8px"><button type="button" class="linkish" data-open-lesson="${l.id}">📘 Lección de ${l.minutes} min: ${esc(l.title)}</button></p>` : '';
+}
+document.addEventListener('click', (e) => { const b = e.target.closest('[data-open-lesson]'); if (b) go('aprender', { lesson: b.dataset.openLesson }); });
+
 function persist() {
   if (!last) return;
   last.session.anxietyAfter = feelAfter.get();
@@ -850,6 +864,87 @@ $('btnClearNo').addEventListener('click', () => $('clearConfirm').classList.add(
 $('btnClearYes').addEventListener('click', () => {
   try { localStorage.removeItem('voxa.sessions.v1'); } catch {}
   $('clearConfirm').classList.add('hidden'); onShow.progreso();
+});
+
+// ================================================================= APRENDER
+profile.lessons ||= {};
+function renderLessonList() {
+  const n = Object.values(profile.lessons).filter(Boolean).length;
+  $('lProgress').textContent = `${n} de ${LESSONS.length} lecciones completadas. Cada una termina con una pregunta de repaso y una práctica.`;
+  $('lList').innerHTML = lessonListHTML(profile.lessons);
+  $('lListCard').classList.remove('hidden'); $('lCard').classList.add('hidden');
+}
+function openLesson(id) {
+  const l = LESSONS.find(x => x.id === id); if (!l) return renderLessonList();
+  $('lCard').innerHTML = lessonHTML(l, !!profile.lessons[l.id]);
+  $('lListCard').classList.add('hidden'); $('lCard').classList.remove('hidden');
+  window.scrollTo(0, 0);
+}
+// Esta versión no tiene evaluación en vivo ni gimnasio: esas prácticas se hacen grabando con el celular.
+function practiceLesson(p) {
+  if (p.view === 'roleplay') return go('roleplay', { persona: p.persona });
+  if (p.view === 'escritura') return go('escritura', { kind: p.kind });
+  const scenarioFor = { pausas: 'opening', sirena: 'passion' };
+  go('ensayar', { scenario: p.scenario || scenarioFor[p.exercise] || 'intro', mode: p.view === 'gimnasio' || p.audience ? 'audio' : undefined });
+}
+$('lList').addEventListener('click', (e) => { const b = e.target.closest('[data-lesson]'); if (b) openLesson(b.dataset.lesson); });
+$('lCard').addEventListener('click', (e) => {
+  if (e.target.closest('[data-back]')) return renderLessonList();
+  const b = e.target.closest('[data-practice]');
+  if (b) practiceLesson(LESSONS.find(x => x.id === b.dataset.practice).practice);
+});
+bindQuiz($('lCard'), (l) => { profile.lessons[l.id] = true; saveProfile(profile); });
+onShow.aprender = (o = {}) => (o.lesson ? openLesson(o.lesson) : renderLessonList());
+
+// ================================================================= LENGUAJE CORPORAL (fotogramas + Claude)
+// Toma 4 fotogramas repartidos en el video y los envía como imágenes. Sólo conductas observables.
+async function grabFrames(f, count = 4) {
+  const url = URL.createObjectURL(f);
+  const v = document.createElement('video');
+  v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = url;
+  try {
+    await new Promise((ok, fail) => { v.onloadedmetadata = ok; v.onerror = () => fail(new Error('No pudimos leer el video.')); });
+    if (!v.videoWidth) throw new Error('Este video no tiene imagen.');
+    const dur = isFinite(v.duration) && v.duration > 0 ? v.duration : 10;
+    const w = Math.min(640, v.videoWidth), h = Math.round(v.videoHeight * w / v.videoWidth);
+    const c = Object.assign(document.createElement('canvas'), { width: w, height: h });
+    const out = [];
+    for (let i = 0; i < count; i++) {
+      v.currentTime = dur * (0.12 + 0.76 * i / (count - 1));
+      await new Promise((ok) => { v.onseeked = ok; setTimeout(ok, 3000); });
+      c.getContext('2d').drawImage(v, 0, 0, w, h);
+      out.push(await new Promise(r => c.toBlob(r, 'image/jpeg', 0.82)));
+    }
+    return out.filter(Boolean);
+  } finally { URL.revokeObjectURL(url); }
+}
+$('btnPresence').addEventListener('click', async () => {
+  if (!sample || !file) return;
+  $('btnPresence').disabled = true;
+  $('presenceOut').innerHTML = '<p class="note">Tomando fotogramas de tu video…</p>';
+  try {
+    const images = await grabFrames(file);
+    if (!images.length) throw new Error('No pudimos tomar fotogramas de este video.');
+    $('presenceOut').innerHTML = '<p class="note">Claude está revisando tu presencia… (puede pedirte permiso para enviar imágenes)</p>';
+    const out = await sample.json(`Eres el coach de lenguaje corporal de VOXA. Recibes ${images.length} fotogramas, en orden, del video de una persona practicando «${scenario().name}» frente a la cámara de su celular o computador.
+${COACH_RULES}
+Evalúa SÓLO conductas observables en los fotogramas: encuadre (posición en el cuadro, distancia, altura de la cámara), iluminación (frontal, contraluz), mirada (hacia el lente o fuera), postura (hombros, espalda, cabeza), gestos (manos visibles, dentro del marco) y expresión facial visible (por ejemplo, si se ve una sonrisa). No describas apariencia física, ropa, edad, género ni rasgos de la persona, ni infieras emociones o personalidad.
+Responde SÓLO con JSON: {"scores":{"encuadre":0,"iluminacion":0,"mirada":0,"postura":0,"gestos":0},"strength":"lo mejor que se observa","focus":"el único ajuste de mayor impacto","how":["paso concreto 1","paso concreto 2"],"notes":{"encuadre":"...","iluminacion":"...","mirada":"...","postura":"...","gestos":"..."}} con puntajes de 0 a 100.`, { images });
+    if (!out?.scores) throw { code: 'invalid_json' };
+    const scores = Object.fromEntries(Object.entries(out.scores).map(([k, v]) => [k, Math.max(0, Math.min(100, Number(v) || 0))]));
+    const notes = out.notes || {};
+    $('presenceOut').innerHTML = `<div class="ai-box">
+      <div class="dims">${dimBars(scores)}</div>
+      <h3 style="color:var(--good)">Lo mejor que se ve</h3><p>${esc(out.strength)}</p>
+      <h3 style="color:var(--mid)">Tu ajuste principal</h3><p>${esc(out.focus)}</p>
+      <ol>${(Array.isArray(out.how) ? out.how : []).map(x => `<li>${esc(x)}</li>`).join('')}</ol>
+      <details><summary>Ver detalle por aspecto</summary><ul>${Object.entries(notes).map(([k, v]) => `<li><strong>${esc(k)}:</strong> ${esc(v)}</li>`).join('')}</ul></details>
+      <p style="margin-top:8px"><button type="button" class="linkish" data-open-lesson="presencia">📘 Lección: Presencia en cámara</button></p>
+    </div>`;
+    if (last) { last.session.presence = scores; persist(); }
+  } catch (e) {
+    $('presenceOut').innerHTML = `<p class="note">${esc(e?.code ? aiErrorText(e) : (e?.message || 'No pudimos analizar el video.'))}</p>`;
+  } finally { $('btnPresence').disabled = false; }
 });
 
 // ---------------------------------------------------------------- arranque

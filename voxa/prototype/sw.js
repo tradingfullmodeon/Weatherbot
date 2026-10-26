@@ -1,9 +1,9 @@
 // Service worker de VOXA: guarda la app para usarla sin conexión.
 // Archivos propios: red primero y copia en caché como respaldo (así nunca se queda una versión vieja).
 // La API del coach IA no se guarda nunca en caché.
-const CACHE = 'voxa-v5';
-const SHELL = ['./', 'index.html', 'evaluar.html', 'roleplay.html', 'gimnasio.html', 'escritura.html', 'progreso.html',
-  'voxa.css', 'shared.js', 'scenarios.js', 'plan.js', 'devices.js', 'manifest.webmanifest', 'icon.svg'];
+const CACHE = 'voxa-v6';
+const SHELL = ['./', 'index.html', 'evaluar.html', 'roleplay.html', 'gimnasio.html', 'escritura.html', 'aprender.html', 'progreso.html',
+  'voxa.css', 'shared.js', 'scenarios.js', 'plan.js', 'devices.js', 'lessons.js', 'manifest.webmanifest', 'icon.svg'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

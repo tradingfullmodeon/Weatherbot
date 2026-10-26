@@ -72,3 +72,5 @@
   .rec-choices { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
   .rec-choices .btn-link { flex: 1 1 200px; }
   #preview { width: 100%; max-height: 260px; border-radius: 12px; background: #000; margin-top: 8px; }
+  .linkish { background: none; border: 0; color: var(--accent); padding: 4px 0; min-height: 44px; text-align: left; text-decoration: underline; cursor: pointer; }
+  @media (max-width: 700px) { nav.bottom-nav button { font-size: .66rem; } }
