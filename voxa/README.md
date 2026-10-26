@@ -8,7 +8,7 @@ Plataforma para mejorar cómo se comunica una persona (confianza, desarrollo pro
 
 | Ruta | Qué es |
 |---|---|
-| [`docs/BENCHMARK.md`](docs/BENCHMARK.md) | Benchmark global (Norteamérica, Europa, Asia, mundo hispanohablante), matriz de funcionalidades, necesidades de los usuarios, quejas recurrentes y 26 mejoras diferenciadoras, con fuentes. |
+| [`docs/BENCHMARK.md`](docs/BENCHMARK.md) | Benchmark global (Norteamérica, Europa, Asia, mundo hispanohablante), matriz de funcionalidades, necesidades de los usuarios, quejas recurrentes y 27 mejoras diferenciadoras, con fuentes. |
 | [`docs/UX.md`](docs/UX.md) | Revisión de usabilidad: 14 problemas y su solución, principios de diseñadores y comunicadores aplicados, benchmark de UX con las apps mejor valoradas e indicadores antes/después. |
 | [`docs/ESTRATEGIA.md`](docs/ESTRATEGIA.md) | Metodologías de comunicación y aprendizaje, lenguaje no verbal basado en evidencia, competencias y niveles, canales, motor de evaluación, arquitectura, privacidad y regulación, sprint de 30 días, modelo de negocio, plan de desarrollo e indicadores. |
 | [`prototype/`](prototype/) | Web app instalable (PWA): **Hoy** (`index.html`), **Evaluar** (`evaluar.html`), **Roleplay** (`roleplay.html`), **Gimnasio de voz** (`gimnasio.html`), **Escritura** (`escritura.html`) y **Aprender** (`aprender.html`), **Evento real** (`evento.html`) y **Progreso** (`progreso.html`). Escenarios en `scenarios.js`, lecciones en `lessons.js`, eventos en `events.js`, revisión de textos en `writing.js`, plan de 30 días en `plan.js` y acceso a cámara y micrófono en `devices.js`. |
@@ -19,7 +19,7 @@ Plataforma para mejorar cómo se comunica una persona (confianza, desarrollo pro
 
 **Versión web publicada (claude.ai):** https://claude.ai/artifact/Q8vtmWQ5KWWXHWFnwzBNXr
 
-Incluye Hoy, Ensayar (respuesta escrita o grabación hecha con la cámara o la grabadora del celular), análisis de **lenguaje corporal** desde tu video (4 fotogramas revisados por IA), Roleplay con 6 personajes, Escritura, Aprender (12 lecciones), **Evento real** (plan hasta la fecha y preguntas difíciles personalizadas con IA) y Progreso. El coach IA usa la cuenta de Claude de quien la abre (claude.ai pide permiso la primera vez), sin servidor ni API key. Las páginas de claude.ai no permiten usar la cámara ni el micrófono en vivo, así que la evaluación en vivo, la audiencia virtual y el gimnasio de voz están en la versión completa (abajo). El link es privado hasta que se comparte desde el menú «Compartir» de la página.
+Incluye el **diagnóstico inicial con metas**, Hoy, Ensayar (respuesta escrita o grabación hecha con la cámara o la grabadora del celular), análisis de **lenguaje corporal** desde tu video (4 fotogramas revisados por IA), Roleplay con 6 personajes, Escritura, Aprender (12 lecciones), **Evento real** (plan hasta la fecha y preguntas difíciles personalizadas con IA) y Progreso. El coach IA usa la cuenta de Claude de quien la abre (claude.ai pide permiso la primera vez), sin servidor ni API key. Las páginas de claude.ai no permiten usar la cámara ni el micrófono en vivo, así que la evaluación en vivo, la audiencia virtual y el gimnasio de voz están en la versión completa (abajo). El link es privado hasta que se comparte desde el menú «Compartir» de la página.
 
 **Cámara y micrófono en el link de claude.ai:** las páginas de claude.ai no pueden usar la cámara ni el micrófono *en vivo*. En «Ensayar → Subir una grabación», los botones «Grabarme en video» y «Grabar sólo mi voz» abren directamente la cámara o la grabadora del celular (atributo `capture`). Al terminar, la grabación vuelve a la página y se analiza en el navegador. En el computador abren el selector de archivos.
 
@@ -36,7 +36,7 @@ Como Pages no ejecuta el servidor, el coach IA no está disponible ahí (todo lo
 - Explica cada error en lenguaje simple (permiso bloqueado, otra app usando la cámara, página sin https, navegador de WhatsApp o Instagram) con los pasos para desbloquear en Chrome, Safari, Firefox, Android e iPhone.
 - En «Hoy» incluye **«Probar cámara y micrófono»**, con vista previa, medidor de voz y estado de cada permiso.
 
-Para regenerarla tras cambiar el prototipo: `python3 voxa/artifact/build.py` (combina `prototype/shared.js`, `prototype/scenarios.js`, `prototype/lessons.js`, `prototype/writing.js`, `prototype/voxa.css` y `server/personas.py` con `artifact/app.js` en `artifact/dist/voxa.html`).
+Para regenerarla tras cambiar el prototipo: `python3 voxa/artifact/build.py` (combina `prototype/shared.js`, `prototype/scenarios.js`, `prototype/lessons.js`, `prototype/writing.js`, `prototype/events.js`, `prototype/goals.js`, `prototype/voxa.css` y `server/personas.py` con `artifact/app.js` en `artifact/dist/voxa.html`).
 
 ## Ejecutar la versión completa
 
@@ -60,7 +60,9 @@ El flujo `.github/workflows/voxa-ci.yml` corre ambas en cada cambio y verifica q
 
 ## Qué incluye
 
-**Hoy.** La primera vez, una bienvenida de 3 preguntas (objetivo, nervios y variante de español), sin crear cuenta. Después, la práctica del día del plan de 30 días a un toque, tu racha, accesos rápidos, un consejo del día y los ajustes.
+**Diagnóstico y metas.** Tras la bienvenida, un diagnóstico de unos 8 minutos: 8 afirmaciones sobre cómo te ves, una prueba de voz de 60 s y una prueba escrita. Entrega tu nivel, un radar en 8 dimensiones, fortalezas, prioridades y puntos ciegos (dónde te ves distinto de lo que medimos). De ahí eliges hasta 3 metas con plazo, que avanzan solas con cada práctica que cumple su criterio. A las 4 semanas, Hoy propone repetir el diagnóstico, y Progreso compara el primero con el último. Disponible en el link de claude.ai (`prototype/goals.js`).
+
+**Hoy.** La primera vez, una bienvenida de 3 preguntas (objetivo, nervios y variante de español), sin crear cuenta, que lleva al diagnóstico. Después, tus metas con su avance, la práctica del día del plan de 30 días a un toque, tu racha, accesos rápidos, un consejo del día y los ajustes.
 
 **Evaluar.** Elige entre 22 escenarios en 6 ambientes (Confianza, Profesional, Liderazgo, Público, Social, Digital); se puede enlazar uno directo con `evaluar.html?escenario=toast` (y `&audiencia=1`). Un solo botón «Empezar» pide permisos, hace una cuenta regresiva, muestra la consigna sobre el video y termina solo al acabar el tiempo. La **audiencia virtual** opcional reacciona en vivo a cómo hablas. Mide localmente:
 - **Voz:** ritmo, muletillas regionales, **sonidos de duda «eh/mmm» detectados en el audio** (los que la transcripción borra), tiempo hablando, silencios largos, variación de tono, volumen.

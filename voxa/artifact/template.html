@@ -36,6 +36,11 @@
       <p class="note" id="tStreak"></p>
     </div>
 
+    <div class="card full" id="goalsCard">
+      <h2>Tu diagnóstico y tus metas</h2>
+      <div id="goalsBox"></div>
+    </div>
+
     <div class="card full" id="quickCard">
       <h2>Practica lo que necesites</h2>
       <div class="quick">
@@ -237,6 +242,52 @@
     </div>
   </section>
 
+  <!-- ============================ DIAGNÓSTICO ============================ -->
+  <section class="view hidden" id="v-diagnostico" data-title="Diagnóstico">
+    <div class="card full" id="dgIntro">
+      <h2>Tu diagnóstico de comunicación</h2>
+      <p class="lead">En unos 8 minutos sabrás dónde estás hoy en 8 dimensiones, cuáles son tus fortalezas y en qué conviene enfocarte. Con eso elegirás tus metas.</p>
+      <ol class="steps-line"><li>Cómo te ves (2 min)</li><li>Prueba de voz (2 min)</li><li>Prueba escrita (2 min)</li><li>Tu perfil y tus metas</li></ol>
+      <p class="note">Las pruebas son opcionales, pero sin ellas el diagnóstico sólo refleja cómo te ves. Todo queda en este navegador.</p>
+    </div>
+    <div class="card full" id="dgStep1">
+      <h2>1. ¿Qué tan de acuerdo estás?</h2>
+      <div id="selfItems"></div>
+    </div>
+    <div class="card full" id="dgStep2">
+      <h2>2. Prueba de voz: preséntate en 60 segundos</h2>
+      <div class="prompt"><strong>Preséntate en 60 segundos</strong>Quién eres, qué haces y qué te apasiona. Cierra con una frase memorable.</div>
+      <div class="rec-choices">
+        <label for="dgVideo" class="btn-link cta">🎥 Grabarme en video</label>
+        <input type="file" id="dgVideo" accept="video/*" capture="user" class="visually-hidden">
+        <label for="dgAudio" class="btn-link file-btn">🎙 Grabar sólo mi voz</label>
+        <input type="file" id="dgAudio" accept="audio/*" capture class="visually-hidden">
+        <label for="dgFile" class="btn-link file-btn">📁 Elegir una grabación</label>
+        <input type="file" id="dgFile" accept="audio/*,video/*" class="visually-hidden">
+      </div>
+      <p class="note" id="dgFileName"></p>
+      <label for="dgSaid">¿Qué dijiste? (opcional: si lo escribes medimos también estructura y muletillas)</label>
+      <textarea id="dgSaid" placeholder="Si no puedes grabarte ahora, escribe aquí tu presentación como la dirías."></textarea>
+      <div class="progress hidden" id="dgProgress" aria-hidden="true"><div id="dgBar"></div></div>
+      <p class="note" id="dgVoiceStatus" aria-live="polite"></p>
+    </div>
+    <div class="card full" id="dgStep3">
+      <h2>3. Prueba escrita</h2>
+      <div class="prompt"><strong>Pide el viernes libre</strong>Escríbele a tu jefe o jefa un mensaje breve para pedir el viernes libre. Escríbelo como lo enviarías de verdad.</div>
+      <label for="dgWrite" class="visually-hidden">Tu mensaje</label>
+      <textarea id="dgWrite" placeholder="Hola Carolina: …"></textarea>
+    </div>
+    <div class="card full">
+      <div class="btns"><button id="dgRun" class="cta">Ver mi diagnóstico</button></div>
+      <p class="note" id="dgErr" aria-live="polite"></p>
+    </div>
+    <div class="card full hidden" id="dgResult">
+      <div id="dgOut"></div>
+      <div id="dgGoals"></div>
+      <div class="btns"><button id="dgSave" class="cta">Guardar mis metas</button></div>
+    </div>
+  </section>
+
   <!-- ============================ EVENTO REAL ============================ -->
   <section class="view hidden" id="v-evento" data-title="Evento real">
     <div class="card full" id="evFormCard">
@@ -286,6 +337,14 @@
       <h2>Resumen</h2>
       <div class="kpis" id="kpis"></div>
       <p class="note" id="pEmpty"></p>
+    </div>
+    <div class="card full" id="pDiag">
+      <h2>Tu diagnóstico: antes y ahora</h2>
+      <div id="pDiagOut"></div>
+    </div>
+    <div class="card full">
+      <h2>Tus metas</h2>
+      <div id="pGoals"></div>
     </div>
     <div class="card full">
       <h2>Evolución del puntaje</h2>

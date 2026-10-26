@@ -10,7 +10,7 @@ $('topNav').innerHTML = VIEWS.map(([id, label]) => `<button data-go="${id}">${la
 $('bottomNav').innerHTML = VIEWS.map(([id, label, ic]) => `<button data-go="${id}">${icon(ic)}<span>${label}</span></button>`).join('');
 const onShow = {};
 // Vistas que no están en la barra (se abren desde Hoy).
-const ALL_VIEWS = [...VIEWS.map(v => v[0]), 'evento'];
+const ALL_VIEWS = [...VIEWS.map(v => v[0]), 'evento', 'diagnostico'];
 function go(view, opts = {}) {
   if (!ALL_VIEWS.includes(view)) view = 'hoy';
   for (const id of ALL_VIEWS) $('v-' + id).classList.toggle('hidden', id !== view);
@@ -168,15 +168,15 @@ pickOne($('wNerves'), 'v', v => wNerves = +v);
 $('wDone').addEventListener('click', () => {
   Object.assign(profile, { goal: wGoal, onboarded: true, startNerves: wNerves });
   saveProfile(profile);
-  // A quien le cuesta mucho, la primera práctica es de baja exigencia: hablar de algo que le gusta.
-  go('ensayar', { scenario: wNerves >= 5 ? 'passion' : 'intro' });
+  // Estado inicial primero: el diagnóstico define las metas (como la prueba de nivel de ELSA o el assessment de BetterUp).
+  go('diagnostico');
 });
 
 onShow.hoy = () => {
   const sessions = loadSessions();
   const firstRun = !profile.onboarded && !sessions.length;
   $('welcome').classList.toggle('hidden', !firstRun);
-  for (const id of ['today', 'quickCard', 'tipCard', 'aiCard']) $(id).classList.toggle('hidden', firstRun);
+  for (const id of ['today', 'goalsCard', 'quickCard', 'tipCard', 'aiCard']) $(id).classList.toggle('hidden', firstRun);
   const task = todayTask(sessions);
   $('tWeek').textContent = task.week + (task.day ? ` · día ${task.day} de 28` : '');
   $('tText').textContent = task.text;
@@ -196,6 +196,7 @@ onShow.hoy = () => {
   $('tStreak').textContent = (s ? `🔥 ${s} ${s === 1 ? 'día seguido' : 'días seguidos'}` : 'Empieza tu racha hoy') + (last ? ` · Último puntaje: ${last.total} en «${last.scenarioName}»` : '');
   $('tip').textContent = TIPS[Math.floor(Date.now() / 864e5) % TIPS.length];
   const next = LESSONS.find(l => !profile.lessons?.[l.id]);
+  renderGoalsBox();
   $('nextLesson').innerHTML = next ? `<button type="button" class="linkish" data-open-lesson="${next.id}">📘 Lección sugerida (${next.minutes} min): ${esc(next.title)}</button>` : '';
 };
 
@@ -261,27 +262,83 @@ onShow.ensayar = (o = {}) => {
 // --------------------------------------------------- análisis de audio subido
 // Decodifica la grabación a 16 kHz y la recorre en ventanas de ~64 ms cada ~33 ms: volumen, tono y pausas.
 const SR = 16000, MAX_SECONDS = 300;
-async function analyzeAudio(f, onProgress) {
-  if (f.size > 150e6) throw new Error('La grabación pesa más de 150 MB. Recórtala a unos pocos minutos.');
-  let audio;
+// Lectura en tres intentos, porque cada navegador decodifica formatos distintos (el .MOV del iPhone suele
+// fallar en el primero): 1) decodificar a 16 kHz, 2) decodificar con el contexto de audio normal (incluida la
+// forma con callbacks del Safari antiguo) y bajar la frecuencia, 3) si nada funciona, reproducir el archivo en
+// silencio y medirlo mientras suena (analyzeByPlayback, que necesita un toque de la persona).
+async function decodeFile(f) {
+  const buf = await f.arrayBuffer();
+  try { return await new OfflineAudioContext(1, SR, SR).decodeAudioData(buf.slice(0)); } catch {}
   try {
-    const ctx = new OfflineAudioContext(1, SR, SR);
-    audio = await ctx.decodeAudioData(await f.arrayBuffer());
-  } catch {
-    throw new Error('No pudimos leer ese archivo. Prueba con una nota de voz (m4a, mp3, wav) o un video mp4/webm.');
+    const AC = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AC();
+    const audio = await new Promise((ok, fail) => { const p = ctx.decodeAudioData(buf.slice(0), ok, fail); if (p?.then) p.then(ok, fail); });
+    ctx.close?.();
+    return audio;
+  } catch {}
+  return null;
+}
+
+// Mezcla a mono y baja a ~16 kHz promediando bloques (suficiente para tono de voz y volumen).
+function toMono16k(audio, maxSeconds) {
+  const sr = audio.sampleRate, ch = audio.numberOfChannels, len = Math.min(audio.length, Math.round(maxSeconds * sr));
+  const factor = Math.max(1, Math.floor(sr / SR)), outLen = Math.floor(len / factor), out = new Float32Array(outLen);
+  for (let c = 0; c < ch; c++) {
+    const d = audio.getChannelData(c);
+    for (let i = 0; i < outLen; i++) { let acc = 0; for (let k = 0; k < factor; k++) acc += d[i * factor + k]; out[i] += acc / factor / ch; }
   }
-  const ch = audio.numberOfChannels, len = Math.min(audio.length, MAX_SECONDS * SR);
-  let data = audio.getChannelData(0).subarray(0, len);
-  if (ch > 1) { const mix = new Float32Array(len); for (let c = 0; c < ch; c++) { const d = audio.getChannelData(c); for (let i = 0; i < len; i++) mix[i] += d[i] / ch; } data = mix; }
-  const hop = Math.round(SR / 30), win = 1024, out = [];
+  return { data: out, rate: sr / factor, truncated: audio.length > len, duration: len / sr };
+}
+
+async function framesFrom(data, rate, onProgress) {
+  const hop = Math.round(rate / 30), win = Math.round(rate * 0.064), out = [];
   for (let i = 0, k = 0; i + win <= data.length; i += hop, k++) {
     const frame = data.subarray(i, i + win);
     const rms = rmsOf(frame);
-    out.push({ t: i / SR, rms, pitch: rms > 0.01 ? detectPitch(frame, SR) : 0 });
+    out.push({ t: i / rate, rms, pitch: rms > 0.01 ? detectPitch(frame, rate) : 0 });
     if (k % 300 === 0) { onProgress(i / data.length); await new Promise(r => setTimeout(r)); }
   }
   onProgress(1);
-  return { samples: out, truncated: audio.length > len, duration: len / SR };
+  return out;
+}
+
+async function analyzeAudio(f, onProgress) {
+  if (f.size > 150e6) throw new Error('La grabación pesa más de 150 MB. Recórtala a unos pocos minutos.');
+  const audio = await decodeFile(f);
+  if (!audio) { const e = new Error('needs-playback'); e.code = 'needs-playback'; throw e; }
+  const m = toMono16k(audio, MAX_SECONDS);
+  return { samples: await framesFrom(m.data, m.rate, onProgress), truncated: m.truncated, duration: m.duration };
+}
+
+// Plan C: reproduce la grabación sin sonido hacia los parlantes y la mide en tiempo real. Tarda lo que dura.
+async function analyzeByPlayback(f, onProgress) {
+  const url = URL.createObjectURL(f);
+  const el = document.createElement(f.type.startsWith('audio/') ? 'audio' : 'video');
+  el.playsInline = true; el.preload = 'auto'; el.src = url;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  const ctx = new AC();
+  try {
+    const src = ctx.createMediaElementSource(el);
+    const an = ctx.createAnalyser(); an.fftSize = 2048;
+    const mute = ctx.createGain(); mute.gain.value = 0;     // Safari sólo procesa nodos conectados a la salida
+    src.connect(an); an.connect(mute); mute.connect(ctx.destination);
+    await ctx.resume();
+    await el.play();
+    await new Promise((ok, fail) => { if (el.readyState >= 1) ok(); else { el.onloadedmetadata = ok; el.onerror = () => fail(new Error('No pudimos reproducir la grabación.')); } });
+    const total = Math.min(isFinite(el.duration) ? el.duration : MAX_SECONDS, MAX_SECONDS);
+    const buf = new Float32Array(an.fftSize), out = [];
+    await new Promise((ok) => {
+      const timer = setInterval(() => {
+        an.getFloatTimeDomainData(buf);
+        const rms = rmsOf(buf), t = el.currentTime;
+        out.push({ t, rms, pitch: rms > 0.01 ? detectPitch(buf, ctx.sampleRate) : 0 });
+        onProgress(Math.min(1, t / total));
+        if (el.ended || t >= total) { clearInterval(timer); ok(); }
+      }, 33);
+    });
+    onProgress(1);
+    return { samples: out, truncated: el.duration > total, duration: total };
+  } finally { el.pause(); ctx.close?.(); URL.revokeObjectURL(url); }
 }
 
 function voiceMetrics(samples, text, dur) {
@@ -314,8 +371,8 @@ function voiceMetrics(samples, text, dur) {
 }
 
 const level3 = (v, lo, hi) => v < lo ? 'poco' : v > hi ? 'mucho' : 'adecuado';
-function scoreItems(m, isAudio) {
-  const items = [], s = scenario();
+function scoreItems(m, isAudio, s = scenario()) {
+  const items = [];
   const add = (dim, key, label, display, target, sc) => items.push({ dim, key, label, display, target, s: Math.round(sc) });
   if (m.hasText) {
     const minutes = isAudio ? Math.max(m.dur / 60, 1 / 60) : Math.max(m.words / 140, 1 / 60);
@@ -377,7 +434,29 @@ $('btnEval').addEventListener('click', async () => {
     if (isAudio) {
       $('anProgress').classList.remove('hidden');
       $('evalStatus').textContent = 'Analizando tu voz…';
-      const a = await analyzeAudio(file, p => { $('anBar').style.width = Math.round(p * 100) + '%'; });
+      const progress = p => { $('anBar').style.width = Math.round(p * 100) + '%'; };
+      let a;
+      try { a = await analyzeAudio(file, progress); }
+      catch (err) {
+        if (err.code !== 'needs-playback') throw err;
+        // Hace falta un toque nuevo para reproducir con sonido (regla de los navegadores móviles).
+        $('evalStatus').innerHTML = 'Tu celular guardó la grabación en un formato que no podemos leer directo. <button type="button" id="btnPlayback" class="primary">▶ Escuchar y analizar</button> <span class="note">(tarda lo que dura la grabación; no se oirá nada)</span>';
+        $('btnEval').disabled = false; $('anProgress').classList.add('hidden');
+        $('btnPlayback').addEventListener('click', async () => {
+          $('btnPlayback').disabled = true; $('anProgress').classList.remove('hidden');
+          $('evalStatus').textContent = 'Escuchando tu grabación…';
+          try {
+            const r = await analyzeByPlayback(file, progress);
+            const mm = voiceMetrics(r.samples, $('said').value, r.duration); mm.samples = r.samples;
+            $('evalStatus').textContent = ''; $('anProgress').classList.add('hidden');
+            showReport(mm, true, $('said').value);
+          } catch (e2) {
+            $('anProgress').classList.add('hidden');
+            $('evalStatus').textContent = 'No pudimos analizar esta grabación (' + (e2.message || e2.name) + '). Prueba grabando sólo tu voz con «Grabar sólo mi voz».';
+          }
+        }, { once: true });
+        return;
+      }
       m = voiceMetrics(a.samples, text, a.duration);
       m.samples = a.samples;
       $('evalStatus').textContent = a.truncated ? `Analizamos los primeros ${MAX_SECONDS / 60} minutos.` : '';
@@ -424,7 +503,7 @@ function showReport(m, isAudio, text) {
   last = { m, r, isAudio, text, session: {
     id: Date.now().toString(36), date: new Date().toISOString(), type: 'ensayo', mode: isAudio ? 'audio' : 'texto',
     scenario: scenario().id, scenarioName: scenario().name, total: r.total, dims: r.dims,
-    anxietyBefore: feelBefore.get(), anxietyAfter: null,
+    anxietyBefore: feelBefore.get(), anxietyAfter: null, metrics: Object.fromEntries(r.items.map(i => [i.key, { s: i.s }])),
   } };
   persist();
   $('report').scrollIntoView({ behavior: 'smooth' });
@@ -810,6 +889,7 @@ onShow.progreso = () => {
   profile.ladder ||= {};
   $('ladder').innerHTML = LADDER.map((t, i) => `<li><label><input type="checkbox" data-i="${i}" ${profile.ladder[i] ? 'checked' : ''}> <span>${i + 1}. ${t}</span></label></li>`).join('');
   drawTrend(sessions.filter(x => x.type !== 'escritura'));
+  renderProgressDiagnosis(sessions);
 };
 function drawTrend(list) {
   const c = $('trend'), ctx = c.getContext('2d'), W = c.width, H = c.height, pad = 30;
@@ -965,6 +1045,120 @@ Responde SÓLO con JSON: {"scores":{"encuadre":0,"iluminacion":0,"mirada":0,"pos
   } catch (e) {
     $('presenceOut').innerHTML = `<p class="note">${esc(e?.code ? aiErrorText(e) : (e?.message || 'No pudimos analizar el video.'))}</p>`;
   } finally { $('btnPresence').disabled = false; }
+});
+
+// ================================================================= DIAGNÓSTICO Y METAS
+// Estado inicial → diagnóstico (autoevaluación + prueba de voz + prueba escrita) → metas con plazo que avanzan solas.
+let dgAnswers = {}, dgFile = null, dgResult = null;
+function renderSelfItems() { $('selfItems').innerHTML = selfAssessmentHTML(dgAnswers); }
+$('selfItems').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-dim]'); if (!b) return;
+  dgAnswers[b.dataset.dim] = +b.dataset.v;
+  b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+});
+for (const id of ['dgVideo', 'dgAudio', 'dgFile']) $(id).addEventListener('change', (e) => {
+  dgFile = e.target.files[0] || null;
+  $('dgFileName').textContent = dgFile ? `Grabación lista: ${dgFile.name || 'grabación'} (${(dgFile.size / 1e6).toFixed(1)} MB)` : '';
+  $('dgVoiceStatus').textContent = '';
+});
+onShow.diagnostico = () => {
+  dgAnswers = {}; dgFile = null; dgResult = null;
+  if (profile.startNerves) dgAnswers.confianza = profile.startNerves;
+  renderSelfItems();
+  for (const id of ['dgVideo', 'dgAudio', 'dgFile']) $(id).value = '';
+  $('dgFileName').textContent = ''; $('dgVoiceStatus').textContent = ''; $('dgErr').textContent = '';
+  $('dgResult').classList.add('hidden');
+};
+
+// Prueba de voz: devuelve los ítems puntuados (o [] si no hay grabación ni texto).
+async function diagnosisSpeech() {
+  const text = $('dgSaid').value, intro = SCENARIOS.find(s => s.id === 'intro');
+  const progress = p => { $('dgBar').style.width = Math.round(p * 100) + '%'; };
+  if (!dgFile) {
+    if (wordCount(text) < 5) return [];
+    return scoreItems({ words: wordCount(text), hasText: true, fillers: countMatches(text, FILLER_RE), hedges: countMatches(text, HEDGE_RE), dur: wordCount(text) / 140 * 60 }, false, intro).items;
+  }
+  $('dgProgress').classList.remove('hidden');
+  $('dgVoiceStatus').textContent = 'Analizando tu voz…';
+  try {
+    let a;
+    try { a = await analyzeAudio(dgFile, progress); }
+    catch (err) {
+      if (err.code !== 'needs-playback') throw err;
+      $('dgVoiceStatus').textContent = 'Escuchando tu grabación (tarda lo que dura; no se oirá nada)…';
+      a = await analyzeByPlayback(dgFile, progress);
+    }
+    $('dgVoiceStatus').textContent = 'Voz analizada.';
+    return scoreItems(voiceMetrics(a.samples, text, a.duration), true, intro).items;
+  } finally { $('dgProgress').classList.add('hidden'); }
+}
+
+$('dgRun').addEventListener('click', async () => {
+  const answered = Object.keys(dgAnswers).length;
+  if (answered < SELF_ITEMS.length) { $('dgErr').textContent = `Responde las ${SELF_ITEMS.length} afirmaciones (llevas ${answered}).`; $('dgStep1').scrollIntoView({ behavior: 'smooth' }); return; }
+  $('dgErr').textContent = ''; $('dgRun').disabled = true;
+  let speechItems = [];
+  try { speechItems = await diagnosisSpeech(); }
+  catch (e) { $('dgVoiceStatus').textContent = `No pudimos analizar la grabación (${e.message || e.name}). Seguimos con el resto; puedes escribir lo que dijiste.`; }
+  const w = $('dgWrite').value.trim();
+  const writingScore = wordCount(w) >= 5 ? analyzeWriting(w, KINDS.find(k => k.id === 'pedido')).score : null;
+  const presence = [...loadSessions()].reverse().find(s => s.presence)?.presence || null;
+  dgResult = computeProfile(dgAnswers, measuredFrom({ speechItems, writingScore, presenceScores: presence }));
+  const prev = profile.diagnoses?.at(-1) || null;
+  $('dgOut').innerHTML = diagnosisHTML(dgResult, prev);
+  drawRadar($('dgOut').querySelector('#radar'), dgResult.profile, prev?.profile);
+  $('dgGoals').innerHTML = goalPickerHTML(suggestGoals(dgResult));
+  $('dgResult').classList.remove('hidden');
+  $('dgRun').disabled = false;
+  $('dgResult').scrollIntoView({ behavior: 'smooth' });
+});
+$('dgGoals').addEventListener('change', (e) => {
+  if (!e.target.matches('[data-goal]')) return;
+  const on = $('dgGoals').querySelectorAll('[data-goal]:checked');
+  if (on.length > 3) e.target.checked = false;
+});
+$('dgSave').addEventListener('click', () => {
+  if (!dgResult) return;
+  const dims = [...$('dgGoals').querySelectorAll('[data-goal]:checked')].map(x => x.dataset.goal);
+  const opts = { days: +$('goalDays').value || 30, why: $('goalWhy').value.trim() };
+  profile.diagnoses = [...(profile.diagnoses || []), { date: new Date().toISOString(), ...dgResult }];
+  // Las metas activas del mismo tipo se reemplazan; las demás se conservan.
+  profile.goals = [...(profile.goals || []).filter(g => !dims.includes(g.dim)), ...dims.map(d => createGoal(d, opts))];
+  profile.onboarded = true;
+  saveProfile(profile);
+  go('hoy');
+});
+
+function renderGoalsBox() {
+  const d = profile.diagnoses?.at(-1);
+  if (!d) {
+    $('goalsBox').innerHTML = `<p class="lead">Empieza por saber dónde estás: un diagnóstico de 8 minutos en 8 dimensiones te da tu nivel, tus fortalezas y metas a tu medida.</p>
+      <div class="btns"><button class="cta" data-go="diagnostico">Haz tu diagnóstico inicial (8 min)</button></div>`;
+    return;
+  }
+  const age = Math.floor((Date.now() - new Date(d.date)) / 864e5);
+  $('goalsBox').innerHTML = `<p class="note">Nivel ${esc(d.level)} · ${d.total} puntos · diagnóstico del ${new Date(d.date).toLocaleDateString('es')}</p>
+    ${goalsHTML(profile.goals, loadSessions())}
+    ${age >= 28 ? '<p style="margin-top:10px"><button class="linkish" data-go="diagnostico">🔁 Pasaron 4 semanas: repite el diagnóstico y compara</button></p>' : ''}`;
+}
+function renderProgressDiagnosis(sessions) {
+  const ds = profile.diagnoses || [];
+  if (!ds.length) {
+    $('pDiagOut').innerHTML = '<p class="note">Todavía no haces tu diagnóstico.</p><div class="btns"><button class="cta" data-go="diagnostico">Hacer mi diagnóstico</button></div>';
+  } else {
+    const first = ds[0], latest = ds[ds.length - 1];
+    $('pDiagOut').innerHTML = diagnosisHTML(latest, ds.length > 1 ? first : null)
+      + `<p class="note">${ds.length > 1 ? `Comparado con tu primer diagnóstico (${new Date(first.date).toLocaleDateString('es')}). El área gris es tu punto de partida.` : 'Repite el diagnóstico en unas 4 semanas para ver tu avance.'}</p>
+      <div class="btns"><button data-go="diagnostico">Repetir el diagnóstico</button></div>`;
+    drawRadar($('pDiagOut').querySelector('#radar'), latest.profile, ds.length > 1 ? first.profile : null);
+  }
+  $('pGoals').innerHTML = goalsHTML(profile.goals, sessions);
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-goal-next]'); if (!b) return;
+  const g = (profile.goals || []).find(x => x.id === b.dataset.goalNext); if (!g) return;
+  const n = g.next;
+  go(n.view, { scenario: n.scenario, mode: n.mode, persona: n.persona, kind: n.kind });
 });
 
 // ---------------------------------------------------------------- arranque

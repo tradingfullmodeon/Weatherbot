@@ -91,7 +91,7 @@
   a { color: var(--accent); }
   textarea { width: 100%; font: inherit; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--text); padding: 10px; min-height: 110px; }
   .btn-link { display: inline-flex; align-items: center; justify-content: center; padding: 10px 18px; border-radius: 12px; text-decoration: none; font-weight: 600; }
-  .btn-link.primary, button.cta { background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent); }
+  .btn-link.primary, .btn-link.cta, button.cta { background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent); }
   button.cta, .btn-link.cta { font-size: 1.1rem; padding: 14px 22px; border-radius: 14px; font-weight: 700; min-height: 52px; }
   .muted { color: var(--muted); }
   .lead { font-size: 1.05rem; }

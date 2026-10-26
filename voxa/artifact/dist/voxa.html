@@ -94,7 +94,7 @@
   a { color: var(--accent); }
   textarea { width: 100%; font: inherit; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--text); padding: 10px; min-height: 110px; }
   .btn-link { display: inline-flex; align-items: center; justify-content: center; padding: 10px 18px; border-radius: 12px; text-decoration: none; font-weight: 600; }
-  .btn-link.primary, button.cta { background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent); }
+  .btn-link.primary, .btn-link.cta, button.cta { background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent); }
   button.cta, .btn-link.cta { font-size: 1.1rem; padding: 14px 22px; border-radius: 14px; font-weight: 700; min-height: 52px; }
   .muted { color: var(--muted); }
   .lead { font-size: 1.05rem; }
@@ -250,6 +250,21 @@
   #preview { width: 100%; max-height: 260px; border-radius: 12px; background: #000; margin-top: 8px; }
   .linkish { background: none; border: 0; color: var(--accent); padding: 4px 0; min-height: 44px; text-align: left; text-decoration: underline; cursor: pointer; }
   @media (max-width: 700px) { nav.bottom-nav button { font-size: .66rem; } }
+  /* Diagnóstico y metas */
+  .steps-line { display: flex; flex-wrap: wrap; gap: 6px 16px; padding-left: 18px; color: var(--muted); }
+  .self-item { border-bottom: 1px solid var(--line); padding: 8px 0; }
+  .self-item p { margin: 0 0 6px; }
+  .scale5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .scale5 button { display: flex; flex-direction: column; align-items: center; padding: 6px 0; line-height: 1.15; font-weight: 700; }
+  .scale5 button small { font-weight: 400; font-size: .68rem; color: var(--muted); }
+  .scale5 button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  .scale5 button[aria-pressed="true"] small { color: inherit; }
+  .goal-pick { display: flex; gap: 10px; align-items: flex-start; padding: 10px; border: 1px solid var(--line); border-radius: 12px; margin: 6px 0; cursor: pointer; color: var(--text); }
+  .goal-pick input { width: 22px; height: 22px; margin-top: 2px; flex: 0 0 auto; }
+  .goal-pick small { display: block; color: var(--muted); }
+  .goal { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin: 8px 0; }
+  .goal-head, .goal-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .goal-foot { margin-top: 6px; }
 
 </style>
 
@@ -283,6 +298,11 @@
       <p class="muted" id="tWhy"></p>
       <div class="btns"><button class="btn-link cta" id="tGo">▶ Hacer la práctica de hoy</button></div>
       <p class="note" id="tStreak"></p>
+    </div>
+
+    <div class="card full" id="goalsCard">
+      <h2>Tu diagnóstico y tus metas</h2>
+      <div id="goalsBox"></div>
     </div>
 
     <div class="card full" id="quickCard">
@@ -486,6 +506,52 @@
     </div>
   </section>
 
+  <!-- ============================ DIAGNÓSTICO ============================ -->
+  <section class="view hidden" id="v-diagnostico" data-title="Diagnóstico">
+    <div class="card full" id="dgIntro">
+      <h2>Tu diagnóstico de comunicación</h2>
+      <p class="lead">En unos 8 minutos sabrás dónde estás hoy en 8 dimensiones, cuáles son tus fortalezas y en qué conviene enfocarte. Con eso elegirás tus metas.</p>
+      <ol class="steps-line"><li>Cómo te ves (2 min)</li><li>Prueba de voz (2 min)</li><li>Prueba escrita (2 min)</li><li>Tu perfil y tus metas</li></ol>
+      <p class="note">Las pruebas son opcionales, pero sin ellas el diagnóstico sólo refleja cómo te ves. Todo queda en este navegador.</p>
+    </div>
+    <div class="card full" id="dgStep1">
+      <h2>1. ¿Qué tan de acuerdo estás?</h2>
+      <div id="selfItems"></div>
+    </div>
+    <div class="card full" id="dgStep2">
+      <h2>2. Prueba de voz: preséntate en 60 segundos</h2>
+      <div class="prompt"><strong>Preséntate en 60 segundos</strong>Quién eres, qué haces y qué te apasiona. Cierra con una frase memorable.</div>
+      <div class="rec-choices">
+        <label for="dgVideo" class="btn-link cta">🎥 Grabarme en video</label>
+        <input type="file" id="dgVideo" accept="video/*" capture="user" class="visually-hidden">
+        <label for="dgAudio" class="btn-link file-btn">🎙 Grabar sólo mi voz</label>
+        <input type="file" id="dgAudio" accept="audio/*" capture class="visually-hidden">
+        <label for="dgFile" class="btn-link file-btn">📁 Elegir una grabación</label>
+        <input type="file" id="dgFile" accept="audio/*,video/*" class="visually-hidden">
+      </div>
+      <p class="note" id="dgFileName"></p>
+      <label for="dgSaid">¿Qué dijiste? (opcional: si lo escribes medimos también estructura y muletillas)</label>
+      <textarea id="dgSaid" placeholder="Si no puedes grabarte ahora, escribe aquí tu presentación como la dirías."></textarea>
+      <div class="progress hidden" id="dgProgress" aria-hidden="true"><div id="dgBar"></div></div>
+      <p class="note" id="dgVoiceStatus" aria-live="polite"></p>
+    </div>
+    <div class="card full" id="dgStep3">
+      <h2>3. Prueba escrita</h2>
+      <div class="prompt"><strong>Pide el viernes libre</strong>Escríbele a tu jefe o jefa un mensaje breve para pedir el viernes libre. Escríbelo como lo enviarías de verdad.</div>
+      <label for="dgWrite" class="visually-hidden">Tu mensaje</label>
+      <textarea id="dgWrite" placeholder="Hola Carolina: …"></textarea>
+    </div>
+    <div class="card full">
+      <div class="btns"><button id="dgRun" class="cta">Ver mi diagnóstico</button></div>
+      <p class="note" id="dgErr" aria-live="polite"></p>
+    </div>
+    <div class="card full hidden" id="dgResult">
+      <div id="dgOut"></div>
+      <div id="dgGoals"></div>
+      <div class="btns"><button id="dgSave" class="cta">Guardar mis metas</button></div>
+    </div>
+  </section>
+
   <!-- ============================ EVENTO REAL ============================ -->
   <section class="view hidden" id="v-evento" data-title="Evento real">
     <div class="card full" id="evFormCard">
@@ -535,6 +601,14 @@
       <h2>Resumen</h2>
       <div class="kpis" id="kpis"></div>
       <p class="note" id="pEmpty"></p>
+    </div>
+    <div class="card full" id="pDiag">
+      <h2>Tu diagnóstico: antes y ahora</h2>
+      <div id="pDiagOut"></div>
+    </div>
+    <div class="card full">
+      <h2>Tus metas</h2>
+      <div id="pGoals"></div>
     </div>
     <div class="card full">
       <h2>Evolución del puntaje</h2>
@@ -1387,6 +1461,203 @@ Genera las 6 preguntas u objeciones más probables y difíciles para ESTE evento
 Responde SÓLO con JSON: {"questions":[{"q":"...","why":"...","tip":"..."}]}`;
 }
 
+// Diagnóstico inicial y metas. Estado inicial (autoevaluación + prueba real) → perfil por dimensión →
+// metas específicas y desafiantes con plazo y compromiso (Locke y Latham), que avanzan solas con cada
+// práctica → re-diagnóstico para comparar. Lo usa la versión publicada (artifact/app.js).
+
+const DIMENSIONS = [
+  { id: 'estructura', name: 'Estructura y claridad', icon: '🧭' },
+  { id: 'voz', name: 'Voz', icon: '🎙' },
+  { id: 'fluidez', name: 'Fluidez', icon: '🌊' },
+  { id: 'presencia', name: 'Presencia y lenguaje corporal', icon: '🧍' },
+  { id: 'escucha', name: 'Escucha', icon: '👂' },
+  { id: 'asertividad', name: 'Asertividad', icon: '🗣' },
+  { id: 'confianza', name: 'Confianza', icon: '💪' },
+  { id: 'escritura', name: 'Escritura', icon: '✍️' },
+];
+
+// Afirmaciones de autoevaluación (1 = nada de acuerdo … 5 = totalmente de acuerdo). «reverse» invierte la escala.
+const SELF_ITEMS = [
+  { dim: 'estructura', text: 'Cuando hablo voy al punto y la gente entiende mi idea principal.' },
+  { dim: 'voz', text: 'Mi voz suena segura y con energía: varío el tono y hago pausas.' },
+  { dim: 'fluidez', text: 'Hablo con fluidez, sin muchas muletillas ni silencios incómodos.' },
+  { dim: 'presencia', text: 'Frente a otros o en video, mi postura y mi mirada transmiten seguridad.' },
+  { dim: 'escucha', text: 'Escucho sin interrumpir y hago preguntas para entender bien.' },
+  { dim: 'asertividad', text: 'Pido lo que necesito y pongo límites sin agresividad ni rodeos.' },
+  { dim: 'confianza', text: 'Me pongo muy nervioso o nerviosa antes de hablar frente a otros.', reverse: true },
+  { dim: 'escritura', text: 'Mis correos y mensajes son claros y la gente responde lo que necesito.' },
+];
+
+const LEVELS = [[85, 'Referente'], [70, 'Hábil'], [55, 'Competente'], [40, 'Practicante'], [0, 'Explorador']];
+const levelOf = (score) => LEVELS.find(([min]) => score >= min)[1];
+const selfScore = (item, v) => Math.round(((item.reverse ? 6 - v : v) - 1) / 4 * 100);
+
+// Mediciones de la prueba real a partir de las métricas del ensayo (items con key y s 0–100) y del texto.
+function measuredFrom({ speechItems = [], writingScore = null, presenceScores = null } = {}) {
+  const s = (k) => speechItems.find(i => i.key === k)?.s;
+  const avg = (...xs) => { const v = xs.filter(x => x != null); return v.length ? Math.round(mean(v)) : null; };
+  return {
+    estructura: avg(s('length')),
+    voz: avg(s('pitch'), s('volume')),
+    fluidez: avg(s('hums'), s('pauses'), s('fillers')),
+    asertividad: avg(s('hedges')),
+    presencia: presenceScores ? avg(...Object.values(presenceScores)) : null,
+    escritura: writingScore,
+    escucha: null, confianza: null,
+  };
+}
+
+// Perfil: combina cómo te ves (40%) con lo medido (60%) cuando hay medición; si no, sólo la autoevaluación.
+function computeProfile(selfAnswers, measured = {}) {
+  const self = {}, profile = {};
+  for (const item of SELF_ITEMS) if (selfAnswers[item.dim] != null) self[item.dim] = selfScore(item, selfAnswers[item.dim]);
+  for (const d of DIMENSIONS) {
+    const m = measured[d.id], v = self[d.id];
+    if (m == null && v == null) continue;
+    profile[d.id] = m == null ? v : v == null ? m : Math.round(0.6 * m + 0.4 * v);
+  }
+  const vals = Object.values(profile), total = vals.length ? Math.round(mean(vals)) : 0;
+  const ranked = Object.entries(profile).sort((a, b) => b[1] - a[1]);
+  // Ventana de Johari: diferencias grandes entre cómo te ves y cómo te medimos.
+  const gaps = DIMENSIONS.filter(d => self[d.id] != null && measured[d.id] != null && Math.abs(self[d.id] - measured[d.id]) >= 25)
+    .map(d => ({ dim: d.id, self: self[d.id], measured: measured[d.id], kind: self[d.id] > measured[d.id] ? 'sobre' : 'sub' }));
+  return { self, measured, profile, total, level: levelOf(total), strengths: ranked.slice(0, 2).map(r => r[0]), priorities: ranked.slice(-3).reverse().map(r => r[0]), gaps };
+}
+
+// ---------------------------------------------------------------- metas
+// Cada meta es específica (qué y cuánto), con evidencia automática (las prácticas que la cumplen) y una
+// práctica siguiente. Para habilidades complejas se plantea como meta de aprendizaje: repetir con un criterio.
+const GOAL_TEMPLATES = {
+  estructura: { title: 'Responder con estructura', detail: '3 ensayos con 75 puntos o más', check: { type: 'score', min: 75 }, count: 3,
+    next: { view: 'ensayar', scenario: 'interview' }, lesson: 'star' },
+  voz: { title: 'Una voz que mantiene la atención', detail: '3 grabaciones con variación de tono en el rango ideal', check: { type: 'metric', key: 'pitch', min: 90 }, count: 3,
+    next: { view: 'ensayar', scenario: 'opening', mode: 'audio' }, lesson: 'voz' },
+  fluidez: { title: 'Menos «eeh» y muletillas', detail: '3 grabaciones con menos de 2 «eeh» por minuto', check: { type: 'metric', key: 'hums', min: 85 }, count: 3,
+    next: { view: 'ensayar', scenario: 'passion', mode: 'audio' }, lesson: 'pausa' },
+  presencia: { title: 'Presencia en cámara', detail: '2 análisis de lenguaje corporal con 70 o más en mirada', check: { type: 'presence', key: 'mirada', min: 70 }, count: 2,
+    next: { view: 'ensayar', scenario: 'intro', mode: 'audio' }, lesson: 'presencia' },
+  escucha: { title: 'Escuchar mejor', detail: '3 roleplays con 75 o más en escucha', check: { type: 'roleplay', keys: ['escucha', 'preguntas'], min: 75 }, count: 3,
+    next: { view: 'roleplay', persona: 'cliente' }, lesson: 'escucha' },
+  asertividad: { title: 'Hablar con seguridad', detail: '3 ensayos casi sin frases que restan seguridad', check: { type: 'metric', key: 'hedges', min: 90 }, count: 3,
+    next: { view: 'ensayar', scenario: 'say-no' }, lesson: 'bluf' },
+  confianza: { title: 'Más calma al hablar', detail: '3 prácticas empezando con nervios de 2/5 o menos', check: { type: 'anxiety', max: 2 }, count: 3,
+    next: { view: 'ensayar', scenario: 'passion' }, lesson: 'nervios' },
+  escritura: { title: 'Escribir claro', detail: '3 textos con 85 o más en la revisión', check: { type: 'writing', min: 85 }, count: 3,
+    next: { view: 'escritura', kind: 'pedido' }, lesson: 'bluf' },
+};
+
+function suggestGoals(result) {
+  return result.priorities.filter(d => GOAL_TEMPLATES[d]).map(d => ({ dim: d, ...GOAL_TEMPLATES[d] }));
+}
+
+function createGoal(dim, { days = 30, why = '' } = {}, today = new Date()) {
+  const t = GOAL_TEMPLATES[dim];
+  const due = new Date(today); due.setDate(due.getDate() + days);
+  return { id: `${dim}-${today.getTime().toString(36)}`, dim, title: t.title, detail: t.detail, check: t.check, count: t.count,
+    next: t.next, lesson: t.lesson, why, start: today.toISOString(), due: due.toISOString().slice(0, 10) };
+}
+
+// ¿Esta sesión cuenta como evidencia de la meta?
+function sessionMeets(goal, s) {
+  const c = goal.check;
+  switch (c.type) {
+    case 'score': return (s.type === 'ensayo' || s.type === 'evaluacion') && s.total >= c.min;
+    case 'metric': return (s.type === 'ensayo' || s.type === 'evaluacion') && (s.metrics?.[c.key]?.s ?? -1) >= c.min;
+    case 'presence': return (s.presence?.[c.key] ?? -1) >= c.min;
+    case 'roleplay': return s.type === 'roleplay' && c.keys.some(k => (s.dims?.[k] ?? -1) >= c.min);
+    case 'anxiety': return s.anxietyBefore != null && s.anxietyBefore <= c.max;
+    case 'writing': return s.type === 'escritura' && s.total >= c.min;
+    default: return false;
+  }
+}
+
+function goalProgress(goal, sessions, today = new Date()) {
+  const hits = sessions.filter(s => s.date >= goal.start && sessionMeets(goal, s)).length;
+  const done = hits >= goal.count;
+  const daysLeft = Math.round((new Date(goal.due + 'T23:59:59') - today) / 864e5);
+  return { hits: Math.min(hits, goal.count), done, ratio: Math.min(1, hits / goal.count), daysLeft, expired: !done && daysLeft < 0 };
+}
+
+// ---------------------------------------------------------------- interfaz compartida
+const dimName = (id) => DIMENSIONS.find(d => d.id === id)?.name || id;
+
+function selfAssessmentHTML(answers = {}) {
+  const labels = ['Nada', 'Poco', 'A veces', 'Bastante', 'Totalmente'];
+  return SELF_ITEMS.map((it, i) => `<div class="self-item"><p><strong>${i + 1}.</strong> ${esc(it.text)}</p>
+    <div class="scale5" role="group" aria-label="${esc(it.text)}">${labels.map((l, k) =>
+      `<button type="button" data-dim="${it.dim}" data-v="${k + 1}" aria-pressed="${answers[it.dim] === k + 1}">${k + 1}<small>${l}</small></button>`).join('')}</div></div>`).join('');
+}
+
+// Gráfico de radar con el perfil (y, opcional, un perfil anterior para comparar).
+function drawRadar(canvas, profile, previous = null) {
+  const ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height, cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 58;
+  const css = getComputedStyle(document.documentElement);
+  const dims = DIMENSIONS.filter(d => profile[d.id] != null);
+  if (dims.length < 3) return;
+  ctx.clearRect(0, 0, W, H);
+  const pt = (i, v) => { const a = -Math.PI / 2 + i * 2 * Math.PI / dims.length; return [cx + Math.cos(a) * R * v / 100, cy + Math.sin(a) * R * v / 100]; };
+  ctx.strokeStyle = css.getPropertyValue('--line'); ctx.lineWidth = 1;
+  for (const lvl of [25, 50, 75, 100]) { ctx.beginPath(); dims.forEach((_, i) => { const [x, y] = pt(i, lvl); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.closePath(); ctx.stroke(); }
+  ctx.fillStyle = css.getPropertyValue('--muted'); ctx.font = '13px system-ui'; ctx.textAlign = 'center';
+  dims.forEach((d, i) => { const [x, y] = pt(i, 122); ctx.fillText(`${d.icon} ${d.name.split(' ')[0]}`, x, y + 4); });
+  const shape = (p, color, alpha) => {
+    ctx.beginPath(); dims.forEach((d, i) => { const [x, y] = pt(i, p[d.id] ?? 0); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.closePath();
+    ctx.globalAlpha = alpha; ctx.fillStyle = color; ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
+  };
+  if (previous) shape(previous, css.getPropertyValue('--muted'), 0.12);
+  shape(profile, css.getPropertyValue('--accent'), 0.25);
+}
+
+function diagnosisHTML(r, previous = null) {
+  const rows = DIMENSIONS.filter(d => r.profile[d.id] != null).map(d => {
+    const v = r.profile[d.id], prev = previous?.profile?.[d.id];
+    const delta = prev != null ? v - prev : null;
+    return `<tr><td>${d.icon} ${esc(d.name)}</td><td class="num">${r.self[d.id] ?? '–'}</td><td class="num">${r.measured[d.id] ?? '–'}</td>
+      <td><span class="pill" style="color:${colorFor(v)}">${v}</span>${delta != null ? ` <small style="color:${delta >= 0 ? 'var(--good)' : 'var(--bad)'}">${delta >= 0 ? '+' : ''}${delta}</small>` : ''}</td></tr>`;
+  }).join('');
+  const gaps = r.gaps.map(g => g.kind === 'sobre'
+    ? `<li>En <strong>${esc(dimName(g.dim))}</strong> te ves mejor (${g.self}) de lo que medimos (${g.measured}): es un punto ciego que vale la pena practicar.</li>`
+    : `<li>En <strong>${esc(dimName(g.dim))}</strong> eres más exigente contigo (${g.self}) de lo que medimos (${g.measured}): lo haces mejor de lo que crees.</li>`).join('');
+  return `
+    <div class="score-big"><div class="ring" style="border:8px solid ${colorFor(r.total)}">${r.total}</div>
+      <div><div style="font-size:1.15rem;font-weight:700">Nivel ${esc(r.level)}</div>
+      <div class="lead">${previous ? `Antes: ${previous.total} (nivel ${esc(previous.level)}). ${r.total - previous.total >= 0 ? '+' : ''}${r.total - previous.total} puntos.` : 'Este es tu punto de partida.'}</div>
+      <div class="note">Combina cómo te ves (40%) con lo que medimos en tus pruebas (60%).</div></div></div>
+    <canvas id="radar" width="520" height="420" aria-label="Perfil de comunicación por dimensión" style="width:100%;max-width:520px;height:auto;margin:8px auto;display:block"></canvas>
+    <div class="fb">
+      <div><h3 style="color:var(--good)">Tus fortalezas</h3><ul>${r.strengths.map(d => `<li>${esc(dimName(d))}</li>`).join('')}</ul></div>
+      <div><h3 style="color:var(--mid)">Tus prioridades</h3><ul>${r.priorities.map(d => `<li>${esc(dimName(d))}</li>`).join('')}</ul></div>
+    </div>
+    ${gaps ? `<h3>Cómo te ves y cómo te medimos</h3><ul>${gaps}</ul>` : ''}
+    <details><summary>Ver el detalle por dimensión</summary>
+      <div class="table-wrap"><table><thead><tr><th>Dimensión</th><th>Cómo te ves</th><th>Medido</th><th>Perfil</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="note">«–» significa que esa dimensión todavía no se midió en una prueba: haz la prueba de voz o de escritura para completarla.</p>
+    </details>`;
+}
+
+function goalPickerHTML(suggestions) {
+  return `<h3>Elige tus metas (hasta 3)</h3>
+    <p class="note">Las metas específicas y desafiantes, con plazo y una razón personal, se cumplen más que un «haré lo posible».</p>
+    ${suggestions.map((g, i) => `<label class="goal-pick"><input type="checkbox" data-goal="${g.dim}" ${i < 2 ? 'checked' : ''}>
+      <span><strong>${esc(g.title)}</strong><small>${esc(g.detail)}</small></span></label>`).join('')}
+    <div class="row" style="margin-top:10px">
+      <div><label for="goalDays">Plazo</label><select id="goalDays"><option value="14">2 semanas</option><option value="30" selected>30 días</option><option value="60">60 días</option></select></div>
+      <div><label for="goalWhy">¿Por qué te importa? (opcional)</label><input id="goalWhy" class="field" placeholder="Ej.: quiero conseguir el ascenso este año"></div>
+    </div>`;
+}
+
+function goalsHTML(goals, sessions, today = new Date()) {
+  if (!goals?.length) return '<p class="note">Todavía no tienes metas. Haz tu diagnóstico para recibir metas a tu medida.</p>';
+  return goals.map(g => {
+    const p = goalProgress(g, sessions, today);
+    const state = p.done ? '✅ ¡Cumplida!' : p.expired ? '⏰ Se venció el plazo: puedes renovarla' : `Faltan ${Math.max(0, p.daysLeft)} días`;
+    return `<div class="goal"><div class="goal-head"><strong>${esc(g.title)}</strong><span class="note">${state}</span></div>
+      <div class="note">${esc(g.detail)}${g.why ? ` · Para: ${esc(g.why)}` : ''}</div>
+      <div class="bar" style="margin-top:6px"><div style="width:${Math.round(p.ratio * 100)}%;background:${p.done ? 'var(--good)' : 'var(--accent)'}"></div></div>
+      <div class="goal-foot"><span class="note">${p.hits} de ${g.count}</span>${p.done ? '' : `<button type="button" data-goal-next="${g.id}">▶ Practicar</button>`}</div></div>`;
+  }).join('');
+}
+
 // VOXA publicable: una sola página con vistas. Reutiliza shared.js y scenarios.js (inyectados por build.py)
 // y usa el coach IA a través de la capacidad `sample` del visor de claude.ai cuando está disponible.
 
@@ -1399,7 +1670,7 @@ $('topNav').innerHTML = VIEWS.map(([id, label]) => `<button data-go="${id}">${la
 $('bottomNav').innerHTML = VIEWS.map(([id, label, ic]) => `<button data-go="${id}">${icon(ic)}<span>${label}</span></button>`).join('');
 const onShow = {};
 // Vistas que no están en la barra (se abren desde Hoy).
-const ALL_VIEWS = [...VIEWS.map(v => v[0]), 'evento'];
+const ALL_VIEWS = [...VIEWS.map(v => v[0]), 'evento', 'diagnostico'];
 function go(view, opts = {}) {
   if (!ALL_VIEWS.includes(view)) view = 'hoy';
   for (const id of ALL_VIEWS) $('v-' + id).classList.toggle('hidden', id !== view);
@@ -1557,15 +1828,15 @@ pickOne($('wNerves'), 'v', v => wNerves = +v);
 $('wDone').addEventListener('click', () => {
   Object.assign(profile, { goal: wGoal, onboarded: true, startNerves: wNerves });
   saveProfile(profile);
-  // A quien le cuesta mucho, la primera práctica es de baja exigencia: hablar de algo que le gusta.
-  go('ensayar', { scenario: wNerves >= 5 ? 'passion' : 'intro' });
+  // Estado inicial primero: el diagnóstico define las metas (como la prueba de nivel de ELSA o el assessment de BetterUp).
+  go('diagnostico');
 });
 
 onShow.hoy = () => {
   const sessions = loadSessions();
   const firstRun = !profile.onboarded && !sessions.length;
   $('welcome').classList.toggle('hidden', !firstRun);
-  for (const id of ['today', 'quickCard', 'tipCard', 'aiCard']) $(id).classList.toggle('hidden', firstRun);
+  for (const id of ['today', 'goalsCard', 'quickCard', 'tipCard', 'aiCard']) $(id).classList.toggle('hidden', firstRun);
   const task = todayTask(sessions);
   $('tWeek').textContent = task.week + (task.day ? ` · día ${task.day} de 28` : '');
   $('tText').textContent = task.text;
@@ -1585,6 +1856,7 @@ onShow.hoy = () => {
   $('tStreak').textContent = (s ? `🔥 ${s} ${s === 1 ? 'día seguido' : 'días seguidos'}` : 'Empieza tu racha hoy') + (last ? ` · Último puntaje: ${last.total} en «${last.scenarioName}»` : '');
   $('tip').textContent = TIPS[Math.floor(Date.now() / 864e5) % TIPS.length];
   const next = LESSONS.find(l => !profile.lessons?.[l.id]);
+  renderGoalsBox();
   $('nextLesson').innerHTML = next ? `<button type="button" class="linkish" data-open-lesson="${next.id}">📘 Lección sugerida (${next.minutes} min): ${esc(next.title)}</button>` : '';
 };
 
@@ -1650,27 +1922,83 @@ onShow.ensayar = (o = {}) => {
 // --------------------------------------------------- análisis de audio subido
 // Decodifica la grabación a 16 kHz y la recorre en ventanas de ~64 ms cada ~33 ms: volumen, tono y pausas.
 const SR = 16000, MAX_SECONDS = 300;
-async function analyzeAudio(f, onProgress) {
-  if (f.size > 150e6) throw new Error('La grabación pesa más de 150 MB. Recórtala a unos pocos minutos.');
-  let audio;
+// Lectura en tres intentos, porque cada navegador decodifica formatos distintos (el .MOV del iPhone suele
+// fallar en el primero): 1) decodificar a 16 kHz, 2) decodificar con el contexto de audio normal (incluida la
+// forma con callbacks del Safari antiguo) y bajar la frecuencia, 3) si nada funciona, reproducir el archivo en
+// silencio y medirlo mientras suena (analyzeByPlayback, que necesita un toque de la persona).
+async function decodeFile(f) {
+  const buf = await f.arrayBuffer();
+  try { return await new OfflineAudioContext(1, SR, SR).decodeAudioData(buf.slice(0)); } catch {}
   try {
-    const ctx = new OfflineAudioContext(1, SR, SR);
-    audio = await ctx.decodeAudioData(await f.arrayBuffer());
-  } catch {
-    throw new Error('No pudimos leer ese archivo. Prueba con una nota de voz (m4a, mp3, wav) o un video mp4/webm.');
+    const AC = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AC();
+    const audio = await new Promise((ok, fail) => { const p = ctx.decodeAudioData(buf.slice(0), ok, fail); if (p?.then) p.then(ok, fail); });
+    ctx.close?.();
+    return audio;
+  } catch {}
+  return null;
+}
+
+// Mezcla a mono y baja a ~16 kHz promediando bloques (suficiente para tono de voz y volumen).
+function toMono16k(audio, maxSeconds) {
+  const sr = audio.sampleRate, ch = audio.numberOfChannels, len = Math.min(audio.length, Math.round(maxSeconds * sr));
+  const factor = Math.max(1, Math.floor(sr / SR)), outLen = Math.floor(len / factor), out = new Float32Array(outLen);
+  for (let c = 0; c < ch; c++) {
+    const d = audio.getChannelData(c);
+    for (let i = 0; i < outLen; i++) { let acc = 0; for (let k = 0; k < factor; k++) acc += d[i * factor + k]; out[i] += acc / factor / ch; }
   }
-  const ch = audio.numberOfChannels, len = Math.min(audio.length, MAX_SECONDS * SR);
-  let data = audio.getChannelData(0).subarray(0, len);
-  if (ch > 1) { const mix = new Float32Array(len); for (let c = 0; c < ch; c++) { const d = audio.getChannelData(c); for (let i = 0; i < len; i++) mix[i] += d[i] / ch; } data = mix; }
-  const hop = Math.round(SR / 30), win = 1024, out = [];
+  return { data: out, rate: sr / factor, truncated: audio.length > len, duration: len / sr };
+}
+
+async function framesFrom(data, rate, onProgress) {
+  const hop = Math.round(rate / 30), win = Math.round(rate * 0.064), out = [];
   for (let i = 0, k = 0; i + win <= data.length; i += hop, k++) {
     const frame = data.subarray(i, i + win);
     const rms = rmsOf(frame);
-    out.push({ t: i / SR, rms, pitch: rms > 0.01 ? detectPitch(frame, SR) : 0 });
+    out.push({ t: i / rate, rms, pitch: rms > 0.01 ? detectPitch(frame, rate) : 0 });
     if (k % 300 === 0) { onProgress(i / data.length); await new Promise(r => setTimeout(r)); }
   }
   onProgress(1);
-  return { samples: out, truncated: audio.length > len, duration: len / SR };
+  return out;
+}
+
+async function analyzeAudio(f, onProgress) {
+  if (f.size > 150e6) throw new Error('La grabación pesa más de 150 MB. Recórtala a unos pocos minutos.');
+  const audio = await decodeFile(f);
+  if (!audio) { const e = new Error('needs-playback'); e.code = 'needs-playback'; throw e; }
+  const m = toMono16k(audio, MAX_SECONDS);
+  return { samples: await framesFrom(m.data, m.rate, onProgress), truncated: m.truncated, duration: m.duration };
+}
+
+// Plan C: reproduce la grabación sin sonido hacia los parlantes y la mide en tiempo real. Tarda lo que dura.
+async function analyzeByPlayback(f, onProgress) {
+  const url = URL.createObjectURL(f);
+  const el = document.createElement(f.type.startsWith('audio/') ? 'audio' : 'video');
+  el.playsInline = true; el.preload = 'auto'; el.src = url;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  const ctx = new AC();
+  try {
+    const src = ctx.createMediaElementSource(el);
+    const an = ctx.createAnalyser(); an.fftSize = 2048;
+    const mute = ctx.createGain(); mute.gain.value = 0;     // Safari sólo procesa nodos conectados a la salida
+    src.connect(an); an.connect(mute); mute.connect(ctx.destination);
+    await ctx.resume();
+    await el.play();
+    await new Promise((ok, fail) => { if (el.readyState >= 1) ok(); else { el.onloadedmetadata = ok; el.onerror = () => fail(new Error('No pudimos reproducir la grabación.')); } });
+    const total = Math.min(isFinite(el.duration) ? el.duration : MAX_SECONDS, MAX_SECONDS);
+    const buf = new Float32Array(an.fftSize), out = [];
+    await new Promise((ok) => {
+      const timer = setInterval(() => {
+        an.getFloatTimeDomainData(buf);
+        const rms = rmsOf(buf), t = el.currentTime;
+        out.push({ t, rms, pitch: rms > 0.01 ? detectPitch(buf, ctx.sampleRate) : 0 });
+        onProgress(Math.min(1, t / total));
+        if (el.ended || t >= total) { clearInterval(timer); ok(); }
+      }, 33);
+    });
+    onProgress(1);
+    return { samples: out, truncated: el.duration > total, duration: total };
+  } finally { el.pause(); ctx.close?.(); URL.revokeObjectURL(url); }
 }
 
 function voiceMetrics(samples, text, dur) {
@@ -1703,8 +2031,8 @@ function voiceMetrics(samples, text, dur) {
 }
 
 const level3 = (v, lo, hi) => v < lo ? 'poco' : v > hi ? 'mucho' : 'adecuado';
-function scoreItems(m, isAudio) {
-  const items = [], s = scenario();
+function scoreItems(m, isAudio, s = scenario()) {
+  const items = [];
   const add = (dim, key, label, display, target, sc) => items.push({ dim, key, label, display, target, s: Math.round(sc) });
   if (m.hasText) {
     const minutes = isAudio ? Math.max(m.dur / 60, 1 / 60) : Math.max(m.words / 140, 1 / 60);
@@ -1766,7 +2094,29 @@ $('btnEval').addEventListener('click', async () => {
     if (isAudio) {
       $('anProgress').classList.remove('hidden');
       $('evalStatus').textContent = 'Analizando tu voz…';
-      const a = await analyzeAudio(file, p => { $('anBar').style.width = Math.round(p * 100) + '%'; });
+      const progress = p => { $('anBar').style.width = Math.round(p * 100) + '%'; };
+      let a;
+      try { a = await analyzeAudio(file, progress); }
+      catch (err) {
+        if (err.code !== 'needs-playback') throw err;
+        // Hace falta un toque nuevo para reproducir con sonido (regla de los navegadores móviles).
+        $('evalStatus').innerHTML = 'Tu celular guardó la grabación en un formato que no podemos leer directo. <button type="button" id="btnPlayback" class="primary">▶ Escuchar y analizar</button> <span class="note">(tarda lo que dura la grabación; no se oirá nada)</span>';
+        $('btnEval').disabled = false; $('anProgress').classList.add('hidden');
+        $('btnPlayback').addEventListener('click', async () => {
+          $('btnPlayback').disabled = true; $('anProgress').classList.remove('hidden');
+          $('evalStatus').textContent = 'Escuchando tu grabación…';
+          try {
+            const r = await analyzeByPlayback(file, progress);
+            const mm = voiceMetrics(r.samples, $('said').value, r.duration); mm.samples = r.samples;
+            $('evalStatus').textContent = ''; $('anProgress').classList.add('hidden');
+            showReport(mm, true, $('said').value);
+          } catch (e2) {
+            $('anProgress').classList.add('hidden');
+            $('evalStatus').textContent = 'No pudimos analizar esta grabación (' + (e2.message || e2.name) + '). Prueba grabando sólo tu voz con «Grabar sólo mi voz».';
+          }
+        }, { once: true });
+        return;
+      }
       m = voiceMetrics(a.samples, text, a.duration);
       m.samples = a.samples;
       $('evalStatus').textContent = a.truncated ? `Analizamos los primeros ${MAX_SECONDS / 60} minutos.` : '';
@@ -1813,7 +2163,7 @@ function showReport(m, isAudio, text) {
   last = { m, r, isAudio, text, session: {
     id: Date.now().toString(36), date: new Date().toISOString(), type: 'ensayo', mode: isAudio ? 'audio' : 'texto',
     scenario: scenario().id, scenarioName: scenario().name, total: r.total, dims: r.dims,
-    anxietyBefore: feelBefore.get(), anxietyAfter: null,
+    anxietyBefore: feelBefore.get(), anxietyAfter: null, metrics: Object.fromEntries(r.items.map(i => [i.key, { s: i.s }])),
   } };
   persist();
   $('report').scrollIntoView({ behavior: 'smooth' });
@@ -2283,6 +2633,7 @@ onShow.progreso = () => {
   profile.ladder ||= {};
   $('ladder').innerHTML = LADDER.map((t, i) => `<li><label><input type="checkbox" data-i="${i}" ${profile.ladder[i] ? 'checked' : ''}> <span>${i + 1}. ${t}</span></label></li>`).join('');
   drawTrend(sessions.filter(x => x.type !== 'escritura'));
+  renderProgressDiagnosis(sessions);
 };
 function drawTrend(list) {
   const c = $('trend'), ctx = c.getContext('2d'), W = c.width, H = c.height, pad = 30;
@@ -2438,6 +2789,120 @@ Responde SÓLO con JSON: {"scores":{"encuadre":0,"iluminacion":0,"mirada":0,"pos
   } catch (e) {
     $('presenceOut').innerHTML = `<p class="note">${esc(e?.code ? aiErrorText(e) : (e?.message || 'No pudimos analizar el video.'))}</p>`;
   } finally { $('btnPresence').disabled = false; }
+});
+
+// ================================================================= DIAGNÓSTICO Y METAS
+// Estado inicial → diagnóstico (autoevaluación + prueba de voz + prueba escrita) → metas con plazo que avanzan solas.
+let dgAnswers = {}, dgFile = null, dgResult = null;
+function renderSelfItems() { $('selfItems').innerHTML = selfAssessmentHTML(dgAnswers); }
+$('selfItems').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-dim]'); if (!b) return;
+  dgAnswers[b.dataset.dim] = +b.dataset.v;
+  b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+});
+for (const id of ['dgVideo', 'dgAudio', 'dgFile']) $(id).addEventListener('change', (e) => {
+  dgFile = e.target.files[0] || null;
+  $('dgFileName').textContent = dgFile ? `Grabación lista: ${dgFile.name || 'grabación'} (${(dgFile.size / 1e6).toFixed(1)} MB)` : '';
+  $('dgVoiceStatus').textContent = '';
+});
+onShow.diagnostico = () => {
+  dgAnswers = {}; dgFile = null; dgResult = null;
+  if (profile.startNerves) dgAnswers.confianza = profile.startNerves;
+  renderSelfItems();
+  for (const id of ['dgVideo', 'dgAudio', 'dgFile']) $(id).value = '';
+  $('dgFileName').textContent = ''; $('dgVoiceStatus').textContent = ''; $('dgErr').textContent = '';
+  $('dgResult').classList.add('hidden');
+};
+
+// Prueba de voz: devuelve los ítems puntuados (o [] si no hay grabación ni texto).
+async function diagnosisSpeech() {
+  const text = $('dgSaid').value, intro = SCENARIOS.find(s => s.id === 'intro');
+  const progress = p => { $('dgBar').style.width = Math.round(p * 100) + '%'; };
+  if (!dgFile) {
+    if (wordCount(text) < 5) return [];
+    return scoreItems({ words: wordCount(text), hasText: true, fillers: countMatches(text, FILLER_RE), hedges: countMatches(text, HEDGE_RE), dur: wordCount(text) / 140 * 60 }, false, intro).items;
+  }
+  $('dgProgress').classList.remove('hidden');
+  $('dgVoiceStatus').textContent = 'Analizando tu voz…';
+  try {
+    let a;
+    try { a = await analyzeAudio(dgFile, progress); }
+    catch (err) {
+      if (err.code !== 'needs-playback') throw err;
+      $('dgVoiceStatus').textContent = 'Escuchando tu grabación (tarda lo que dura; no se oirá nada)…';
+      a = await analyzeByPlayback(dgFile, progress);
+    }
+    $('dgVoiceStatus').textContent = 'Voz analizada.';
+    return scoreItems(voiceMetrics(a.samples, text, a.duration), true, intro).items;
+  } finally { $('dgProgress').classList.add('hidden'); }
+}
+
+$('dgRun').addEventListener('click', async () => {
+  const answered = Object.keys(dgAnswers).length;
+  if (answered < SELF_ITEMS.length) { $('dgErr').textContent = `Responde las ${SELF_ITEMS.length} afirmaciones (llevas ${answered}).`; $('dgStep1').scrollIntoView({ behavior: 'smooth' }); return; }
+  $('dgErr').textContent = ''; $('dgRun').disabled = true;
+  let speechItems = [];
+  try { speechItems = await diagnosisSpeech(); }
+  catch (e) { $('dgVoiceStatus').textContent = `No pudimos analizar la grabación (${e.message || e.name}). Seguimos con el resto; puedes escribir lo que dijiste.`; }
+  const w = $('dgWrite').value.trim();
+  const writingScore = wordCount(w) >= 5 ? analyzeWriting(w, KINDS.find(k => k.id === 'pedido')).score : null;
+  const presence = [...loadSessions()].reverse().find(s => s.presence)?.presence || null;
+  dgResult = computeProfile(dgAnswers, measuredFrom({ speechItems, writingScore, presenceScores: presence }));
+  const prev = profile.diagnoses?.at(-1) || null;
+  $('dgOut').innerHTML = diagnosisHTML(dgResult, prev);
+  drawRadar($('dgOut').querySelector('#radar'), dgResult.profile, prev?.profile);
+  $('dgGoals').innerHTML = goalPickerHTML(suggestGoals(dgResult));
+  $('dgResult').classList.remove('hidden');
+  $('dgRun').disabled = false;
+  $('dgResult').scrollIntoView({ behavior: 'smooth' });
+});
+$('dgGoals').addEventListener('change', (e) => {
+  if (!e.target.matches('[data-goal]')) return;
+  const on = $('dgGoals').querySelectorAll('[data-goal]:checked');
+  if (on.length > 3) e.target.checked = false;
+});
+$('dgSave').addEventListener('click', () => {
+  if (!dgResult) return;
+  const dims = [...$('dgGoals').querySelectorAll('[data-goal]:checked')].map(x => x.dataset.goal);
+  const opts = { days: +$('goalDays').value || 30, why: $('goalWhy').value.trim() };
+  profile.diagnoses = [...(profile.diagnoses || []), { date: new Date().toISOString(), ...dgResult }];
+  // Las metas activas del mismo tipo se reemplazan; las demás se conservan.
+  profile.goals = [...(profile.goals || []).filter(g => !dims.includes(g.dim)), ...dims.map(d => createGoal(d, opts))];
+  profile.onboarded = true;
+  saveProfile(profile);
+  go('hoy');
+});
+
+function renderGoalsBox() {
+  const d = profile.diagnoses?.at(-1);
+  if (!d) {
+    $('goalsBox').innerHTML = `<p class="lead">Empieza por saber dónde estás: un diagnóstico de 8 minutos en 8 dimensiones te da tu nivel, tus fortalezas y metas a tu medida.</p>
+      <div class="btns"><button class="cta" data-go="diagnostico">Haz tu diagnóstico inicial (8 min)</button></div>`;
+    return;
+  }
+  const age = Math.floor((Date.now() - new Date(d.date)) / 864e5);
+  $('goalsBox').innerHTML = `<p class="note">Nivel ${esc(d.level)} · ${d.total} puntos · diagnóstico del ${new Date(d.date).toLocaleDateString('es')}</p>
+    ${goalsHTML(profile.goals, loadSessions())}
+    ${age >= 28 ? '<p style="margin-top:10px"><button class="linkish" data-go="diagnostico">🔁 Pasaron 4 semanas: repite el diagnóstico y compara</button></p>' : ''}`;
+}
+function renderProgressDiagnosis(sessions) {
+  const ds = profile.diagnoses || [];
+  if (!ds.length) {
+    $('pDiagOut').innerHTML = '<p class="note">Todavía no haces tu diagnóstico.</p><div class="btns"><button class="cta" data-go="diagnostico">Hacer mi diagnóstico</button></div>';
+  } else {
+    const first = ds[0], latest = ds[ds.length - 1];
+    $('pDiagOut').innerHTML = diagnosisHTML(latest, ds.length > 1 ? first : null)
+      + `<p class="note">${ds.length > 1 ? `Comparado con tu primer diagnóstico (${new Date(first.date).toLocaleDateString('es')}). El área gris es tu punto de partida.` : 'Repite el diagnóstico en unas 4 semanas para ver tu avance.'}</p>
+      <div class="btns"><button data-go="diagnostico">Repetir el diagnóstico</button></div>`;
+    drawRadar($('pDiagOut').querySelector('#radar'), latest.profile, ds.length > 1 ? first.profile : null);
+  }
+  $('pGoals').innerHTML = goalsHTML(profile.goals, sessions);
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-goal-next]'); if (!b) return;
+  const g = (profile.goals || []).find(x => x.id === b.dataset.goalNext); if (!g) return;
+  const n = g.next;
+  go(n.view, { scenario: n.scenario, mode: n.mode, persona: n.persona, kind: n.kind });
 });
 
 // ---------------------------------------------------------------- arranque

@@ -74,3 +74,18 @@
   #preview { width: 100%; max-height: 260px; border-radius: 12px; background: #000; margin-top: 8px; }
   .linkish { background: none; border: 0; color: var(--accent); padding: 4px 0; min-height: 44px; text-align: left; text-decoration: underline; cursor: pointer; }
   @media (max-width: 700px) { nav.bottom-nav button { font-size: .66rem; } }
+  /* Diagnóstico y metas */
+  .steps-line { display: flex; flex-wrap: wrap; gap: 6px 16px; padding-left: 18px; color: var(--muted); }
+  .self-item { border-bottom: 1px solid var(--line); padding: 8px 0; }
+  .self-item p { margin: 0 0 6px; }
+  .scale5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .scale5 button { display: flex; flex-direction: column; align-items: center; padding: 6px 0; line-height: 1.15; font-weight: 700; }
+  .scale5 button small { font-weight: 400; font-size: .68rem; color: var(--muted); }
+  .scale5 button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  .scale5 button[aria-pressed="true"] small { color: inherit; }
+  .goal-pick { display: flex; gap: 10px; align-items: flex-start; padding: 10px; border: 1px solid var(--line); border-radius: 12px; margin: 6px 0; cursor: pointer; color: var(--text); }
+  .goal-pick input { width: 22px; height: 22px; margin-top: 2px; flex: 0 0 auto; }
+  .goal-pick small { display: block; color: var(--muted); }
+  .goal { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin: 8px 0; }
+  .goal-head, .goal-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .goal-foot { margin-top: 6px; }

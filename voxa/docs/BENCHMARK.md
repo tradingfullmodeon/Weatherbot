@@ -162,8 +162,21 @@ Cada mejora responde a una brecha concreta. La columna "Estado" indica qué ya e
 | 24 | Los cursos son pasivos: ver un video no cambia la conducta | **Aprender**: 12 micro-lecciones de 2–3 min (STAR, PREP, BLUF, pausa, voz, presencia, nervios, SBI, CNV, escucha activa, storytelling y mitos del lenguaje corporal). Cada una incluye un ejemplo «así no / así sí», una pregunta de repaso y un botón **Practicar ahora** que abre el ejercicio exacto. El reporte enlaza la lección de tu foco. | ✅ Prototipo y link |
 | 25 | El lenguaje corporal sólo se mide con hardware o software pesado | **Análisis de presencia desde tu video**: 4 fotogramas revisados por IA sólo en conductas observables (encuadre, luz, mirada, postura, gestos), sin describir rasgos físicos ni inferir emociones. Funciona en el link de claude.ai, donde no hay cámara en vivo. | ✅ Link |
 | 26 | Las apps entrenan en abstracto, no para tu próxima situación real | **Modo evento real**: plan de práctica hasta la fecha de tu entrevista, charla o reunión, preguntas difíciles probables (banco por tipo de evento y personalizadas con IA) y rutina para el día antes, una hora antes y diez minutos antes. Hoy pasa a mostrar la cuenta regresiva. | ✅ Prototipo y link |
+| 27 | Pocas apps de comunicación parten midiendo dónde está la persona, y sus metas son genéricas («mejorar mi oratoria») | **Estado inicial → diagnóstico → metas**: autoevaluación más prueba real de voz y escritura, perfil en 8 dimensiones con puntos ciegos (cómo te ves frente a lo medido), metas específicas con plazo que avanzan solas con la práctica, y re-diagnóstico cada 4 semanas. | ✅ Link |
 
 ---
+
+### 5.1 Cómo diagnostican y fijan metas los programas de referencia
+
+| Programa | Estado inicial | Diagnóstico | Metas y seguimiento | Qué toma VOXA |
+|---|---|---|---|---|
+| **ELSA Speak** (Asia) | Prueba de lectura en voz alta al instalar | Nivel y puntaje por sonido, fluidez y entonación | Ruta personalizada; cada sonido se «conquista» con 80% o más | Prueba real corta al inicio y criterio numérico por meta |
+| **BetterUp** (Norteamérica) | Whole Person Assessment confidencial | Perfil por habilidades, revisado con el coach | Áreas de foco; se repite cada 6 semanas como mínimo | Perfil por dimensiones, privacidad (sólo en el navegador) y re-diagnóstico cada 4 semanas |
+| **Toastmasters Pathways** (global) | Evaluación de unas 20 preguntas | Recomienda 3 rutas según habilidades e intereses | La persona elige; puede repetir la evaluación | Sugerir 3 prioridades y dejar que la persona elija sus metas |
+| **Duolingo** (global) | Prueba de ubicación adaptativa opcional | Punto de partida en el curso | Meta diaria y racha | Diagnóstico opcional por partes y práctica diaria |
+| **Locke y Latham** (teoría de metas) | — | — | Metas claras y desafiantes, con compromiso, feedback y submetas para tareas complejas | Metas con criterio, plazo y «por qué», avance visible y práctica siguiente a un toque |
+
+Diferencia de VOXA: combina lo que la persona cree de sí misma con lo que se mide en una prueba real, y muestra la brecha. Así aparecen los puntos ciegos (te ves mejor de lo que suenas) y la autocrítica excesiva (lo haces mejor de lo que crees), algo que ninguno de los anteriores muestra junto.
 
 ## 6. Posicionamiento
 
@@ -247,3 +260,10 @@ Cada mejora responde a una brecha concreta. La columna "Estado" indica qué ya e
 - Lim, Aryadoust y Esposito (2023) — metaanálisis de VR y ansiedad al hablar en público: https://iris.unitn.it/handle/11572/360923
 - Frontiers in Psychiatry — VR autoguiada para ansiedad al hablar en público: https://www.frontiersin.org/articles/10.3389/fpsyt.2021.694610/pdf
 - CNBC — campeón de Toastmasters sobre el miedo: https://www.cnbc.com/2019/11/26/toastmasters-world-champion-how-to-overcome-fear-of-public-speaking.html
+- ELSA Speak — prueba inicial y ruta personalizada: https://www.toolmage.com/en/tool/elsa-speak/
+- BetterUp — preguntas frecuentes del Whole Person Model: https://www.betterup.com/whole-person-model-faqs
+- BetterUp — modelo de persona completa: https://betterup.com/blog/whole-person-model-to-build-inspiring-leaders-thriving-teams
+- Toastmasters — cómo empezar en Pathways (evaluación y 3 rutas): https://d28toastmasters.org/?p=459
+- Yoodli — Toastmasters Pathways: https://yoodli.ai/blog/toastmasters-international-pathways-toward-success
+- Mind Tools — teoría de metas de Locke: https://prime.mindtools.com/pages/article/newHTE_87.htm
+- Tability — qué encontraron Locke y Latham: https://www.tability.io/odt/articles/goal-setting-theory
