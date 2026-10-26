@@ -159,3 +159,15 @@
   .quiz button { text-align: left; }
   .quiz button.right { border-color: var(--good); box-shadow: 0 0 0 2px var(--good) inset; }
   .quiz button.wrong { border-color: var(--bad); box-shadow: 0 0 0 2px var(--bad) inset; }
+  /* Evento real */
+  .ev-plan { list-style: none; padding: 0; display: grid; gap: 6px; }
+  .ev-item { display: flex; gap: 8px; align-items: center; justify-content: space-between; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; }
+  .ev-item label { display: flex; gap: 8px; align-items: flex-start; flex: 1; min-width: 0; color: var(--text); font-size: .95rem; }
+  .ev-item label input { width: 20px; height: 20px; margin-top: 2px; flex: 0 0 auto; }
+  .ev-item small { color: var(--muted); display: block; }
+  .ev-item.done span { text-decoration: line-through; color: var(--muted); }
+  .ev-questions details { margin-top: 6px; }
+  .ladder { padding: 0; }
+  .ladder li { list-style: none; margin: 6px 0; }
+  .ladder label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; color: var(--text); font-size: .95rem; }
+  .ladder input { width: 20px; height: 20px; margin-top: 2px; flex: 0 0 auto; }

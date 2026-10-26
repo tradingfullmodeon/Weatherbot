@@ -46,7 +46,7 @@ def walk_objects(schema):
         yield from walk_objects(schema["items"])
 
 
-@pytest.mark.parametrize("schema", [voxa.FEEDBACK_SCHEMA, voxa.ROLEPLAY_SCHEMA, voxa.EVAL_SCHEMA, voxa.WRITING_SCHEMA])
+@pytest.mark.parametrize("schema", [voxa.FEEDBACK_SCHEMA, voxa.ROLEPLAY_SCHEMA, voxa.EVAL_SCHEMA, voxa.WRITING_SCHEMA, voxa.EVENT_SCHEMA])
 def test_schemas_are_strict(schema):
     for o in walk_objects(schema):
         assert o["additionalProperties"] is False
@@ -128,3 +128,13 @@ def test_writing_rejects_empty_or_huge_text(monkeypatch):
     fake_client(monkeypatch, {})
     assert api.post("/api/writing", json={"kind": "x", "text": ""}).status_code == 422
     assert api.post("/api/writing", json={"kind": "x", "text": "a" * 6001}).status_code == 422
+
+
+def test_event_questions_personalized(monkeypatch):
+    payload = {"questions": [{"q": "¿Por qué SQL y no Python?", "why": "El puesto pide ambos", "tip": "Un ejemplo con resultado"}]}
+    messages = fake_client(monkeypatch, payload)
+    r = api.post("/api/event-questions", json={"kind": "Entrevista de trabajo", "audience": "Gerente de datos",
+                                              "message": "Sé convertir datos en decisiones", "context": "Requisitos: SQL, Python"})
+    assert r.status_code == 200 and r.json()["questions"][0]["q"].startswith("¿Por qué")
+    content = messages.calls[0]["messages"][0]["content"]
+    assert "Gerente de datos" in content and "<material_usuario>" in content

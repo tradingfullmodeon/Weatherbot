@@ -53,6 +53,7 @@
       <a href="evaluar.html"><strong>🎥 Evaluar</strong><span>Habla a la cámara y recibe un consejo concreto.</span></a>
       <a href="roleplay.html"><strong>💬 Roleplay</strong><span>Ensaya una conversación difícil con un personaje.</span></a>
       <a href="gimnasio.html"><strong>🎙 Gimnasio de voz</strong><span>Calentamientos de 1 minuto: respiración, tono y volumen.</span></a>
+      <a href="evento.html"><strong>📅 Evento real</strong><span>Prepara una entrevista, charla o reunión con fecha.</span></a>
       <a href="escritura.html"><strong>✍️ Escritura</strong><span>Mejora un correo o mensaje antes de enviarlo.</span></a>
       <a href="aprender.html"><strong>📘 Aprender</strong><span>Lecciones de 2 minutos con práctica incluida.</span></a>
       <a href="progreso.html"><strong>📈 Mi progreso</strong><span>Tu evolución, tu racha y tu plan de 30 días.</span></a>
@@ -85,6 +86,7 @@ import { $, esc, renderNav, loadProfile, saveProfile, loadSessions, GOALS, LOCAL
 import { todayTask, streak, practicedToday } from './plan.js';
 import { mountDeviceCheck } from './devices.js';
 import { LESSONS } from './lessons.js';
+import { EVENT_TYPES, validEvent, daysUntil, nextEventPractice } from './events.js';
 
 mountDeviceCheck($('deviceCheck'));
 
@@ -143,6 +145,15 @@ const s = streak(sessions);
 $('tWeek').textContent = task.week + (task.day ? ` · día ${task.day} de 28` : '');
 $('tText').textContent = task.text;
 $('tGo').href = task.href;
+// Con un evento real próximo, la práctica del día es la del plan del evento.
+const ev = profile.event;
+if (validEvent(ev) && daysUntil(ev.date) >= 0) {
+  const left = daysUntil(ev.date), next = nextEventPractice(ev);
+  $('tWeek').textContent = `${EVENT_TYPES[ev.type].icon} ${ev.title || EVENT_TYPES[ev.type].name} · ${left === 0 ? 'es hoy' : left === 1 ? 'es mañana' : `faltan ${left} días`}`;
+  $('tText').textContent = left === 0 ? 'Hoy es el día: haz tu rutina previa y confía en lo que practicaste.' : next ? next.text : 'Completaste el plan de tu evento. Repasa las preguntas difíciles.';
+  $('tGo').href = 'evento.html';
+  $('tGo').textContent = left === 0 ? '▶ Ver mi rutina del día' : '▶ Ir a mi plan del evento';
+}
 $('tWhy').textContent = practicedToday(sessions)
   ? '¡Ya practicaste hoy! Si quieres, haz otra ronda: la repetición es la que crea el hábito.'
   : 'Toma unos 7 minutos. Una sola práctica bien hecha vale más que muchas a medias.';

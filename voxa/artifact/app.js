@@ -9,9 +9,11 @@ const VIEWS = [['hoy', 'Hoy', 'home'], ['ensayar', 'Ensayar', 'rec'], ['roleplay
 $('topNav').innerHTML = VIEWS.map(([id, label]) => `<button data-go="${id}">${label}</button>`).join('');
 $('bottomNav').innerHTML = VIEWS.map(([id, label, ic]) => `<button data-go="${id}">${icon(ic)}<span>${label}</span></button>`).join('');
 const onShow = {};
+// Vistas que no están en la barra (se abren desde Hoy).
+const ALL_VIEWS = [...VIEWS.map(v => v[0]), 'evento'];
 function go(view, opts = {}) {
-  if (!VIEWS.some(v => v[0] === view)) view = 'hoy';
-  for (const [id] of VIEWS) $('v-' + id).classList.toggle('hidden', id !== view);
+  if (!ALL_VIEWS.includes(view)) view = 'hoy';
+  for (const id of ALL_VIEWS) $('v-' + id).classList.toggle('hidden', id !== view);
   document.querySelectorAll('[data-go]').forEach(b => {
     const on = b.dataset.go === view && b.closest('nav');
     b.classList.toggle('on', !!on);
@@ -179,6 +181,14 @@ onShow.hoy = () => {
   $('tWeek').textContent = task.week + (task.day ? ` · día ${task.day} de 28` : '');
   $('tText').textContent = task.text;
   $('tGo').onclick = () => openTask(task);
+  // Con un evento real próximo, la práctica del día es la del plan del evento.
+  const ev = profile.event;
+  if (validEvent(ev) && daysUntil(ev.date) >= 0) {
+    const left = daysUntil(ev.date), next = nextEventPractice(ev);
+    $('tWeek').textContent = `${EVENT_TYPES[ev.type].icon} ${ev.title || EVENT_TYPES[ev.type].name} · ${left === 0 ? 'es hoy' : left === 1 ? 'es mañana' : `faltan ${left} días`}`;
+    $('tText').textContent = left === 0 ? 'Hoy es el día: haz tu rutina previa y confía en lo que practicaste.' : next ? next.text : 'Completaste el plan de tu evento. Repasa las preguntas difíciles.';
+    $('tGo').onclick = () => go('evento');
+  }
   const today = sessions.some(s => dayKey(s.date) === dayKey(new Date().toISOString()));
   $('tWhy').textContent = today ? '¡Ya practicaste hoy! Otra ronda refuerza el hábito.' : 'Toma unos 7 minutos. Una práctica bien hecha vale más que muchas a medias.';
   const s = streak(sessions);
@@ -849,6 +859,62 @@ $('lCard').addEventListener('click', (e) => {
 });
 bindQuiz($('lCard'), (l) => { profile.lessons[l.id] = true; saveProfile(profile); });
 onShow.aprender = (o = {}) => (o.lesson ? openLesson(o.lesson) : renderLessonList());
+
+// ================================================================= EVENTO REAL
+$('evType').innerHTML = eventTypeOptions();
+{
+  const d = new Date(); d.setDate(d.getDate() + 7);
+  $('evDate').value = d.toISOString().slice(0, 10);
+  $('evDate').min = new Date().toISOString().slice(0, 10);
+}
+const lessonTitle = (id) => LESSONS.find(l => l.id === id)?.title || '';
+function saveEv() { saveProfile(profile); $('evSaved').textContent = 'Guardado.'; setTimeout(() => $('evSaved').textContent = '', 1200); }
+function renderEventQuestions(qs) {
+  $('evAI').innerHTML = '<h3>✨ Preguntas para tu caso</h3>' + qs.map(x => `<details><summary>${esc(x.q)}</summary><p class="note">${esc(x.why)}</p><p><strong>Cómo responder:</strong> ${esc(x.tip)}</p></details>`).join('');
+}
+onShow.evento = () => {
+  const ev = profile.event, active = validEvent(ev);
+  $('evFormCard').classList.toggle('hidden', active);
+  $('evCard').classList.toggle('hidden', !active);
+  if (!active) return;
+  $('eventOut').innerHTML = eventHTML(ev, lessonTitle);
+  if (ev.aiQuestions?.length) renderEventQuestions(ev.aiQuestions);
+};
+$('evCreate').addEventListener('click', () => {
+  const f = { type: $('evType').value, date: $('evDate').value, title: $('evTitle').value.trim(), audience: $('evAudience').value.trim(),
+    message: $('evMessage').value.trim(), concern: $('evConcern').value.trim(), context: $('evContext').value.trim() };
+  if (!f.date) { $('evErr').textContent = 'Elige la fecha del evento.'; return; }
+  if (daysUntil(f.date) < 0) { $('evErr').textContent = 'La fecha ya pasó: elige una de hoy en adelante.'; return; }
+  $('evErr').textContent = '';
+  profile.event = createEvent(f); saveProfile(profile); onShow.evento();
+});
+$('evNew').addEventListener('click', () => { delete profile.event; saveProfile(profile); onShow.evento(); });
+$('eventOut').addEventListener('change', (e) => {
+  const ev = profile.event;
+  if (e.target.dataset.done != null) { ev.done[e.target.dataset.done] = e.target.checked; saveEv(); onShow.evento(); }
+  if (e.target.dataset.routine) { ev.routine ||= {}; ev.routine[e.target.dataset.routine] = e.target.checked; saveEv(); }
+});
+$('eventOut').addEventListener('input', (e) => { if (e.target.id === 'evNotes') { profile.event.notes = e.target.value; saveProfile(profile); } });
+$('eventOut').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-practice]'); if (!b) return;
+  const p = profile.event.plan[+b.dataset.practice];
+  if (p.lesson && !profile.lessons?.[p.lesson]) return go('aprender', { lesson: p.lesson });
+  practiceLesson(p);
+});
+$('evQuestionsAI').addEventListener('click', async () => {
+  if (!sample) return;
+  const ev = profile.event;
+  $('evQuestionsAI').disabled = true;
+  $('evAI').innerHTML = '<p class="note">Pensando en las preguntas más probables para tu evento…</p>';
+  try {
+    const out = await sample.json(`Eres el coach de comunicación de VOXA.\n${COACH_RULES}\n\n` + eventQuestionsPrompt(ev));
+    if (!Array.isArray(out?.questions) || !out.questions.length) throw { code: 'invalid_json' };
+    ev.aiQuestions = out.questions.slice(0, 8).map(x => ({ q: String(x.q || ''), why: String(x.why || ''), tip: String(x.tip || '') }));
+    saveEv(); renderEventQuestions(ev.aiQuestions);
+  } catch (e) {
+    $('evAI').innerHTML = `<p class="note">${esc(aiErrorText(e))}</p>`;
+  } finally { $('evQuestionsAI').disabled = false; }
+});
 
 // ================================================================= LENGUAJE CORPORAL (fotogramas + Claude)
 // Toma 4 fotogramas repartidos en el video y los envía como imágenes. Sólo conductas observables.

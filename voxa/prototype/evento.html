@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VOXA Evento real</title>
+<link rel="stylesheet" href="voxa.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#4f46e5">
+</head>
+<body>
+<header>
+  <h1>Prepara un evento real</h1>
+  <p>¿Tienes una entrevista, una charla o una conversación difícil? VOXA arma tu plan de práctica hasta ese día.</p>
+</header>
+
+<main>
+  <section class="card full" id="formCard">
+    <div class="row">
+      <div><label for="evType">¿Qué evento es?</label><select id="evType"></select></div>
+      <div><label for="evDate">¿Cuándo es?</label><input type="date" id="evDate" class="field"></div>
+    </div>
+    <label for="evTitle">Ponle un nombre (opcional)</label>
+    <input id="evTitle" class="field" placeholder="Ej.: Entrevista en Banco Andino, charla en el congreso">
+    <label for="evAudience" style="margin-top:10px">¿Ante quién? (opcional)</label>
+    <input id="evAudience" class="field" placeholder="Ej.: gerente de datos y RR. HH.; 200 personas del sector">
+    <label for="evMessage" style="margin-top:10px">Tu mensaje clave en una frase (opcional)</label>
+    <input id="evMessage" class="field" placeholder="Ej.: Sé convertir datos en decisiones que ahorran dinero">
+    <label for="evConcern" style="margin-top:10px">¿Qué es lo que más te preocupa? (opcional)</label>
+    <input id="evConcern" class="field" placeholder="Ej.: que me pregunten por qué dejé mi último trabajo">
+    <details><summary>Agregar contexto: oferta de trabajo, guion o notas (opcional)</summary>
+      <textarea id="evContext" maxlength="6000" placeholder="Pega aquí la oferta, tu presentación o tus notas."></textarea>
+    </details>
+    <div class="btns"><button id="evCreate" class="cta">Armar mi plan</button></div>
+    <p class="note" id="evErr" aria-live="polite"></p>
+  </section>
+
+  <section class="card full hidden" id="eventCard">
+    <div id="eventOut"></div>
+    <div class="btns">
+      <button id="evQuestionsAI" class="primary hidden">✨ Preguntas personalizadas con IA</button>
+      <button id="evNew">Preparar otro evento</button>
+    </div>
+    <p class="note" id="evSaved" aria-live="polite"></p>
+  </section>
+</main>
+
+<script type="module">
+import { $, esc, renderNav, loadProfile, saveProfile, aiStatus, postJSON } from './shared.js';
+import { EVENT_TYPES, createEvent, eventHTML, eventTypeOptions, validEvent, daysUntil } from './events.js';
+import { LESSONS } from './lessons.js';
+
+renderNav();
+const profile = loadProfile();
+$('evType').innerHTML = eventTypeOptions();
+const inAWeek = new Date(); inAWeek.setDate(inAWeek.getDate() + 7);
+$('evDate').value = inAWeek.toISOString().slice(0, 10);
+$('evDate').min = new Date().toISOString().slice(0, 10);
+const lessonTitle = (id) => LESSONS.find(l => l.id === id)?.title || '';
+
+function practiceHref(p) {
+  if (p.view === 'roleplay') return `roleplay.html?personaje=${p.persona}`;
+  if (p.view === 'gimnasio') return `gimnasio.html?ejercicio=${p.exercise}`;
+  if (p.view === 'escritura') return `escritura.html?tipo=${p.kind}`;
+  return `evaluar.html?escenario=${p.scenario}${p.audience ? '&audiencia=1' : ''}`;
+}
+const save = () => { saveProfile(profile); $('evSaved').textContent = 'Guardado.'; setTimeout(() => $('evSaved').textContent = '', 1200); };
+
+function show() {
+  const ev = profile.event;
+  const active = validEvent(ev);
+  $('formCard').classList.toggle('hidden', active);
+  $('eventCard').classList.toggle('hidden', !active);
+  if (!active) return;
+  $('eventOut').innerHTML = eventHTML(ev, lessonTitle);
+  if (ev.aiQuestions?.length) renderAIQuestions(ev.aiQuestions);
+}
+
+$('evCreate').addEventListener('click', () => {
+  const fields = { type: $('evType').value, date: $('evDate').value, title: $('evTitle').value.trim(), audience: $('evAudience').value.trim(),
+    message: $('evMessage').value.trim(), concern: $('evConcern').value.trim(), context: $('evContext').value.trim() };
+  if (!fields.date) { $('evErr').textContent = 'Elige la fecha del evento.'; return; }
+  if (daysUntil(fields.date) < 0) { $('evErr').textContent = 'La fecha ya pasó: elige una de hoy en adelante.'; return; }
+  $('evErr').textContent = '';
+  profile.event = createEvent(fields);
+  saveProfile(profile); show();
+});
+$('evNew').addEventListener('click', () => { delete profile.event; saveProfile(profile); show(); });
+
+$('eventOut').addEventListener('change', (e) => {
+  const ev = profile.event;
+  if (e.target.dataset.done != null) { ev.done[e.target.dataset.done] = e.target.checked; save(); show(); }
+  if (e.target.dataset.routine) { ev.routine ||= {}; ev.routine[e.target.dataset.routine] = e.target.checked; save(); }
+});
+$('eventOut').addEventListener('input', (e) => { if (e.target.id === 'evNotes') { profile.event.notes = e.target.value; saveProfile(profile); } });
+$('eventOut').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-practice]'); if (!b) return;
+  const p = profile.event.plan[+b.dataset.practice];
+  location.href = p.lesson && !profile.lessons?.[p.lesson] ? `aprender.html?leccion=${p.lesson}` : practiceHref(p);
+});
+
+// Preguntas personalizadas: sólo con el servidor de VOXA conectado (coach IA).
+aiStatus().then(s => { if (s.ai) $('evQuestionsAI').classList.remove('hidden'); });
+$('evQuestionsAI').addEventListener('click', async () => {
+  const ev = profile.event;
+  $('evQuestionsAI').disabled = true;
+  $('evAI').innerHTML = '<p class="note">Pensando en las preguntas más probables para tu evento…</p>';
+  try {
+    const out = await postJSON('api/event-questions', { kind: EVENT_TYPES[ev.type].name, title: ev.title, audience: ev.audience, message: ev.message, concern: ev.concern, context: ev.context });
+    ev.aiQuestions = out.questions; save(); renderAIQuestions(out.questions);
+  } catch (e) {
+    $('evAI').innerHTML = `<p class="note">No se pudieron generar las preguntas: ${esc(e.message)}</p>`;
+  } finally { $('evQuestionsAI').disabled = false; }
+});
+function renderAIQuestions(qs) {
+  $('evAI').innerHTML = `<h3>✨ Preguntas para tu caso</h3>` + qs.map(x => `<details><summary>${esc(x.q)}</summary><p class="note">${esc(x.why)}</p><p><strong>Cómo responder:</strong> ${esc(x.tip)}</p></details>`).join('');
+}
+
+show();
+</script>
+</body>
+</html>

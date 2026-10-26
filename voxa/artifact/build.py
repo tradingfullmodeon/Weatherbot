@@ -32,6 +32,7 @@ def main() -> None:
         as_script(ROOT / "prototype" / "scenarios.js"),
         as_script(ROOT / "prototype" / "lessons.js"),
         as_script(ROOT / "prototype" / "writing.js"),
+        as_script(ROOT / "prototype" / "events.js"),
         app,
         "})();",
     ])

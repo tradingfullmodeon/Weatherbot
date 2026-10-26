@@ -39,6 +39,7 @@
     <div class="card full" id="quickCard">
       <h2>Practica lo que necesites</h2>
       <div class="quick">
+        <button data-go="evento"><strong>📅 Evento real</strong><span>Prepara una entrevista, charla o reunión con fecha.</span></button>
         <button data-go="ensayar"><strong>🎤 Ensayar</strong><span>Escribe lo que dirías o sube una grabación de tu celular.</span></button>
         <button data-go="roleplay"><strong>💬 Roleplay</strong><span>Ensaya una conversación difícil con un personaje.</span></button>
         <button data-go="escritura"><strong>✍️ Escritura</strong><span>Mejora un correo o mensaje antes de enviarlo.</span></button>
@@ -233,6 +234,39 @@
         <div class="btns"><button id="btnWAI" class="cta" disabled>✨ Mejorar mi texto</button></div>
         <div id="wOut" aria-live="polite"></div>
       </div>
+    </div>
+  </section>
+
+  <!-- ============================ EVENTO REAL ============================ -->
+  <section class="view hidden" id="v-evento" data-title="Evento real">
+    <div class="card full" id="evFormCard">
+      <h2>Prepara un evento real</h2>
+      <p class="note">¿Tienes una entrevista, una charla o una conversación difícil? VOXA arma tu plan de práctica hasta ese día.</p>
+      <div class="row">
+        <div><label for="evType">¿Qué evento es?</label><select id="evType"></select></div>
+        <div><label for="evDate">¿Cuándo es?</label><input type="date" id="evDate" class="field"></div>
+      </div>
+      <label for="evTitle">Ponle un nombre (opcional)</label>
+      <input id="evTitle" class="field" placeholder="Ej.: Entrevista en Banco Andino">
+      <label for="evAudience" style="margin-top:10px">¿Ante quién? (opcional)</label>
+      <input id="evAudience" class="field" placeholder="Ej.: gerente de datos y RR. HH.">
+      <label for="evMessage" style="margin-top:10px">Tu mensaje clave en una frase (opcional)</label>
+      <input id="evMessage" class="field" placeholder="Ej.: Sé convertir datos en decisiones que ahorran dinero">
+      <label for="evConcern" style="margin-top:10px">¿Qué es lo que más te preocupa? (opcional)</label>
+      <input id="evConcern" class="field" placeholder="Ej.: que me pregunten por qué dejé mi último trabajo">
+      <details><summary>Agregar contexto: oferta de trabajo, guion o notas (opcional)</summary>
+        <textarea id="evContext" maxlength="6000" placeholder="Pega aquí la oferta, tu presentación o tus notas."></textarea>
+      </details>
+      <div class="btns"><button id="evCreate" class="cta">Armar mi plan</button></div>
+      <p class="note" id="evErr" aria-live="polite"></p>
+    </div>
+    <div class="card full hidden" id="evCard">
+      <div id="eventOut"></div>
+      <div class="btns">
+        <button id="evQuestionsAI" class="primary ai-only">✨ Preguntas personalizadas con IA</button>
+        <button id="evNew">Preparar otro evento</button>
+      </div>
+      <p class="note" id="evSaved" aria-live="polite"></p>
     </div>
   </section>
 
