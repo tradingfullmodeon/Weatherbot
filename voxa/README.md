@@ -36,7 +36,7 @@ Como Pages no ejecuta el servidor, el coach IA no está disponible ahí (todo lo
 - Explica cada error en lenguaje simple (permiso bloqueado, otra app usando la cámara, página sin https, navegador de WhatsApp o Instagram) con los pasos para desbloquear en Chrome, Safari, Firefox, Android e iPhone.
 - En «Hoy» incluye **«Probar cámara y micrófono»**, con vista previa, medidor de voz y estado de cada permiso.
 
-Para regenerarla tras cambiar el prototipo: `python3 voxa/artifact/build.py` (combina `prototype/shared.js`, `prototype/scenarios.js`, `prototype/voxa.css` y `server/personas.py` con `artifact/app.js` en `artifact/dist/voxa.html`).
+Para regenerarla tras cambiar el prototipo: `python3 voxa/artifact/build.py` (combina `prototype/shared.js`, `prototype/scenarios.js`, `prototype/lessons.js`, `prototype/writing.js`, `prototype/voxa.css` y `server/personas.py` con `artifact/app.js` en `artifact/dist/voxa.html`).
 
 ## Ejecutar la versión completa
 
@@ -52,7 +52,11 @@ Sólo el prototipo, sin servidor: `cd voxa/prototype && python3 -m http.server 8
 
 El modelo se configura con `VOXA_MODEL` (por defecto `claude-opus-5-5`). Las llamadas usan salida JSON con esquema estricto y `fallbacks: "default"` ante rechazos del modelo.
 
-Pruebas del servidor (con un cliente de Anthropic simulado, sin consumir la API): `cd voxa/server && python3 -m pytest -q`.
+Pruebas:
+- Servidor, con un cliente de Anthropic simulado y sin consumir la API: `cd voxa/server && python3 -m pytest -q`.
+- Motor de análisis y contenido (muletillas en contexto, tono, «eeeh», escritura, legibilidad, integridad de escenarios, lecciones y plan): `cd voxa && npm test`.
+
+El flujo `.github/workflows/voxa-ci.yml` corre ambas en cada cambio y verifica que `artifact/dist/voxa.html` esté regenerado.
 
 ## Qué incluye
 

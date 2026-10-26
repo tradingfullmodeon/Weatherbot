@@ -1,0 +1,34 @@
+# Pruebas de VOXA en cada cambio: servidor (pytest), motor de análisis y contenido (node --test)
+# y que la versión publicable (voxa/artifact/dist) esté regenerada desde el código fuente.
+name: VOXA CI
+
+on:
+  push:
+    paths: ["voxa/**", ".github/workflows/voxa-ci.yml"]
+  pull_request:
+    paths: ["voxa/**", ".github/workflows/voxa-ci.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Pruebas del servidor
+        run: |
+          pip install -r voxa/server/requirements.txt
+          cd voxa/server && python -m pytest -q
+      - name: Pruebas del motor de análisis y del contenido
+        run: cd voxa && npm test
+      - name: La versión publicable está al día
+        run: |
+          python3 voxa/artifact/build.py
+          git diff --exit-code voxa/artifact/dist || (echo "::error::Ejecuta python3 voxa/artifact/build.py y sube voxa/artifact/dist/voxa.html" && exit 1)

@@ -706,60 +706,14 @@ Responde SÓLO con JSON: {"summary":"...","scores":{"escucha":0,"empatia":0,"cla
 $('btnAgain').addEventListener('click', () => { $('rpStage').classList.add('hidden'); $('rpReport').classList.add('hidden'); $('rpSetup').scrollIntoView({ behavior: 'smooth' }); });
 
 // ================================================================= ESCRITURA
-const KINDS = [
-  { id: 'pedido', name: 'Pedir algo por correo', method: 'BLUF', words: [15, 150], ask: true, deadline: true, guide: 'Pon el pedido en la primera o segunda frase, explica el porqué en una línea y cierra con una fecha concreta.' },
-  { id: 'no', name: 'Decir que no con amabilidad', method: 'DESC', words: [20, 120], ask: false, deadline: false, guide: 'Agradece, di que no en la primera frase (sin rodeos), da una razón breve y ofrece una alternativa si la hay.' },
-  { id: 'feedback', name: 'Feedback por escrito', method: 'SBI', words: [35, 180], ask: true, deadline: false, guide: 'Describe la situación y el comportamiento concreto (sin juicios), su impacto y termina con una pregunta o propuesta.' },
-  { id: 'disculpa', name: 'Disculparse con un cliente', method: 'Reconocer–Impacto–Reparar', words: [30, 160], ask: false, deadline: true, guide: 'Reconoce el error sin excusas, nombra el impacto para el cliente y di qué harás y cuándo.' },
-  { id: 'whatsapp', name: 'Mensaje breve (WhatsApp, Slack)', method: 'BLUF', words: [5, 60], ask: true, deadline: false, guide: 'Una o dos frases: qué necesitas y para cuándo. Evita el «hola, ¿tienes un minuto?» sin contexto.' },
-  { id: 'linkedin', name: 'Publicación de LinkedIn', method: 'Gancho + historia + aprendizaje', words: [60, 250], ask: false, deadline: false, guide: 'Primera línea que despierte curiosidad, una historia concreta, el aprendizaje en una frase y una pregunta para el lector.' },
-];
 for (const k of KINDS) $('kind').add(new Option(k.name, k.id));
 const kind = () => KINDS.find(k => k.id === $('kind').value);
 const renderGuide = () => { $('guide').innerHTML = `<strong>${esc(kind().name)}</strong>${esc(kind().guide)}`; };
-const sentencesOf = (t) => t.split(/(?<=[.!?¿¡…])\s+|\n+/).map(s => s.trim()).filter(s => /\p{L}/u.test(s));
-function syllables(word) {
-  const groups = word.toLowerCase().replace(/[^a-záéíóúüñ]/g, '').match(/[aeiouáéíóúü]+/g) || [];
-  let n = 0;
-  for (const g of groups) { let c = 1; for (let i = 1; i < g.length; i++) if ('aeoáéóíú'.includes(g[i - 1]) && 'aeoáéóíú'.includes(g[i])) c++; n += c; }
-  return Math.max(1, n);
-}
-// Índice de legibilidad Fernández Huerta (Flesch adaptado al español): 60–70 normal, más de 70 fácil.
-function fernandezHuerta(words, sentences) {
-  if (!words.length || !sentences) return 0;
-  return Math.round(206.84 - 0.6 * (words.reduce((s, w) => s + syllables(w), 0) / words.length * 100) - 1.02 * (sentences / words.length * 100));
-}
-const ASK_RE = /\?|\b(podr[ií]as|puedes|pod[eé]s|necesito|necesitamos|te pido|les pido|solicito|agradecer[ií]a|por favor|me ayudas|me confirmas|confirm[aá]|env[ií]a|propongo)\b/iu;
-const DEADLINE_RE = /\b(hoy|mañana|lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|esta semana|pr[oó]xima semana|antes del?|a m[aá]s tardar|fecha|plazo|\d{1,2}(:\d{2})?\s?(h|hrs|horas|am|pm)|\d{1,2} de (enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)|\d{1,2}\/\d{1,2})\b/iu;
-const APOLOGY_RE = /\b(perd[oó]n por (molestar|la molestia)|disculpa (la molestia|que te moleste)|siento molestarte|no s[eé] si es posible)\b/giu;
-const VAGUE_OPEN_RE = /^(hola[,!.]?\s*)?(¿tienes un minuto\??|¿tienes un momento\??|espero que est[eé]s bien[.!]?|ojal[aá] est[eé]s bien[.!]?)\s*$/iu;
-function analyzeText(text) {
-  const k = kind(), words = text.match(/\p{L}+/gu) || [], sents = sentencesOf(text);
-  const lens = sents.map(s => wordCount(s)), avg = lens.length ? words.length / lens.length : 0, longest = Math.max(0, ...lens);
-  const read = fernandezHuerta(words, sents.length), hedges = countMatches(text, HEDGE_RE);
-  const askIdx = sents.findIndex(s => ASK_RE.test(s)), checks = [];
-  const add = (ok, msg) => checks.push({ ok, msg });
-  const [lo, hi] = k.words;
-  add(words.length >= lo && words.length <= hi, words.length < lo ? `Es muy corto para este tipo de texto (${words.length} palabras; ideal ${lo}–${hi}).`
-    : words.length > hi ? `Es largo (${words.length} palabras; ideal ${lo}–${hi}). Quita lo que no ayude a tu objetivo.` : `Buena extensión (${words.length} palabras).`);
-  if (k.ask) {
-    add(askIdx >= 0, askIdx >= 0 ? 'Hay un pedido explícito.' : 'No se ve un pedido claro: di exactamente qué necesitas («¿Puedes…?», «Necesito…»).');
-    if (askIdx >= 0) add(askIdx <= 1, askIdx <= 1 ? 'El pedido está al inicio: quien lee entiende enseguida qué necesitas.' : `El pedido aparece recién en la frase ${askIdx + 1}. Súbelo al inicio.`);
-  }
-  if (k.deadline) add(DEADLINE_RE.test(text), DEADLINE_RE.test(text) ? 'Incluye un plazo o fecha.' : 'Falta un plazo: agrega para cuándo («antes del jueves a las 12»).');
-  add(avg <= 22 && longest <= 35, avg <= 22 && longest <= 35 ? 'Frases de largo cómodo.' : `Hay frases largas (la más larga tiene ${longest} palabras). Divide las de más de 25.`);
-  if (words.length >= 30) add(read >= 55, read >= 55 ? `Fácil de leer (índice de legibilidad ${read}).` : `Cuesta leerlo (índice de legibilidad ${read}; apunta a 60 o más).`);
-  add(hedges <= 1, hedges <= 1 ? 'Lenguaje seguro.' : `${hedges} frases restan seguridad («creo que», «un poco», «solo quería»).`);
-  if ((text.match(APOLOGY_RE) || []).length) add(false, 'Pides perdón por escribir: no hace falta. Agradece en lugar de disculparte.');
-  if ((text.match(/\b[A-ZÁÉÍÓÚÑ]{4,}\b/g) || []).length + (text.match(/!{2,}/g) || []).length) add(false, 'Hay mayúsculas sostenidas o varios signos de exclamación: pueden leerse como enojo.');
-  if (sents.length && VAGUE_OPEN_RE.test(sents[0])) add(false, 'La primera frase no dice nada todavía: empieza por el motivo del mensaje.');
-  return { checks, score: Math.round(100 * checks.filter(c => c.ok).length / (checks.length || 1)), words: words.length, sentences: sents.length, read };
-}
 let wLast = null, wTimer = 0, draftId = Date.now().toString(36);
 function updateWriting() {
   const text = $('text').value;
   if (!text.trim()) { $('checks').innerHTML = '<li class="warn"><span class="i">·</span><span>Escribe tu borrador y la revisión aparecerá aquí.</span></li>'; $('wStats').textContent = ''; $('wScore').textContent = '–'; $('btnWAI').disabled = true; return; }
-  wLast = analyzeText(text);
+  wLast = analyzeWriting(text, kind());
   $('checks').innerHTML = wLast.checks.map(c => `<li class="${c.ok ? 'ok' : 'warn'}"><span class="i">${c.ok ? '✓' : '!'}</span><span>${esc(c.msg)}</span></li>`).join('');
   $('wStats').innerHTML = `<span>${wLast.words} palabras</span><span>${wLast.sentences} frases</span><span>~${Math.max(1, Math.round(wLast.words / 200 * 60))} s de lectura</span>`;
   $('wScore').textContent = `${wLast.score}/100`;

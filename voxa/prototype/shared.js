@@ -10,9 +10,29 @@ export const HEDGES = ['creo que', 'tal vez', 'quizás', 'quizá', 'un poco', 'u
   'no sé si', 'más o menos', 'de alguna manera', 'supongo', 'disculpa', 'solo quería', 'sólo quería'];
 
 const escRe = (s) => s.replace(/[.*?^${}()|[\]\\]/g, '\\$&');
-const wordRe = (list) => new RegExp(`(^|[^\\p{L}])(${list.map(w => w.endsWith('+') ? escRe(w.slice(0, -1)) + '+' : escRe(w)).join('|')})(?=$|[^\\p{L}])`, 'giu');
-export const FILLER_RE = wordRe(FILLERS);
-export const HEDGE_RE = wordRe(HEDGES);
+const asPattern = (w) => w.endsWith('+') ? escRe(w.slice(0, -1)) + '+' : escRe(w);
+const wordRe = (patterns) => new RegExp(`(^|[^\\p{L}])(${patterns.join('|')})(?=$|[^\\p{L}])`, 'giu');
+
+// Palabras que también son normales («este informe», «este tipo de cliente», «es bueno que», «vale la pena»,
+// «viste la película») sólo cuentan como muletilla en contexto de relleno: seguidas de una pausa, al
+// inicio de la frase (bueno) o antes de una palabra funcional («este, la idea es…», «este eh…»).
+const PAUSE = String.raw`(?:\s*[,.;:…!?]|\s*$)`;
+const FUNCTION_WORD = String.raw`\s+(?:el|la|los|las|lo|un|una|unos|unas|yo|tú|me|te|se|le|les|nos|que|no|sí|es|era|hay|vamos|tenemos|quiero|eh+|em+|o sea|pues|bueno|este)(?!\p{L})`;
+const CONTEXTUAL = {
+  // Sonidos de duda alargados: «eh», «eeeh», «ehm», «emm», «mmm».
+  'eh+': 'e+h+', 'em+': 'e+m+', 'ehm+': 'e+h+m+', 'mm+': 'm{2,}',
+  este: String.raw`este(?=${PAUSE}|${FUNCTION_WORD})`,
+  tipo: String.raw`tipo(?=${PAUSE}|${FUNCTION_WORD})`,
+  onda: String.raw`onda(?=${PAUSE}|${FUNCTION_WORD})`,
+  bueno: String.raw`(?<=(?:^|[.!?¡¿]\s*))bueno|bueno(?=\s*[,.…])`,
+  vale: String.raw`vale(?=\s*[?,.…!]|\s*$)`,
+  sabes: String.raw`sabes(?=\s*[?,]|\s*$)`,
+  viste: String.raw`viste(?=\s*[?,]|\s*$)`,
+  po: String.raw`po(?=${PAUSE})`,
+};
+export const FILLER_RE = wordRe(FILLERS.map(w => CONTEXTUAL[w] ?? asPattern(w)));
+export const HEDGE_RE = wordRe(HEDGES.map(asPattern));
+
 
 export const $ = (id) => document.getElementById(id);
 export const countMatches = (t, re) => (t.match(re) || []).length;
