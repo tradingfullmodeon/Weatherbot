@@ -223,6 +223,9 @@
   canvas { max-width: 100%; }
   code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9em; }
   #report:not(.hidden) { display: block; }
+  .rec-choices { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+  .rec-choices .btn-link { flex: 1 1 200px; }
+  #preview { width: 100%; max-height: 260px; border-radius: 12px; background: #000; margin-top: 8px; }
 
 </style>
 
@@ -305,9 +308,17 @@
       </div>
 
       <div id="paneAudio" class="hidden">
-        <p class="note">Graba tu respuesta con la app de notas de voz o la cámara de tu celular y súbela aquí. El audio se analiza en tu navegador y no se sube a ningún lado.</p>
-        <label for="file" class="btn-link file-btn">📁 Elegir grabación (audio o video)</label>
-        <input type="file" id="file" accept="audio/*,video/*" class="visually-hidden">
+        <p class="note">Graba tu respuesta y VOXA la analiza en tu navegador: no se sube a ningún lado.</p>
+        <div class="rec-choices">
+          <label for="recVideo" class="btn-link cta">🎥 Grabarme en video</label>
+          <input type="file" id="recVideo" accept="video/*" capture="user" class="visually-hidden">
+          <label for="recAudio" class="btn-link file-btn">🎙 Grabar sólo mi voz</label>
+          <input type="file" id="recAudio" accept="audio/*" capture class="visually-hidden">
+          <label for="file" class="btn-link file-btn">📁 Elegir una grabación que ya tengo</label>
+          <input type="file" id="file" accept="audio/*,video/*" class="visually-hidden">
+        </div>
+        <p class="note" id="recHelp"></p>
+        <video id="preview" class="hidden" controls playsinline></video>
         <p class="note" id="fileName"></p>
         <label for="said">¿Qué dijiste? (opcional, para medir ritmo y muletillas)</label>
         <textarea id="said" placeholder="Pega o escribe el texto de tu respuesta."></textarea>
@@ -951,9 +962,21 @@ function setMode(m) {
 }
 $('mText').addEventListener('click', () => setMode('text'));
 $('mAudio').addEventListener('click', () => setMode('audio'));
-$('file').addEventListener('change', () => {
-  file = $('file').files[0] || null;
-  $('fileName').textContent = file ? `Elegiste: ${file.name} (${(file.size / 1e6).toFixed(1)} MB)` : '';
+// En el celular, «capture» abre directamente la cámara o la grabadora del sistema; en el computador, el
+// navegador muestra el selector de archivos. Esta página no puede usar la cámara en vivo (claude.ai no lo permite).
+const touch = matchMedia('(pointer: coarse)').matches;
+$('recHelp').textContent = touch
+  ? 'Al tocar «Grabarme en video» se abre la cámara de tu celular: graba tu respuesta, confirma y vuelve aquí.'
+  : 'En el computador, graba con la app de cámara o de grabadora de voz y elige el archivo. Desde el celular, estos botones abren la cámara directamente.';
+if (!touch) { $('recVideo').previousElementSibling.textContent = '🎥 Elegir un video'; $('recAudio').previousElementSibling.textContent = '🎙 Elegir un audio'; }
+let previewUrl = null;
+for (const id of ['recVideo', 'recAudio', 'file']) $(id).addEventListener('change', () => {
+  file = $(id).files[0] || null;
+  $('fileName').textContent = file ? `Listo: ${file.name || 'grabación'} (${(file.size / 1e6).toFixed(1)} MB). Pulsa «Analizar mi grabación».` : '';
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
+  previewUrl = file ? URL.createObjectURL(file) : null;
+  $('preview').classList.toggle('hidden', !file);
+  if (file) $('preview').src = previewUrl;
 });
 function updateAnswerStats() {
   const w = wordCount($('answer').value);

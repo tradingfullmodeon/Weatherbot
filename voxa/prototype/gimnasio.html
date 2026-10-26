@@ -54,6 +54,7 @@
 
 <script type="module">
 import { $, esc, mean, std, colorFor, detectPitch, rmsOf, renderNav, saveSession, loadSessions, userLocale } from './shared.js';
+import { requestMedia, explainError } from './devices.js';
 
 renderNav();
 
@@ -121,8 +122,8 @@ $('btnMic').addEventListener('click', async () => {
   try {
     // Sin ganancia automática ni supresión de ruido: el navegador aplanaría el volumen y atenuaría la voz suave,
     // y aquí lo que se mide son justamente los niveles. Por eso se recomiendan auriculares.
-    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
-  } catch (e) { $('status').textContent = 'No se pudo acceder al micrófono: ' + e.message; return; }
+    ({ stream } = await requestMedia({ video: false, audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }));
+  } catch (e) { $('status').innerHTML = esc(explainError(e)) + ' <a href="index.html#dispositivos">Probar mis dispositivos</a>'; return; }
   ctx = new AudioContext();
   analyser = ctx.createAnalyser(); analyser.fftSize = 2048;
   ctx.createMediaStreamSource(stream).connect(analyser);

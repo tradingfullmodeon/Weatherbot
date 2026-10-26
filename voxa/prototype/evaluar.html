@@ -29,10 +29,15 @@
       <span><strong style="color:var(--text)">Audiencia virtual</strong><br>Un público simulado que presta más o menos atención según cómo hablas.</span>
     </label>
 
+    <label style="display:flex;gap:10px;align-items:flex-start;margin-top:10px;cursor:pointer">
+      <input type="checkbox" id="voiceOnly" style="width:22px;height:22px;margin-top:2px">
+      <span><strong style="color:var(--text)">Sólo voz (sin cámara)</strong><br>Útil si no tienes cámara o prefieres empezar sin verte.</span>
+    </label>
+
     <div class="btns" style="margin-top:16px">
       <button id="btnStart" class="cta">▶ Empezar</button>
     </div>
-    <p class="note" id="status" aria-live="polite">Te pediremos permiso para usar la cámara y el micrófono. Nada se sube a internet.</p>
+    <p class="note" id="status" aria-live="polite">Te pediremos permiso para usar la cámara y el micrófono. Nada se sube a internet. <a href="index.html#dispositivos">Probar mis dispositivos</a></p>
   </section>
 
   <section class="card" id="stageCard">
@@ -128,6 +133,7 @@ import {
   renderNav, saveSession, loadSessions, loadProfile, aiStatus, postJSON, GOALS, detectPitch, findFilledPauses, userLocale, LOCALES,
 } from './shared.js';
 import { SCENARIOS, GROUPS, IMPRO_TOPICS, methodHelp } from './scenarios.js';
+import { requestMedia, explainError } from './devices.js';
 
 renderNav();
 const profile = loadProfile();
@@ -187,28 +193,37 @@ const localeName = LOCALES.find(([id]) => id === locale)?.[1] || locale;
 $('status').innerHTML += ` Español: ${esc(localeName)} (<a href="index.html#ajustes">cambiar</a>).`;
 
 // ---------------------------------------------------------------- cámara, micrófono y visión
+let hasCamera = false;
 async function ensureMedia() {
-  if (stream) return true;
-  $('status').textContent = 'Esperando tu permiso para usar la cámara y el micrófono…';
+  const wantVideo = !$('voiceOnly').checked;
+  // Si cambió el modo (con o sin cámara) desde la última vez, se vuelve a pedir el acceso.
+  if (stream && hasCamera === wantVideo) return true;
+  stream?.getTracks().forEach(t => t.stop());
+  stream = null;
+  $('status').textContent = wantVideo ? 'Esperando tu permiso para usar la cámara y el micrófono…' : 'Esperando tu permiso para usar el micrófono…';
   try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: 640, height: 480, facingMode: 'user' },
-      audio: { echoCancellation: true, noiseSuppression: true },
-    });
+    const r = await requestMedia({ video: wantVideo });
+    stream = r.stream; hasCamera = r.video;
   } catch (e) {
-    $('status').innerHTML = e.name === 'NotAllowedError'
-      ? 'Sin permiso no podemos escucharte. Actívalo en el candado de la barra de direcciones y vuelve a pulsar «Empezar».'
-      : 'No encontramos cámara o micrófono disponibles: ' + esc(e.message);
+    $('status').innerHTML = esc(explainError(e)) + ' <a href="index.html#dispositivos">Probar mis dispositivos</a>';
     return false;
   }
-  $('video').srcObject = stream;
-  await $('video').play();
-  $('stageEmpty').classList.add('hidden');
-  audioCtx = new AudioContext();
+  const v = $('video');
+  if (hasCamera) {
+    v.srcObject = stream; await v.play();
+    $('stageEmpty').classList.add('hidden');
+  } else {
+    v.srcObject = null;
+    $('stageEmpty').classList.remove('hidden');
+    $('stageEmpty').innerHTML = '🎙 Modo sólo voz<br>Evaluaremos tu voz y tu lenguaje.';
+    $('lGaze').textContent = 'sin cámara';
+    if (wantVideo) $('status').textContent = 'No pudimos usar la cámara, así que seguimos sólo con tu voz.';
+  }
+  audioCtx ??= new AudioContext();
   analyser = audioCtx.createAnalyser();
   analyser.fftSize = 2048;
   audioCtx.createMediaStreamSource(stream).connect(analyser);
-  loadVision();
+  if (hasCamera && !faceLandmarker) loadVision();
   return true;
 }
 
@@ -239,7 +254,8 @@ async function begin() {
   if (running) return;
   $('btnStart').disabled = true;
   if (!(await ensureMedia())) { $('btnStart').disabled = false; return; }
-  $('status').textContent = '';
+  // Se conserva el aviso de «seguimos sólo con tu voz» si la cámara no estuvo disponible.
+  if (hasCamera || $('voiceOnly').checked) $('status').textContent = '';
   $('overlayPrompt').textContent = currentPrompt;
   $('overlayPrompt').classList.remove('hidden');
   $('stageCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -254,7 +270,7 @@ function start() {
   if (audioCtx.state === 'suspended') audioCtx.resume();
   finalText = ''; interimText = ''; samples = []; faceSamples = []; chunks = []; attention = [];
   $('transcript').innerHTML = '';
-  $('lFill').textContent = '0'; $('lWpm').textContent = '–'; if (faceLandmarker) $('lGaze').textContent = '–';
+  $('lFill').textContent = '0'; $('lWpm').textContent = '–'; $('lGaze').textContent = hasCamera ? (faceLandmarker ? '–' : 'n/d') : 'sin cámara';
   running = true; startT = performance.now();
   $('btnStop').classList.remove('hidden'); $('recBadge').style.display = 'block';
   $('audBox').classList.toggle('hidden', !$('audToggle').checked);
@@ -308,7 +324,10 @@ function startRecognition() {
   };
   // Chrome corta la sesión tras silencios: se reinicia mientras sigamos grabando.
   recognition.onend = () => { if (running) try { recognition.start(); } catch {} };
-  recognition.onerror = (e) => { if (e.error === 'not-allowed') $('status').textContent = 'Permiso de reconocimiento de voz denegado.'; };
+  recognition.onerror = (e) => {
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') $('transcript').innerHTML = '<span class="note">El navegador no permitió transcribir tu voz; evaluaremos el resto igual.</span>';
+    if (e.error === 'network') $('transcript').innerHTML = '<span class="note">La transcripción necesita internet; evaluaremos tu voz igual.</span>';
+  };
   try { recognition.start(); } catch {}
 }
 
@@ -343,7 +362,7 @@ function loop() {
   const v = $('video');
   if (faceLandmarker && t - lastFaceT > 0.1 && v.currentTime !== lastVideoTime) {
     lastFaceT = t; lastVideoTime = v.currentTime;
-    try { faceSamples.push({ t, ...analyzeFace(faceLandmarker.detectForVideo(v, performance.now())) }); } catch {}
+    if (hasCamera) try { faceSamples.push({ t, ...analyzeFace(faceLandmarker.detectForVideo(v, performance.now())) }); } catch {}
     const recent = faceSamples.slice(-30);
     if (recent.length) $('lGaze').textContent = Math.round(100 * recent.filter(f => f.gaze).length / recent.length) + '%';
   }

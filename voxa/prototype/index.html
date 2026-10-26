@@ -63,6 +63,11 @@
     <p id="tip" class="lead"></p>
   </section>
 
+  <section class="card" id="dispositivos">
+    <h2>Tus dispositivos</h2>
+    <div id="deviceCheck"></div>
+  </section>
+
   <section class="card" id="ajustes">
     <h2>Ajustes</h2>
     <label for="sGoal">Tu objetivo</label>
@@ -76,6 +81,9 @@
 <script type="module">
 import { $, esc, renderNav, loadProfile, saveProfile, loadSessions, GOALS, LOCALES, userLocale } from './shared.js';
 import { todayTask, streak, practicedToday } from './plan.js';
+import { mountDeviceCheck } from './devices.js';
+
+mountDeviceCheck($('deviceCheck'));
 
 renderNav();
 const profile = loadProfile();
@@ -115,6 +123,8 @@ pick($('wNerves'), 'v', v => wNerves = +v);
 const firstRun = !profile.onboarded && !sessions.length;
 // En la primera visita sólo se muestra la bienvenida: una sola tarea por pantalla.
 if (firstRun) { $('welcome').classList.remove('hidden'); document.querySelectorAll('main > section:not(#welcome)').forEach(s => s.classList.add('hidden')); }
+// Quien llega desde «Probar mis dispositivos» ve esa tarjeta aunque no haya terminado la bienvenida.
+if (location.hash === '#dispositivos') { $('dispositivos').classList.remove('hidden'); $('dispositivos').scrollIntoView(); }
 $('wDone').addEventListener('click', () => {
   Object.assign(profile, { goal: wGoal, locale: $('wLocale').value, onboarded: true, startNerves: wNerves });
   saveProfile(profile);

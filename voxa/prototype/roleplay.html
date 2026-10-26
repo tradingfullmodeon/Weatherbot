@@ -91,6 +91,7 @@
 import {
   $, FILLER_RE, countMatches, wordCount, mean, esc, colorFor, highlight, renderNav, saveSession, aiStatus, postJSON, userLocale,
 } from './shared.js';
+import { unblockHelp } from './devices.js';
 
 renderNav();
 const locale = userLocale();
@@ -208,7 +209,12 @@ function startListening() {
     }
     $('txt').value = (heard + interim).trim();
   };
-  recognition.onerror = (e) => { $('status').textContent = 'Micrófono: ' + e.error; };
+  recognition.onerror = (e) => {
+    const msg = { 'not-allowed': 'El micrófono está bloqueado. ' + unblockHelp(), 'service-not-allowed': 'Este navegador no permite dictar por voz: escribe tu respuesta.',
+      'no-speech': 'No te escuchamos. Acércate al micrófono e inténtalo de nuevo.', 'audio-capture': 'No encontramos un micrófono. Revisa que esté conectado.',
+      network: 'El dictado por voz necesita internet. Puedes escribir tu respuesta.' }[e.error];
+    $('status').textContent = msg || 'Micrófono: ' + e.error;
+  };
   recStart = performance.now();
   recognition.start();
   $('btnMic').classList.add('rec-on'); $('btnMic').setAttribute('aria-pressed', 'true'); $('btnMic').textContent = '■ Tocar para enviar';

@@ -21,6 +21,21 @@ Plataforma para mejorar cómo se comunica una persona (confianza, desarrollo pro
 
 Incluye Hoy, Ensayar (respuesta escrita o grabación subida desde el celular), Roleplay con 6 personajes, Escritura y Progreso. El coach IA usa la cuenta de Claude de quien la abre (claude.ai pide permiso la primera vez), sin servidor ni API key. Las páginas de claude.ai no permiten usar la cámara ni el micrófono en vivo, así que la evaluación en vivo, la audiencia virtual y el gimnasio de voz están en la versión completa (abajo). El link es privado hasta que se comparte desde el menú «Compartir» de la página.
 
+**Cámara y micrófono en el link de claude.ai:** las páginas de claude.ai no pueden usar la cámara ni el micrófono *en vivo*. En «Ensayar → Subir una grabación», los botones «Grabarme en video» y «Grabar sólo mi voz» abren directamente la cámara o la grabadora del celular (atributo `capture`). Al terminar, la grabación vuelve a la página y se analiza en el navegador. En el computador abren el selector de archivos.
+
+**Versión completa con cámara y micrófono en vivo (GitHub Pages).** El flujo `.github/workflows/voxa-pages.yml` publica `voxa/prototype` en https://tradingfullmodeon.github.io/Weatherbot/. Para activarla una sola vez:
+1. Integra estos cambios en `main` (por ejemplo, con un pull request de la rama `claude/kind-ptolemy-5yibyk`).
+2. En GitHub: Settings → Pages → Source: «GitHub Actions».
+3. Ejecuta el flujo (Actions → «Publicar VOXA en GitHub Pages» → Run workflow) o haz cualquier cambio en `voxa/prototype`.
+
+Como Pages no ejecuta el servidor, el coach IA no está disponible ahí (todo lo demás sí). Para el coach IA en vivo, ejecuta el servidor (abajo) o usa el link de claude.ai.
+
+**Acceso a cámara y micrófono (`prototype/devices.js`):**
+- Pide los permisos al pulsar «Empezar» y nunca antes.
+- Si la cámara no está disponible (no existe, está ocupada o se bloqueó sólo la cámara), sigue en **modo sólo voz**. Ese modo también se puede elegir a propósito.
+- Explica cada error en lenguaje simple (permiso bloqueado, otra app usando la cámara, página sin https, navegador de WhatsApp o Instagram) con los pasos para desbloquear en Chrome, Safari, Firefox, Android e iPhone.
+- En «Hoy» incluye **«Probar cámara y micrófono»**, con vista previa, medidor de voz y estado de cada permiso.
+
 Para regenerarla tras cambiar el prototipo: `python3 voxa/artifact/build.py` (combina `prototype/shared.js`, `prototype/scenarios.js`, `prototype/voxa.css` y `server/personas.py` con `artifact/app.js` en `artifact/dist/voxa.html`).
 
 ## Ejecutar la versión completa

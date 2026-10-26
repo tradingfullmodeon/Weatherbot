@@ -218,9 +218,21 @@ function setMode(m) {
 }
 $('mText').addEventListener('click', () => setMode('text'));
 $('mAudio').addEventListener('click', () => setMode('audio'));
-$('file').addEventListener('change', () => {
-  file = $('file').files[0] || null;
-  $('fileName').textContent = file ? `Elegiste: ${file.name} (${(file.size / 1e6).toFixed(1)} MB)` : '';
+// En el celular, «capture» abre directamente la cámara o la grabadora del sistema; en el computador, el
+// navegador muestra el selector de archivos. Esta página no puede usar la cámara en vivo (claude.ai no lo permite).
+const touch = matchMedia('(pointer: coarse)').matches;
+$('recHelp').textContent = touch
+  ? 'Al tocar «Grabarme en video» se abre la cámara de tu celular: graba tu respuesta, confirma y vuelve aquí.'
+  : 'En el computador, graba con la app de cámara o de grabadora de voz y elige el archivo. Desde el celular, estos botones abren la cámara directamente.';
+if (!touch) { $('recVideo').previousElementSibling.textContent = '🎥 Elegir un video'; $('recAudio').previousElementSibling.textContent = '🎙 Elegir un audio'; }
+let previewUrl = null;
+for (const id of ['recVideo', 'recAudio', 'file']) $(id).addEventListener('change', () => {
+  file = $(id).files[0] || null;
+  $('fileName').textContent = file ? `Listo: ${file.name || 'grabación'} (${(file.size / 1e6).toFixed(1)} MB). Pulsa «Analizar mi grabación».` : '';
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
+  previewUrl = file ? URL.createObjectURL(file) : null;
+  $('preview').classList.toggle('hidden', !file);
+  if (file) $('preview').src = previewUrl;
 });
 function updateAnswerStats() {
   const w = wordCount($('answer').value);
