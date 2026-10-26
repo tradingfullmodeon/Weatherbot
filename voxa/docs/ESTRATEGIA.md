@@ -86,7 +86,7 @@
 | **Gong / Chorus** | Análisis de llamadas reales: ratio habla/escucha, monólogos, preguntas, interrupciones. |
 | **Headspace / Calm** | Rutinas guiadas de respiración/ansiedad antes de un evento. |
 
-> **Benchmark ampliado:** el análisis exhaustivo por región (Norteamérica, Europa, Asia y mundo hispanohablante), las necesidades de los usuarios y las 20 mejoras diferenciadoras están en [`BENCHMARK.md`](BENCHMARK.md).
+> **Benchmark ampliado:** el análisis exhaustivo por región (Norteamérica, Europa, Asia y mundo hispanohablante), las necesidades de los usuarios y las 23 mejoras diferenciadoras están en [`BENCHMARK.md`](BENCHMARK.md).
 
 ### 2.6 Conclusión del benchmark
 
@@ -437,6 +437,7 @@ orgs / teams / seats                               -- B2B
 
 - **Coach IA** (`/api/feedback`): fortaleza con cita, un foco, chequeo de estructura según el método, reescritura de la respuesta, ejercicio y rúbrica cualitativa, con salida JSON validada por esquema.
 - **Roleplay por voz** (`roleplay.html`, `/api/roleplay`): 6 personajes (reclutadora, jefe, clienta molesta, inversionista, colega, networking), 3 niveles de dificultad, pistas en vivo, **rebobinar y reintentar**, métricas de conversación y evaluación final (`/api/roleplay/evaluate`). Sin IA funciona un entrevistador con preguntas fijas.
+- **v3:** biblioteca de 22 escenarios en 6 ambientes (incluida la vida social); detector acústico de sonidos de duda («eh/mmm») que la transcripción borra; **gimnasio de voz** (`gimnasio.html`) con 5 ejercicios medidos en vivo; roleplay personalizado con la oferta de trabajo, el CV o notas reales del usuario; y app instalable que funciona sin conexión (PWA).
 - **Mi progreso** (`progreso.html`): línea base, tendencia por dimensión, racha, nervios antes/después, foco recurrente, sprint de 30 días con la tarea del día, escalera de confianza y exportación o borrado de datos.
 
 ---

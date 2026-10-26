@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VOXA Progreso</title>
 <link rel="stylesheet" href="voxa.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#4f46e5">
 <style>
   .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
   .kpi { border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
@@ -48,6 +50,11 @@
     <div class="legend" id="legend"></div>
   </section>
 
+  <section class="card full">
+    <h2>Gimnasio de voz · mejores marcas</h2>
+    <div class="kpis" id="gym"></div>
+  </section>
+
   <section class="card">
     <h2>Nervios antes y después</h2>
     <canvas id="anx" width="500" height="180" aria-label="Nervios antes y después de cada práctica"></canvas>
@@ -87,6 +94,7 @@ function streak() {
   while (days.has(dayKey(d.toISOString()))) { n++; d.setDate(d.getDate() - 1); }
   return n;
 }
+const count = (type) => sessions.filter(s => s.type === type).length;
 function kpi(k, v, d = '') { return `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d}</div></div>`; }
 if (!sessions.length) {
   $('empty').textContent = 'Aún no hay sesiones. Haz tu diagnóstico en «Evaluar»: será tu línea base.';
@@ -96,7 +104,7 @@ const best = evals.reduce((b, s) => (!b || s.total > b.total ? s : b), null);
 const delta = base && last ? last.total - base.total : 0;
 const anxDrop = mean(sessions.filter(s => s.anxietyAfter != null).map(s => s.anxietyBefore - s.anxietyAfter));
 $('kpis').innerHTML = [
-  kpi('Sesiones', sessions.length, `${evals.length} evaluaciones · ${sessions.length - evals.length} roleplays`),
+  kpi('Sesiones', sessions.length, `${evals.length} evaluaciones · ${count('roleplay')} roleplays · ${count('gimnasio')} de gimnasio`),
   kpi('Racha', (n => `${n} ${n === 1 ? 'día' : 'días'}`)(streak()), 'días seguidos practicando'),
   kpi('Línea base', base ? base.total : '–', base ? esc(base.scenarioName) : ''),
   kpi('Última', last ? last.total : '–', base && last !== base ? `<span style="color:${delta >= 0 ? 'var(--good)' : 'var(--bad)'}">${delta >= 0 ? '+' : ''}${delta} vs. línea base</span>` : ''),
@@ -106,10 +114,10 @@ $('kpis').innerHTML = [
 
 // ---------------------------------------------------------------- Sprint 30 días
 const SPRINT = [
-  { week: 'Semana 1 · Voz y ritmo', tasks: ['Evalúa «Preséntate en 60 s» y anota tu ritmo.', 'Lee un texto en voz alta haciendo una pausa en cada punto (2 min) y repite la evaluación.', 'Reto: 60 s sin muletillas; cambia cada «este/o sea» por una pausa.', 'Calentamiento de voz + evaluación «Actualización ejecutiva».', 'Repite tu peor escenario de la semana.', 'Improvisación: tema sorpresa.', 'Descanso activo: escucha una charla y cuenta las pausas del orador.'] },
+  { week: 'Semana 1 · Voz y ritmo', tasks: ['Evalúa «Preséntate en 60 s» y anota tu ritmo.', 'Gimnasio de voz: «Lectura con pausas» y «Sostén la vocal»; luego repite la evaluación.', 'Reto: 60 s sin muletillas; cambia cada «este/o sea» por una pausa.', 'Gimnasio: «Sirena de tono» + evaluación «Actualización ejecutiva».', 'Repite tu peor escenario de la semana.', 'Improvisación: tema sorpresa.', 'Gimnasio: trabalenguas nivel 1 a 3. Descanso activo: escucha una charla y cuenta las pausas del orador.'] },
   { week: 'Semana 2 · Estructura', tasks: ['Improvisación con PREP.', 'Entrevista STAR: «Cuéntame de un logro».', 'Escribe tu mensaje en una frase y preséntalo en 60 s.', 'Actualización ejecutiva con BLUF.', 'Roleplay con la reclutadora (dificultad media).', 'Pitch de proyecto con Monroe/SCQA.', 'Repite la práctica con menor puntaje en estructura.'] },
-  { week: 'Semana 3 · Presencia', tasks: ['Evalúa mirando a la cámara en apertura, idea clave y cierre.', 'Ajusta encuadre y luz; repite «Preséntate».', 'Sonríe al saludar y al cerrar; revisa tu replay.', 'Gestos dentro del marco: repite el pitch.', 'Graba sin guion durante 90 s.', 'Revisa tu replay sin audio: ¿qué dice tu cuerpo?', 'Repite tu escenario favorito buscando 80+.'] },
-  { week: 'Semana 4 · Contexto e interacción', tasks: ['Roleplay: cliente molesta (escucha activa).', 'Roleplay: colega (SBI + CNV).', 'Roleplay: jefe (pedido concreto).', 'Roleplay: inversionista en dificultad alta.', 'Networking: 3 preguntas abiertas.', 'Misión real: aplica una técnica en una conversación de verdad.', 'Re-evaluación final: el mismo escenario de tu línea base.'] },
+  { week: 'Semana 3 · Presencia', tasks: ['Evalúa mirando a la cámara en apertura, idea clave y cierre.', 'Ajusta encuadre y luz; repite «Preséntate».', 'Sonríe al saludar y al cerrar; revisa tu replay.', 'Gestos dentro del marco: repite el pitch.', 'Graba sin guion durante 90 s.', 'Social: «Brindis en una celebración». Revisa el replay sin audio: ¿qué dice tu cuerpo?', 'Repite tu escenario favorito buscando 80+.'] },
+  { week: 'Semana 4 · Contexto e interacción', tasks: ['Roleplay: cliente molesta (escucha activa).', 'Roleplay: colega (SBI + CNV).', 'Roleplay: jefe (pedido concreto).', 'Roleplay: inversionista en dificultad alta.', 'Roleplay de networking con 3 preguntas abiertas, o «Pedir disculpas de verdad».', 'Misión real: aplica una técnica en una conversación de verdad.', 'Re-evaluación final: el mismo escenario de tu línea base.'] },
 ];
 if (sessions.length) {
   const start = new Date(dayKey(sessions[0].date));
@@ -126,7 +134,7 @@ if (sessions.length) {
 }
 
 // ---------------------------------------------------------------- foco recurrente
-const LABELS = { wpm: 'Ritmo', fillers: 'Muletillas', hedges: 'Atenuadores', length: 'Desarrollo del contenido', pitch: 'Variación de tono',
+const LABELS = { hums: 'Sonidos de duda', wpm: 'Ritmo', fillers: 'Muletillas', hedges: 'Atenuadores', length: 'Desarrollo del contenido', pitch: 'Variación de tono',
   speech: 'Tiempo hablando', pauses: 'Silencios largos', volume: 'Volumen', face: 'Encuadre', gaze: 'Mirada a cámara', smile: 'Expresividad', head: 'Estabilidad' };
 const weakCount = {};
 for (const s of evals.slice(-10)) {
@@ -187,6 +195,16 @@ function drawAnx() {
 }
 drawTrend(); drawAnx();
 
+// ---------------------------------------------------------------- gimnasio
+const gymBest = {};
+for (const s of sessions.filter(s => s.type === 'gimnasio')) {
+  const b = gymBest[s.scenario];
+  if (!b || s.total > b.total) gymBest[s.scenario] = { ...s, tries: (b?.tries || 0) + 1 };
+  else b.tries++;
+}
+$('gym').innerHTML = Object.values(gymBest).map(s => kpi(esc(s.scenarioName.replace('Gimnasio: ', '')), s.total, `${s.tries} ${s.tries === 1 ? 'intento' : 'intentos'}`)).join('')
+  || '<p class="note">Haz tu primer calentamiento en «Gimnasio de voz».</p>';
+
 // ---------------------------------------------------------------- escalera de confianza
 const LADDER = [
   'Hablar 60 s a solas en voz alta (sin grabar).',
@@ -199,9 +217,11 @@ const LADDER = [
   'Presentar 3 minutos ante un grupo pequeño.',
   'Presentar ante un público o en un evento.',
 ];
+// Peldaños que se pueden practicar dentro de VOXA.
+const LADDER_LINKS = { 1: 'gimnasio.html', 2: 'index.html?escenario=passion', 3: 'roleplay.html', 4: 'roleplay.html' };
 profile.ladder ||= {};
 $('ladder').innerHTML = LADDER.map((t, i) =>
-  `<li><label><input type="checkbox" data-i="${i}" ${profile.ladder[i] ? 'checked' : ''}> <span>${i + 1}. ${t}</span></label></li>`).join('');
+  `<li><label><input type="checkbox" data-i="${i}" ${profile.ladder[i] ? 'checked' : ''}> <span>${i + 1}. ${t}${LADDER_LINKS[i] ? ` <a href="${LADDER_LINKS[i]}">Practicar</a>` : ''}</span></label></li>`).join('');
 $('ladder').addEventListener('change', (e) => {
   profile.ladder[e.target.dataset.i] = e.target.checked; saveProfile(profile);
 });

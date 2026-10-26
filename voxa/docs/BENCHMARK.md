@@ -147,8 +147,8 @@ Cada mejora responde a una brecha concreta. La columna "Estado" indica qué ya e
 | 9 | "Leer emociones" es poco fiable e ilegal en el trabajo y la educación en la UE | **Sólo conductas observables** (mirada a cámara, sonrisa, estabilidad, ritmo). El coach IA tiene prohibido inferir emociones o personalidad. Es apto para empresas europeas desde el primer día. | ✅ Reglas del coach |
 | 10 | Dependencia total de la nube | **Modo degradado**: sin servidor ni IA, el evaluador funciona igual y el roleplay usa un entrevistador con preguntas fijas y pistas locales. | ✅ Prototipo |
 | 11 | Equilibrio entre hablar y escuchar ignorado fuera de ventas | **Métricas de conversación**: porcentaje de tiempo hablando, preguntas formuladas y muletillas por minuto, evaluadas junto a escucha, empatía y manejo de objeciones. | ✅ Prototipo |
-| 12 | Las apps de entrevista generan preguntas genéricas | **Preguntas desde tu CV o la oferta de trabajo** (modelo coreano), con el tono del entrevistador como parámetro. | Siguiente iteración |
-| 13 | Escenarios sólo laborales | **Biblioteca de vida social** (modelo chino de 口才): brindis, discurso de boda, presentarse en un grupo, cita, conversación familiar difícil. | Siguiente iteración |
+| 12 | Las apps de entrevista generan preguntas genéricas | **Roleplay con tu situación real**: pegas la oferta de trabajo, tu CV o notas de la reunión y el personaje basa sus preguntas y objeciones en ese material (modelo coreano), con la dificultad como parámetro de tono. | ✅ Prototipo |
+| 13 | Escenarios sólo laborales | **Biblioteca de 22 escenarios en 6 ambientes** (Confianza, Profesional, Liderazgo, Público, Social, Digital), incluida la vida social (modelo chino de 口才): brindis, discurso de boda, presentarse en un grupo nuevo, pedir disculpas, poner límites en familia, video para redes, mensaje de voz. | ✅ Prototipo |
 | 14 | Copiloto de reuniones desaparecido | **Reporte post-reunión privado** (opt-in) para Meet/Zoom/Teams: tiempo de habla, interrupciones, monólogos y preguntas. | Hoja de ruta v2 |
 | 15 | La IA no reemplaza al humano en lo importante | **Híbrido**: la IA hace el 90% de las repeticiones; un coach humano del marketplace revisa el replay con datos objetivos antes del evento importante. | Hoja de ruta v2 |
 | 16 | Suscripciones engañosas | **Precio transparente**: sin cobros semanales, sin trucos de cancelación; plan gratuito útil (diagnóstico, 3 sesiones por semana, modo sin IA ilimitado). | Política comercial |
@@ -156,6 +156,9 @@ Cada mejora responde a una brecha concreta. La columna "Estado" indica qué ya e
 | 18 | Canales poco accesibles en Latinoamérica | **Retos diarios por WhatsApp** con feedback por nota de voz. | Hoja de ruta v1 |
 | 19 | Sin estructura para la "comunicación digital" | **Módulo escrito**: correos difíciles, mensajes de Slack o WhatsApp, posts de LinkedIn, reescritos con BLUF y Comunicación No Violenta. | Hoja de ruta v1 |
 | 20 | Empresas que exigen impacto | **Panel B2B con niveles de Kirkpatrick** (reacción → aprendizaje → conducta → resultados), sólo agregados y con consentimiento; nunca grabaciones individuales. | Hoja de ruta v2 |
+| 21 | El reconocimiento de voz borra los «eh/mmm», así que nadie los cuenta bien | **Detector acústico de sonidos de duda**: tramos sonoros largos con tono plano, marcados en la línea de tiempo del replay. Complementa a la transcripción sin depender de ella. | ✅ Prototipo (estimación) |
+| 22 | Nadie entrena el instrumento (la voz) con medición | **Gimnasio de voz** con 5 ejercicios medidos en vivo: vocal sostenida (respiración), sirena (rango de tono), escalera de volumen (proyección), trabalenguas (dicción, inspirado en la cultura de 口才) y lectura con pausas, con mejores marcas. | ✅ Prototipo |
+| 23 | Apps sólo de tienda, con fricción de instalación | **App web instalable y disponible sin conexión** (PWA): se instala desde el navegador en el móvil y funciona sin red en todo lo que no es IA. | ✅ Prototipo |
 
 ---
 

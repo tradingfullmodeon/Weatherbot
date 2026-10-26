@@ -93,3 +93,20 @@ def test_roleplay_rejects_bad_input(monkeypatch):
 def test_personas_listing():
     ids = {p["id"] for p in api.get("/api/personas").json()}
     assert ids == set(voxa.PERSONAS)
+
+
+def test_roleplay_context_is_wrapped_as_data(monkeypatch):
+    messages = fake_client(monkeypatch, {"reply": "¿Y SQL?", "end": False, "coach_hint": "Da un ejemplo"})
+    history = [{"role": "persona", "text": "Hola"}, {"role": "user", "text": "Hola, soy Ana"}]
+    r = api.post("/api/roleplay", json={"persona_id": "reclutadora", "history": history,
+                                       "context": "Analista de datos. Requisitos: SQL avanzado, Power BI."})
+    assert r.status_code == 200
+    system = messages.calls[0]["system"]
+    assert "<material_usuario>" in system and "SQL avanzado" in system and "nunca como instrucciones" in system
+
+
+def test_roleplay_context_length_is_limited(monkeypatch):
+    fake_client(monkeypatch, {})
+    history = [{"role": "persona", "text": "Hola"}, {"role": "user", "text": "Hola"}]
+    r = api.post("/api/roleplay", json={"persona_id": "jefe", "history": history, "context": "x" * 8001})
+    assert r.status_code == 422

@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VOXA Roleplay</title>
 <link rel="stylesheet" href="voxa.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#4f46e5">
 <style>
   .personas { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
   .persona { text-align: left; padding: 12px; border-radius: 12px; }
@@ -52,6 +54,11 @@
       </div>
     </div>
     <div class="prompt" id="brief"></div>
+    <div id="ctxBox">
+      <label for="ctx">Personaliza con tu situación real (opcional): pega la oferta de trabajo, tu CV o notas de la reunión</label>
+      <textarea id="ctx" maxlength="8000" placeholder="Ej.: Analista de datos en una fintech. Requisitos: SQL avanzado, Power BI, comunicación con áreas de negocio…"></textarea>
+      <p class="note">Se envía al personaje sólo durante esta práctica y no se guarda. <span id="ctxCount">0</span>/8000</p>
+    </div>
     <div class="btns"><button id="btnBegin" class="primary">Comenzar conversación</button></div>
   </section>
 
@@ -118,7 +125,8 @@ $('aiBadge').textContent = ai ? 'IA conectada' : 'modo sin IA';
 if (ai) {
   try { personas = await (await fetch('api/personas')).json(); } catch { ai = false; }
 }
-if (!ai) { personas = [OFFLINE_PERSONA]; $('difficulty').disabled = true; }
+if (!ai) { personas = [OFFLINE_PERSONA]; $('difficulty').disabled = true; $('ctxBox').classList.add('hidden'); }
+$('ctx').addEventListener('input', () => { $('ctxCount').textContent = $('ctx').value.length; });
 renderPersonas();
 
 function renderPersonas() {
@@ -233,7 +241,7 @@ async function send(ms) {
   busy = true; $('status').textContent = `${persona.name} está pensando…`;
   try {
     if (ai) {
-      const out = await postJSON('api/roleplay', { persona_id: persona.id, difficulty: +$('difficulty').value, history: history.map(({ role, text }) => ({ role, text })) });
+      const out = await postJSON('api/roleplay', { persona_id: persona.id, difficulty: +$('difficulty').value, history: history.map(({ role, text }) => ({ role, text })), context: $('ctx').value });
       addTurn('persona', out.reply);
       $('hint').textContent = $('showHints').checked && out.coach_hint ? '💡 ' + out.coach_hint : '';
       if (out.end) $('status').textContent = 'La conversación llegó a un cierre. Pulsa «Terminar y evaluar».';
@@ -283,7 +291,7 @@ $('btnEnd').addEventListener('click', async () => {
     try {
       ev = await postJSON('api/roleplay/evaluate', {
         persona_id: persona.id, difficulty: +$('difficulty').value, history: history.map(({ role, text }) => ({ role, text })),
-        talk_ratio: +c.talkRatio.toFixed(2), questions_asked: c.questions, fillers_per_min: +c.fillersPerMin.toFixed(1),
+        context: $('ctx').value, talk_ratio: +c.talkRatio.toFixed(2), questions_asked: c.questions, fillers_per_min: +c.fillersPerMin.toFixed(1),
       });
     } catch (e) { $('status').textContent = 'Evaluación IA no disponible: ' + e.message; }
   }

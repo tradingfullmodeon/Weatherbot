@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VOXA Evaluador</title>
 <link rel="stylesheet" href="voxa.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#4f46e5">
 </head>
 <body>
 <header>
@@ -97,7 +99,7 @@
 
     <h2 style="margin-top:18px">Línea de tiempo de voz</h2>
     <canvas id="chart" width="1000" height="140" aria-label="Volumen y tono a lo largo de la práctica"></canvas>
-    <p class="note">Barras = volumen · línea = tono (semitonos relativos a tu media) · zonas rojas = pausas largas.</p>
+    <p class="note">Barras = volumen · línea = tono (semitonos relativos a tu media) · zonas rojas = pausas largas · marcas amarillas = posibles «eh/mmm».</p>
 
     <h2 style="margin-top:18px">Replay</h2>
     <video id="replay" controls playsinline></video>
@@ -127,38 +129,11 @@
 </main>
 
 <script type="module">
-// ---------------------------------------------------------------------------
-// Escenarios: cada uno define consigna, duración sugerida y pesos por dimensión.
-// ---------------------------------------------------------------------------
-const SCENARIOS = [
-  { id: 'intro', name: 'Preséntate en 60 segundos', seconds: 60,
-    prompt: 'Quién eres, qué haces y qué te apasiona. Cierra con una frase memorable.',
-    method: 'PREP', weights: { voz: .35, lenguaje: .3, presencia: .35 } },
-  { id: 'interview', name: 'Entrevista: "Cuéntame de un logro"', seconds: 120,
-    prompt: 'Responde con el método STAR: Situación, Tarea, Acción y Resultado (con un número si puedes).',
-    method: 'STAR', weights: { voz: .3, lenguaje: .4, presencia: .3 } },
-  { id: 'pitch', name: 'Pitch de proyecto (2 min)', seconds: 120,
-    prompt: 'Problema, solución, por qué ahora, por qué tú y qué pides. Usa una historia breve al inicio.',
-    method: 'Monroe / SCQA', weights: { voz: .35, lenguaje: .35, presencia: .3 } },
-  { id: 'meeting', name: 'Actualización ejecutiva (BLUF)', seconds: 90,
-    prompt: 'Da el estado de un proyecto a tu jefatura: conclusión primero, luego 3 puntos clave y un pedido concreto.',
-    method: 'BLUF / Pirámide de Minto', weights: { voz: .3, lenguaje: .45, presencia: .25 } },
-  { id: 'feedback', name: 'Feedback difícil a un colega', seconds: 90,
-    prompt: 'Usa SBI: Situación, Comportamiento observable, Impacto; termina con una pregunta abierta.',
-    method: 'SBI + CNV', weights: { voz: .3, lenguaje: .4, presencia: .3 } },
-  { id: 'impro', name: 'Improvisación: tema sorpresa', seconds: 60,
-    prompt: null, method: 'PREP', weights: { voz: .4, lenguaje: .3, presencia: .3 } },
-];
-const IMPRO_TOPICS = [
-  '¿Qué cambiarías de tu ciudad?', 'Un error que te enseñó algo', 'Defiende tu comida favorita',
-  'Si tuvieras un día libre extra a la semana', 'La mejor decisión que has tomado',
-  'Convence al público de leer más', '¿Trabajo remoto o presencial?',
-];
-
 import {
   $, FILLER_RE, HEDGE_RE, countMatches, wordCount, mean, std, esc, colorFor, highlight,
-  renderNav, saveSession, loadProfile, saveProfile, aiStatus, postJSON, GOALS,
+  renderNav, saveSession, loadProfile, saveProfile, aiStatus, postJSON, GOALS, detectPitch, findFilledPauses,
 } from './shared.js';
+import { SCENARIOS, GROUPS, IMPRO_TOPICS } from './scenarios.js';
 
 renderNav();
 const profile = loadProfile();
@@ -185,7 +160,14 @@ let lastVideoTime = -1;
 // ---------------------------------------------------------------------------
 // UI de escenario
 // ---------------------------------------------------------------------------
-for (const s of SCENARIOS) $('scenario').add(new Option(`${s.name} · ${s.seconds}s`, s.id));
+for (const g of GROUPS) {
+  const og = document.createElement('optgroup');
+  og.label = g;
+  for (const s of SCENARIOS.filter(x => x.group === g)) og.appendChild(new Option(`${s.name} · ${s.seconds}s`, s.id));
+  $('scenario').appendChild(og);
+}
+const wanted = new URLSearchParams(location.search).get('escenario');
+$('scenario').value = SCENARIOS.some(s => s.id === wanted) ? wanted : 'intro';
 function scenario() { return SCENARIOS.find(s => s.id === $('scenario').value); }
 function renderPrompt() {
   const s = scenario();
@@ -344,19 +326,6 @@ function loop() {
   rafId = requestAnimationFrame(loop);
 }
 
-// Autocorrelación normalizada simple; suficiente para F0 de voz hablada (70–400 Hz).
-function detectPitch(x, sr) {
-  const minLag = Math.floor(sr / 400), maxLag = Math.floor(sr / 70);
-  let best = -1, bestLag = 0;
-  for (let lag = minLag; lag <= maxLag; lag++) {
-    let c = 0, e1 = 0, e2 = 0;
-    for (let i = 0; i + lag < x.length; i++) { c += x[i] * x[i + lag]; e1 += x[i] * x[i]; e2 += x[i + lag] * x[i + lag]; }
-    const r = c / Math.sqrt(e1 * e2 + 1e-12);
-    if (r > best) { best = r; bestLag = lag; }
-  }
-  return best > 0.8 ? sr / bestLag : 0;
-}
-
 // Conductas observables (no emociones): presencia, mirada aproximada a cámara, sonrisa, giro de cabeza.
 function analyzeFace(res) {
   if (!res.faceLandmarks || !res.faceLandmarks.length) return { present: false, gaze: false, smile: 0, yaw: 0, pitch: 0 };
@@ -403,6 +372,7 @@ function computeMetrics() {
     } else if (pauseStart === null) pauseStart = s.t;
   }
   const speechRatio = samples.length ? speechFrames / samples.length : 0;
+  const humZones = findFilledPauses(samples);
 
   const voiced = samples.filter(s => s.pitch > 0).map(s => s.pitch);
   const medF0 = voiced.length ? [...voiced].sort((a, b) => a - b)[Math.floor(voiced.length / 2)] : 0;
@@ -423,7 +393,7 @@ function computeMetrics() {
 
   return {
     dur, words, wpm: words / minutes, fillers, fillersPerMin: fillers / minutes, hedges, hedgesPerMin: hedges / minutes,
-    longPauses, speechRatio, pitchVar, medF0, volume, volCv, hasText: words > 0,
+    longPauses, speechRatio, humZones, humsPerMin: humZones.length / minutes, pitchVar, medF0, volume, volCv, hasText: words > 0,
     hasVision, facePct, gazePct, smileAvg, smilePct, headMove, pauseZones, thr,
   };
 }
@@ -437,6 +407,7 @@ function score(m) {
     add('lenguaje', 'hedges', 'Atenuadores', m.hedgesPerMin, `${m.hedgesPerMin.toFixed(1)} /min (${m.hedges})`, '< 1,5 /min', band(m.hedgesPerMin, 0, 1.5, 4));
     add('lenguaje', 'length', 'Contenido desarrollado', m.words, `${m.words} palabras`, `≥ ${Math.round(scenario().seconds * 1.7)} palabras`, band(m.words, scenario().seconds * 1.7, 1e6, scenario().seconds * 1.7));
   }
+  add('voz', 'hums', 'Sonidos de duda «eh/mmm» (estimado)', m.humsPerMin, `${m.humsPerMin.toFixed(1)} /min (${m.humZones.length})`, '< 2 /min', band(m.humsPerMin, 0, 2, 6));
   add('voz', 'pitch', 'Variación de tono', m.pitchVar, m.medF0 ? `${m.pitchVar.toFixed(1)} semitonos` : 'sin datos', '2–6 semitonos', m.medF0 ? band(m.pitchVar, 2, 6, 1.8) : 50);
   add('voz', 'speech', 'Tiempo hablando', m.speechRatio, `${Math.round(m.speechRatio * 100)}%`, '55–90%', band(m.speechRatio * 100, 55, 90, 35));
   add('voz', 'pauses', 'Silencios largos (> 2,5 s)', m.longPauses, `${m.longPauses}`, '0–2', band(m.longPauses, 0, 2, 4));
@@ -463,6 +434,7 @@ const TIPS = {
   wpm: (m) => m.wpm > 165
     ? ['Hablas rápido: el público pierde ideas clave.', 'Lee un párrafo marcando una pausa de 1 s en cada punto. Repite la práctica apuntando a 140 ppm.']
     : ['Tu ritmo es lento; puede bajar la energía.', 'Repite la práctica imaginando que hablas con alguien entusiasmado. Apunta a 130–150 ppm.'],
+  hums: () => ['Rellenas los silencios con «eeh» o «mmm» (marcas amarillas en la línea de tiempo).', 'Cierra los labios al terminar cada idea y respira por la nariz: es físicamente imposible decir «eeh» con la boca cerrada. Repite la práctica.'],
   fillers: () => ['Las muletillas restan autoridad.', 'Ejercicio "pausa en vez de muletilla": habla 60 s y cada vez que sientas un "este/o sea", cierra la boca y respira. El silencio suena seguro.'],
   hedges: () => ['Usas atenuadores ("creo que", "un poco") que debilitan tus ideas.', 'Reformula 3 frases quitando el atenuador: "Creo que deberíamos…" → "Propongo…". Repite la práctica con esa intención.'],
   length: () => ['El mensaje quedó corto o poco desarrollado.', `Estructura con ${scenario().method}: escribe 1 línea por bloque y vuelve a intentarlo sin leer.`],
@@ -484,7 +456,7 @@ const TIPS = {
     : ['Postura muy rígida.', 'Permite asentir y gesticular con naturalidad en las ideas clave.'],
 };
 const STRENGTH = {
-  wpm: 'Ritmo cómodo de seguir.', fillers: 'Discurso limpio, casi sin muletillas.', hedges: 'Lenguaje asertivo y directo.',
+  hums: 'Silencios limpios, sin «eeh» de relleno.', wpm: 'Ritmo cómodo de seguir.', fillers: 'Discurso limpio, casi sin muletillas.', hedges: 'Lenguaje asertivo y directo.',
   length: 'Desarrollaste bien el contenido.', pitch: 'Voz expresiva con buena variación de tono.', speech: 'Buen equilibrio entre voz y pausa.',
   pauses: 'Fluidez: sin bloqueos largos.', volume: 'Volumen sólido con énfasis.', face: 'Buen encuadre.',
   gaze: 'Excelente contacto visual con la cámara.', smile: 'Expresividad facial adecuada.', head: 'Presencia estable y natural.',
@@ -589,6 +561,8 @@ function drawChart(m) {
   ctx.clearRect(0, 0, W, H);
   ctx.fillStyle = 'rgba(220,38,38,.15)';
   for (const [a, b] of m.pauseZones) ctx.fillRect(a / dur * W, 0, (b - a) / dur * W, H);
+  ctx.fillStyle = 'rgba(234,179,8,.35)';
+  for (const [a, b] of m.humZones) ctx.fillRect(a / dur * W, 0, Math.max(3, (b - a) / dur * W), H);
   // Volumen agregado en 200 columnas.
   const cols = 200, bucket = Array.from({ length: cols }, () => []);
   for (const s of samples) bucket[Math.min(cols - 1, Math.floor(s.t / dur * cols))].push(s);

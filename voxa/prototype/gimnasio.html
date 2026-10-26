@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VOXA Gimnasio de voz</title>
+<link rel="stylesheet" href="voxa.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#4f46e5">
+<style>
+  .exs { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+  .ex { text-align: left; padding: 12px; border-radius: 12px; }
+  .ex.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+  .ex small { display: block; color: var(--muted); }
+  .ex .pb { font-size: .75rem; color: var(--accent); margin-top: 4px; }
+  .big-read { font-size: 1.25rem; line-height: 1.7; padding: 14px; border-radius: 12px; background: var(--accent-soft); }
+  .big-read .mark { color: var(--accent); font-weight: 700; padding: 0 4px; }
+  .step { font-size: 1.4rem; font-weight: 700; text-align: center; padding: 10px; }
+  #live { width: 100%; height: 180px; display: block; border: 1px solid var(--line); border-radius: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>VOXA · Gimnasio de voz</h1>
+  <p>Calentamientos de 1–2 minutos con medición en vivo: respiración, rango de tono, proyección, dicción y pausas.</p>
+</header>
+
+<main>
+  <section class="card full">
+    <h2>1. Elige un ejercicio</h2>
+    <div class="exs" id="exs"></div>
+    <div class="prompt" id="howto"></div>
+    <div id="extra"></div>
+    <div class="btns">
+      <button id="btnMic">Activar micrófono</button>
+      <button id="btnGo" class="primary" disabled>Empezar</button>
+      <button id="btnStop" disabled>Terminar</button>
+    </div>
+    <p class="note" id="status">Usa auriculares si puedes y un lugar tranquilo. El audio se analiza en tu navegador y no se graba.</p>
+  </section>
+
+  <section class="card full">
+    <h2>2. En vivo</h2>
+    <div class="step" id="step">—</div>
+    <canvas id="live" width="1000" height="180" aria-label="Tono y volumen en vivo"></canvas>
+    <div class="live">
+      <div class="tile"><div class="k" id="k1">—</div><div class="v" id="v1">–</div></div>
+      <div class="tile"><div class="k" id="k2">—</div><div class="v" id="v2">–</div></div>
+      <div class="tile"><div class="k">Puntaje</div><div class="v" id="v3">–</div></div>
+    </div>
+    <div class="fb" id="result"></div>
+  </section>
+</main>
+
+<script type="module">
+import { $, esc, mean, std, colorFor, detectPitch, rmsOf, renderNav, saveSession, loadSessions } from './shared.js';
+
+renderNav();
+
+const band = (v, lo, hi, soft) => Math.round(v >= lo && v <= hi ? 100 : Math.max(0, 100 - 100 * (v < lo ? lo - v : v - hi) / soft));
+const pct = (arr, p) => { const a = [...arr].sort((x, y) => x - y); return a.length ? a[Math.min(a.length - 1, Math.floor(p * a.length))] : 0; };
+const db = (r) => 20 * Math.log10(Math.max(r, 1e-6));
+const norm = (t) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zñ\s]/g, ' ').split(/\s+/).filter(Boolean);
+
+const TWISTERS = [
+  'Pablito clavó un clavito, ¿qué clavito clavó Pablito?',
+  'Tres tristes tigres tragaban trigo en un trigal en tres tristes trastos.',
+  'Compadre, cómprame un coco. Compadre, no compro coco, porque como poco coco, poco coco compro.',
+  'Erre con erre cigarro, erre con erre barril, rápido ruedan los carros cargados de azúcar del ferrocarril.',
+  'El cielo está enladrillado, ¿quién lo desenladrillará? El desenladrillador que lo desenladrille, buen desenladrillador será.',
+];
+const PAUSE_TEXT = ['Hoy quiero contarles algo importante.', 'Durante tres años', 'probamos una idea sencilla.', 'Funcionó.', 'Y hoy', 'queremos compartirla con ustedes.'];
+
+// Cada ejercicio: cómo se hace, cuánto dura y cómo se puntúa a partir de las muestras.
+const EXERCISES = [
+  { id: 'sostener', name: 'Sostén la vocal', short: 'Respiración y apoyo', seconds: 60, k1: 'Segundos sostenidos', k2: 'Estabilidad (semitonos)',
+    howto: 'Inspira por la nariz llevando el aire al abdomen. Di una «aaa» cómoda, sin forzar, y sostenla al mismo volumen el mayor tiempo posible. Se detiene sola tras 2 s de silencio.',
+    tip: 'Un adulto suele sostener entre 15 y 25 s. Si te quedas corto, practica respiración diafragmática: 4 s inspirar, 6 s soltar en «sss».' },
+  { id: 'sirena', name: 'Sirena de tono', short: 'Rango y variación', seconds: 15, k1: 'Rango (semitonos)', k2: 'Tono más alto (Hz)',
+    howto: 'Con una «uuu» suave, desliza la voz desde tu nota más grave hasta la más aguda y vuelve, como una sirena. Repite durante 15 s sin forzar la garganta.',
+    tip: 'Un rango amplio te da recursos para no sonar monótono. Haz 3 sirenas al día antes de hablar en público.' },
+  { id: 'proyeccion', name: 'Escalera de volumen', short: 'Proyección', seconds: 30, k1: 'Rango dinámico (dB)', k2: 'Orden correcto',
+    howto: 'Di «Buenos días a todos» tres veces, haciendo una pausa entre cada una: SUAVE, NORMAL y PROYECTADO (como para la última fila, sin gritar). La pantalla avanza sola con cada frase.',
+    tip: 'Proyectar es apoyar con aire, no gritar: abre la boca, apunta la voz lejos y mantén la garganta relajada.' },
+  { id: 'trabalenguas', name: 'Trabalenguas', short: 'Dicción y claridad', seconds: 25, k1: 'Precisión', k2: 'Palabras/min',
+    howto: 'Lee el trabalenguas en voz alta una vez, tan rápido como puedas sin perder claridad. La precisión se mide con el reconocimiento de voz.',
+    tip: 'Primero lento y exagerando cada consonante; después sube la velocidad. La claridad vale más que la rapidez.' },
+  { id: 'pausas', name: 'Lectura con pausas', short: 'Pausa intencional', seconds: 40, k1: 'Pausas logradas', k2: 'Pausas marcadas',
+    howto: 'Lee el texto en voz alta haciendo una pausa de al menos medio segundo en cada «/». Las pausas dan peso a tus ideas.',
+    tip: 'Si te cuesta callar, cuenta mentalmente «uno» en cada pausa y mira a tu audiencia (o a la cámara) mientras tanto.' },
+];
+
+let ex = EXERCISES[0], stream, ctx, analyser, running = false, t0 = 0, raf = 0, samples = [], twister = 0, heard = '', rec = null;
+const buf = new Float32Array(2048);
+
+function bests() {
+  const out = {};
+  for (const s of loadSessions().filter(s => s.type === 'gimnasio')) out[s.scenario] = Math.max(out[s.scenario] ?? 0, s.total);
+  return out;
+}
+function renderExercises() {
+  const pb = bests();
+  $('exs').innerHTML = EXERCISES.map(e => `<button class="ex ${e.id === ex.id ? 'on' : ''}" data-id="${e.id}"><strong>${e.name}</strong><small>${e.short}</small>
+    <div class="pb">${pb['gym:' + e.id] != null ? `Tu mejor marca: ${pb['gym:' + e.id]}` : '&nbsp;'}</div></button>`).join('');
+  $('exs').querySelectorAll('.ex').forEach(b => b.addEventListener('click', () => { if (!running) { ex = EXERCISES.find(e => e.id === b.dataset.id); renderExercises(); } }));
+  $('howto').innerHTML = `<strong>${ex.name}</strong>${ex.howto}`;
+  $('k1').textContent = ex.k1; $('k2').textContent = ex.k2;
+  if (ex.id === 'trabalenguas') {
+    $('extra').innerHTML = `<label for="tw">Nivel</label><select id="tw">${TWISTERS.map((t, i) => `<option value="${i}">Nivel ${i + 1}</option>`).join('')}</select>
+      <p class="big-read" id="twText"></p>`;
+    $('tw').value = twister;
+    const show = () => { twister = +$('tw').value; $('twText').textContent = TWISTERS[twister]; };
+    $('tw').addEventListener('change', show); show();
+  } else if (ex.id === 'pausas') {
+    $('extra').innerHTML = `<p class="big-read">${PAUSE_TEXT.map(esc).join(' <span class="mark">/</span> ')}</p>`;
+  } else $('extra').innerHTML = '';
+}
+renderExercises();
+
+$('btnMic').addEventListener('click', async () => {
+  try {
+    // Sin ganancia automática ni supresión de ruido: el navegador aplanaría el volumen y atenuaría la voz suave,
+    // y aquí lo que se mide son justamente los niveles. Por eso se recomiendan auriculares.
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+  } catch (e) { $('status').textContent = 'No se pudo acceder al micrófono: ' + e.message; return; }
+  ctx = new AudioContext();
+  analyser = ctx.createAnalyser(); analyser.fftSize = 2048;
+  ctx.createMediaStreamSource(stream).connect(analyser);
+  $('btnMic').disabled = true; $('btnGo').disabled = false;
+  $('status').textContent = 'Micrófono listo.';
+});
+
+$('btnGo').addEventListener('click', () => {
+  if (ctx.state === 'suspended') ctx.resume();
+  samples = []; heard = ''; running = true; t0 = performance.now();
+  $('result').innerHTML = ''; $('v1').textContent = '–'; $('v2').textContent = '–'; $('v3').textContent = '–';
+  $('btnGo').disabled = true; $('btnStop').disabled = false;
+  if (ex.id === 'trabalenguas') startRecognition();
+  loop();
+});
+$('btnStop').addEventListener('click', finish);
+
+function startRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { $('status').textContent = 'Este navegador no ofrece reconocimiento de voz: la precisión no se puede medir.'; return; }
+  rec = new SR(); rec.lang = 'es-419'; rec.continuous = true; rec.interimResults = true;
+  rec.onresult = (e) => { heard = [...e.results].map(r => r[0].transcript).join(' '); };
+  try { rec.start(); } catch {}
+}
+
+// Umbral de voz relativo al ruido del primer medio segundo.
+function voiceThreshold() {
+  const early = samples.filter(s => s.t < 0.5).map(s => s.rms);
+  return Math.max(0.0015, (early.length ? pct(early, 0.5) : 0) * 2.5 + 0.001);
+}
+
+function loop() {
+  if (!running) return;
+  const t = (performance.now() - t0) / 1000;
+  analyser.getFloatTimeDomainData(buf);
+  const rms = rmsOf(buf);
+  const pitch = rms > 0.004 ? detectPitch(buf, ctx.sampleRate, ex.id === 'sirena' ? 1000 : 400) : 0;
+  samples.push({ t, rms, pitch });
+  draw(t);
+  live(t);
+  if (t >= ex.seconds) return finish();
+  if (ex.id === 'sostener' && t > 3 && sustainEnded()) return finish();
+  if (ex.id === 'proyeccion' && phrasesDone() >= 3) return finish();
+  raf = requestAnimationFrame(loop);
+}
+
+function sustainEnded() {
+  const thr = voiceThreshold();
+  const voicedYet = samples.some(s => s.t > 0.5 && s.rms > thr);
+  const last = samples.filter(s => s.t > samples[samples.length - 1].t - 2);
+  return voicedYet && last.every(s => s.rms <= thr);
+}
+
+// Tramo sonoro continuo más largo (tolera cortes < 150 ms).
+function longestRun(thr) {
+  let best = { dur: 0, pitches: [] }, run = null, lastT = 0;
+  for (const s of samples) {
+    if (s.rms > thr) {
+      if (!run || s.t - lastT > 0.15) run = { start: s.t, pitches: [] };
+      lastT = s.t; if (s.pitch) run.pitches.push(12 * Math.log2(s.pitch));
+      const dur = s.t - run.start;
+      if (dur > best.dur) best = { dur, pitches: run.pitches };
+    }
+  }
+  return best;
+}
+
+// Frases ya terminadas (seguidas de al menos 0,6 s de silencio).
+function phrasesDone() {
+  const now = samples[samples.length - 1]?.t ?? 0;
+  return utterances(voiceThreshold()).filter(u => now - u[u.length - 1].t > 0.6).length;
+}
+
+function stepFor(t) {
+  if (ex.id !== 'proyeccion') return ex.id === 'sostener' ? 'Sostén «aaa»…' : ex.id === 'sirena' ? 'Sube y baja: «uuu»' : 'Habla ahora';
+  return t < 0.6 ? 'Prepárate…' : ['1 · SUAVE', '2 · NORMAL', '3 · PROYECTADO', '✓'][Math.min(3, phrasesDone())];
+}
+
+function live(t) {
+  $('step').textContent = stepFor(t);
+  const r = evaluate(true);
+  if (r) { $('v1').textContent = r.v1; $('v2').textContent = r.v2; }
+}
+
+// Devuelve {v1, v2, score, metrics, feedback}. quick = cálculo para el panel en vivo.
+function evaluate(quick = false) {
+  const thr = voiceThreshold();
+  const voiced = samples.filter(s => s.rms > thr);
+  if (ex.id === 'sostener') {
+    const run = longestRun(thr);
+    const steady = run.pitches.length > 5 ? std(run.pitches) : 0;
+    const score = Math.round(band(run.dur, 15, 120, 15) * 0.75 + band(steady, 0, 1, 2) * 0.25);
+    return { v1: run.dur.toFixed(1) + ' s', v2: run.pitches.length > 5 ? steady.toFixed(1) : '–', score, metrics: { seconds: run.dur, steadiness: steady },
+      good: run.dur >= 15 ? 'Gran apoyo respiratorio.' : 'Buen intento: el apoyo respiratorio se entrena rápido.', };
+  }
+  if (ex.id === 'sirena') {
+    const p = voiced.filter(s => s.pitch).map(s => 12 * Math.log2(s.pitch));
+    const range = p.length > 10 ? pct(p, 0.95) - pct(p, 0.05) : 0;
+    const top = p.length > 10 ? Math.round(2 ** (pct(p, 0.95) / 12)) : 0;
+    return { v1: range.toFixed(1), v2: top ? top + ' Hz' : '–', score: band(range, 12, 48, 12), metrics: { range },
+      good: range >= 12 ? 'Rango amplio: tienes recursos para expresar énfasis.' : 'Tu voz tiene más rango del que usas: explóralo sin forzar.' };
+  }
+  if (ex.id === 'proyeccion') {
+    // Las tres frases se separan por los silencios entre ellas (no por tiempo fijo): funciona aunque empieces tarde.
+    const L = utterances(thr).slice(0, 3).map(u => pct(u.map(s => db(s.rms)), 0.7));
+    while (L.length < 3) L.push(null);
+    const ok = L.every(x => x != null);
+    const dyn = ok ? L[2] - L[0] : 0;
+    const ordered = ok && L[0] < L[1] && L[1] < L[2];
+    return { v1: ok ? dyn.toFixed(1) + ' dB' : '–', v2: ok ? (ordered ? 'Sí' : 'No') : '–',
+      score: ok ? Math.round(band(dyn, 10, 40, 10) * 0.7 + (ordered ? 30 : 0)) : 0, metrics: { dynamicRange: dyn, ordered, levels: L },
+      good: ordered ? 'Controlas bien los niveles de volumen.' : 'Intenta que cada nivel sea claramente más fuerte que el anterior.' };
+  }
+  if (ex.id === 'trabalenguas') {
+    const target = norm(TWISTERS[twister]), said = norm(heard);
+    const hits = lcs(target, said);
+    const acc = target.length ? hits / target.length : 0;
+    const first = voiced[0]?.t ?? 0, last = voiced[voiced.length - 1]?.t ?? 0;
+    const wpm = last - first > 1 ? said.length / ((last - first) / 60) : 0;
+    return { v1: Math.round(acc * 100) + '%', v2: wpm ? Math.round(wpm) : '–', score: Math.round(acc * 75 + band(wpm, 140, 260, 80) * 0.25), metrics: { accuracy: acc, wpm, level: twister + 1 },
+      good: acc >= 0.9 ? 'Dicción muy clara.' : 'Ve más lento y exagera las consonantes; después acelera.' };
+  }
+  // pausas
+  const marks = PAUSE_TEXT.length - 1;
+  const first = voiced[0]?.t, lastV = voiced[voiced.length - 1]?.t;
+  let pauses = 0, silentFrom = null;
+  if (first != null) for (const s of samples.filter(s => s.t >= first && s.t <= lastV)) {
+    if (s.rms <= thr) { silentFrom ??= s.t; }
+    else { if (silentFrom != null && s.t - silentFrom >= 0.5) pauses++; silentFrom = null; }
+  }
+  return { v1: pauses, v2: marks, score: band(pauses, marks, marks + 2, marks), metrics: { pauses, marks },
+    good: pauses >= marks ? 'Usas las pausas con intención.' : 'Te saltaste pausas: el silencio no es un error, es énfasis.' };
+}
+
+// Frases: tramos con voz de al menos 0,4 s, separados por silencios de más de 0,4 s.
+function utterances(thr) {
+  const out = []; let cur = null, lastT = -1;
+  for (const s of samples) {
+    if (s.rms <= thr) continue;
+    if (!cur || s.t - lastT > 0.4) { cur = []; out.push(cur); }
+    cur.push(s); lastT = s.t;
+  }
+  return out.filter(u => u[u.length - 1].t - u[0].t >= 0.4);
+}
+
+function lcs(a, b) {
+  const dp = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+    dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+  return dp[a.length][b.length];
+}
+
+function finish() {
+  if (!running) return;
+  running = false; cancelAnimationFrame(raf);
+  $('btnGo').disabled = false; $('btnStop').disabled = true; $('step').textContent = '✓';
+  const done = () => {
+    const r = evaluate();
+    $('v1').textContent = r.v1; $('v2').textContent = r.v2; $('v3').textContent = r.score;
+    $('v3').style.color = colorFor(r.score);
+    const prev = bests()['gym:' + ex.id];
+    saveSession({ id: Date.now().toString(36), date: new Date().toISOString(), type: 'gimnasio', scenario: 'gym:' + ex.id,
+      scenarioName: 'Gimnasio: ' + ex.name, total: r.score, dims: { [ex.short]: r.score }, metrics: r.metrics });
+    $('result').innerHTML = `<div><h3 style="color:var(--good)">Resultado</h3>${r.good}${prev != null && r.score > prev ? ' <strong>¡Nueva mejor marca!</strong>' : ''}</div>
+      <div><h3 style="color:var(--accent)">Para mejorar</h3>${ex.tip}</div>`;
+    renderExercises();
+  };
+  if (!rec) return done();
+  // Espera el último resultado del reconocimiento (con tope de 1,5 s) y evalúa una sola vez.
+  const r = rec; rec = null;
+  let called = false;
+  const once = () => { if (!called) { called = true; done(); } };
+  r.onend = once;
+  try { r.stop(); } catch { once(); }
+  setTimeout(once, 1500);
+}
+
+// Lienzo en vivo: volumen en dB (barras) y tono en semitonos (puntos) de los últimos 10 s.
+function draw(t) {
+  const c = $('live'), g = c.getContext('2d'), Wd = c.width, H = c.height;
+  const css = getComputedStyle(document.documentElement);
+  g.clearRect(0, 0, Wd, H);
+  const from = Math.max(0, t - 10), win = samples.filter(s => s.t >= from);
+  const x = (s) => (s.t - from) / 10 * Wd;
+  g.fillStyle = css.getPropertyValue('--accent'); g.globalAlpha = .35;
+  for (const s of win) { const h = Math.max(0, Math.min(1, (db(s.rms) + 60) / 60)) * H; g.fillRect(x(s), H - h, 3, h); }  // −60 a 0 dBFS
+  g.globalAlpha = 1;
+  const p = win.filter(s => s.pitch);
+  if (p.length) {
+    const lo = 12 * Math.log2(70), hi = 12 * Math.log2(ex.id === 'sirena' ? 1000 : 400);
+    g.fillStyle = css.getPropertyValue('--text');
+    for (const s of p) { const y = H - (12 * Math.log2(s.pitch) - lo) / (hi - lo) * H; g.fillRect(x(s), y - 2, 3, 4); }
+  }
+}
+</script>
+</body>
+</html>

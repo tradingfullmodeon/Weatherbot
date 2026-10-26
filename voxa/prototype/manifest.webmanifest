@@ -1,0 +1,14 @@
+{
+  "name": "VOXA · Entrenamiento de comunicación",
+  "short_name": "VOXA",
+  "description": "Practica cómo hablas con IA: evaluación por cámara y micrófono, roleplay, gimnasio de voz y progreso.",
+  "lang": "es",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f7fb",
+  "theme_color": "#4f46e5",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
