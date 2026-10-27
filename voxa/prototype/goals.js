@@ -133,7 +133,8 @@ export function sessionMeets(goal, s) {
     case 'presence': return (s.presence?.[c.key] ?? s.metrics?.[PRESENCE_METRIC[c.key]]?.s ?? -1) >= c.min;
     case 'roleplay': return s.type === 'roleplay' && c.keys.some(k => (s.dims?.[k] ?? -1) >= c.min);
     case 'anxiety': return s.anxietyBefore != null && s.anxietyBefore <= c.max;
-    case 'exposure': return s.anxietyBefore != null && s.anxietyBefore >= c.min;
+    // Cuenta sólo una práctica de verdad (no basta con marcar los nervios): audio, roleplay o 30+ palabras.
+    case 'exposure': return s.anxietyBefore != null && s.anxietyBefore >= c.min && (s.mode === 'audio' || s.type === 'roleplay' || (s.words ?? MIN_WORDS) >= MIN_WORDS);
     case 'writing': return s.type === 'escritura' && !s.ai && s.total >= c.min;   // el texto que escribió la IA no cuenta
     default: return false;
   }
@@ -152,7 +153,7 @@ export function goalOfTheDay(goals, sessions, today = new Date(), caps = {}) {
   const active = (goals || []).filter(g => { const p = goalProgress(g, sessions, today); return !p.done && !p.expired && goalAvailable(g, caps); });
   if (!active.length) return null;
   const g = active[Math.floor(today.getTime() / 864e5) % active.length], p = goalProgress(g, sessions, today);
-  return { goal: g, text: `${g.title}: ${g.detail.charAt(0).toLowerCase() + g.detail.slice(1)} (llevas ${p.hits} de ${g.count}).` };
+  return { goal: g, text: `${g.title} · ${p.hits}/${g.count} días`, detail: g.detail };
 }
 
 export function goalProgress(goal, sessions, today = new Date()) {

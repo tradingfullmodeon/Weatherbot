@@ -15,6 +15,7 @@ test('muletillas: cuenta el relleno y no las palabras normales', () => {
     ['Este es el plan para el trimestre.', 0], ['Este no es el informe correcto.', 0], ['Es un tipo que sabe mucho.', 0],
     ['El resultado es bueno.', 0], ['¿Ya lo sabes?', 0], ['Lo hicimos, pues era necesario.', 0],
     ['Y, bueno, seguimos.', 1], ['Me gustó, ¿sabes?', 1], ['Pues, mira, no sé.', 1],
+    ['vendamos más tipo no sé', 1], ['y este no sé qué decir', 1], ['era tipo increíble', 1], ['este pues mm', 3],
   ];
   for (const [text, n] of cases) assert.equal(countMatches(text, FILLER_RE), n, text);
 });
@@ -120,4 +121,9 @@ test('puntaje del habla: el silencio no se puntúa y el relleno repetido no apru
   assert.ok(r.total < 55, String(r.total));   // por debajo de «Competente»
   const real = 'Soy Ana, diseño productos digitales hace ocho años. Me apasiona entender por qué la gente abandona una app y arreglarlo con datos. El año pasado bajamos el abandono del registro a la mitad con tres cambios simples. Si te interesa crecer sin gastar más en anuncios, conversemos.';
   assert.ok(guiraud(real) >= 4, String(guiraud(real)));
+});
+
+test('atenuadores regionales: «de pronto» sólo antes de un condicional', () => {
+  assert.equal(countMatches('De pronto sería posible moverlo al lunes.', HEDGE_RE), 1);
+  assert.equal(countMatches('De pronto se cortó la luz.', HEDGE_RE), 0);
 });

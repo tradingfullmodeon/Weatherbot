@@ -10,6 +10,8 @@ Plataforma para mejorar cómo se comunica una persona (confianza, desarrollo pro
 |---|---|
 | [`docs/BENCHMARK.md`](docs/BENCHMARK.md) | Benchmark global (Norteamérica, Europa, Asia, mundo hispanohablante), matriz de funcionalidades, necesidades de los usuarios, quejas recurrentes y 27 mejoras diferenciadoras, con fuentes. |
 | [`docs/CALIFICACIONES.md`](docs/CALIFICACIONES.md) | Calificaciones de usuarios de 25 apps de la competencia (App Store, Google Play, G2, Trustpilot), qué hace que una app tenga 4,7 o más y qué la hunde, cómo sale VOXA en esos criterios y plan de acción por brecha. |
+| [`docs/PANEL.md`](docs/PANEL.md) | Panel experto simulado (profesora de oratoria, coach ejecutivo, psicóloga, diseñadora de producto, investigador en voz e IA y una usuaria principiante): método, puntajes por ronda y qué se corrigió. |
+| [`docs/PLAN_ACCION.md`](docs/PLAN_ACCION.md) | Plan para subir la calificación y llegar a las primeras 30 personas: a quiénes invitar, mensaje de invitación listo, guía de prueba de 7 días, indicadores y reglas de decisión. |
 | [`docs/AUDITORIA.md`](docs/AUDITORIA.md) | Auditoría técnica y pedagógica: hallazgos, cómo se reproducían, correcciones y temas abiertos. |
 | [`docs/UX.md`](docs/UX.md) | Revisión de usabilidad: 14 problemas y su solución, principios de diseñadores y comunicadores aplicados, benchmark de UX con las apps mejor valoradas e indicadores antes/después. |
 | [`docs/ESTRATEGIA.md`](docs/ESTRATEGIA.md) | Metodologías de comunicación y aprendizaje, lenguaje no verbal basado en evidencia, competencias y niveles, canales, motor de evaluación, arquitectura, privacidad y regulación, sprint de 30 días, modelo de negocio, plan de desarrollo e indicadores. |
@@ -91,6 +93,10 @@ El reporte empieza con el puntaje, la comparación con tu intento anterior y tre
 Desactiva la ganancia automática y la supresión de ruido del navegador para medir niveles reales, por eso conviene usar auriculares.
 
 **Mi progreso.** Línea base, tendencia, racha, "calma ganada", foco recurrente, sprint de 30 días con la tarea del día, escalera de confianza de 9 peldaños y exportación o borrado de todos tus datos.
+
+**Feedback por método.** Además de voz y lenguaje, cada ensayo revisa la estructura del método de la situación (PREP, STAR, BLUF o SBI): qué partes están, cuál falta y cómo agregarla. El **simulacro de entrevista** sin IA repregunta el resultado cuando falta y da un reporte respuesta por respuesta.
+
+**Cuidado.** Modo calma sin números (automático en las primeras prácticas de quien dice que le cuesta mucho), meta de exposición «practicar aunque haya nervios», «💙 ¿Te sientes muy mal?» con líneas de ayuda y emergencias por país, detección de frases de crisis en el dispositivo y «Buscar un profesional».
 
 **Califica VOXA.** Tras 3 prácticas, Hoy pide una calificación (estrellas de 1 a 5, como en las tiendas, más NPS, qué sirve y qué falta), como mucho una vez al mes. En el link de claude.ai, quien es dueño ve el tablero con el promedio, la distribución y el NPS. Para que otras personas califiquen, compártelo con permiso de **Colaborador**.
 

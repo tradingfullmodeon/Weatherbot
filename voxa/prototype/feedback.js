@@ -10,7 +10,8 @@ export const FEATURES = [
 // Se pide en un buen momento (después de lograr algo), no al entrar: tras 3 prácticas y no más de una vez
 // cada 30 días, como recomiendan las guías de calificación en tienda de Apple y Google.
 export function shouldAskRating(profile, sessions, now = Date.now()) {
-  if (sessions.length < 3) return false;
+  // Al menos 3 prácticas en 2 días distintos: que haya vuelto, no sólo probado.
+  if (sessions.length < 3 || new Set(sessions.map(s => String(s.date).slice(0, 10))).size < 2) return false;
   const last = profile.rating?.date || profile.ratingDismissed;
   return !last || now - new Date(last) > 30 * 864e5;
 }

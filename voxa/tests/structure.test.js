@@ -28,6 +28,17 @@ test('BLUF y SBI; métodos sin revisión local devuelven null', () => {
   for (const s of SCENARIOS.filter(x => /^(PREP|STAR|BLUF|SBI)/.test(x.method))) assert.ok(s.id);
 });
 
+test('STAR no premia respuestas vacías y reconoce resultados en tercera persona; BLUF con pregunta inicial', () => {
+  const empty = checkStructure('En 2019 cuando tenía que trabajar ahí yo estaba aburrido, así nomás, la verdad es que no pasó nada.', 'STAR');
+  assert.ok(empty.score <= 50, JSON.stringify(empty.parts));
+  const third = checkStructure('En mi trabajo anterior, cuando había muchos reclamos, mi tarea era bajarlos. Armé un protocolo y capacité al equipo. Los reclamos bajaron a la mitad.', 'STAR');
+  assert.equal(third.score, 100, JSON.stringify(third.parts));
+  const bluf = checkStructure('¿Podemos mover la entrega al viernes? El proveedor llega el jueves y necesitamos un día para revisar la calidad.', 'BLUF');
+  assert.ok(bluf.parts[0].ok);
+  const spoken = checkStructure('cocinar es mi mejor forma de desconectarme lo disfruto mucho porque me obliga a estar presente por ejemplo el domingo hice pan con mi hija y no miré el celular en tres horas y la verdad fue increíble por eso cocinar es mi forma de desconectarme', 'PREP');
+  assert.equal(spoken.score, 100, JSON.stringify(spoken.parts));
+});
+
 test('STAR reconoce pretéritos irregulares y el «nosotros» del equipo como acción', () => {
   const r = checkStructure('En mi práctica, cuando el equipo no se ponía de acuerdo, mi tarea era entregar el informe. Propuse dividir las tareas y hablé con cada uno. Logramos entregarlo dos días antes.', 'STAR');
   assert.deepEqual(r.parts.filter(p => !p.ok).map(p => p.part), []);

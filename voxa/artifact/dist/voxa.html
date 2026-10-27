@@ -205,8 +205,9 @@
   .help-card summary { font-weight: 700; cursor: pointer; }
   .chk { display: inline-flex; gap: 8px; align-items: center; color: var(--text); }
   .week { display: inline-flex; gap: 4px; vertical-align: middle; margin-right: 6px; }
-  .week .wk { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; font-size: .7rem; border: 1px solid currentColor; opacity: .55; }
+  .week .wk { width: 28px; height: 28px; border-radius: 50%; display: inline-grid; place-items: center; font-size: .7rem; border: 1px solid currentColor; opacity: .55; }
   .week .wk.on { background: var(--good); border-color: var(--good); color: #fff; opacity: 1; }
+  .week .wk.today { outline: 2px solid var(--accent); outline-offset: 1px; opacity: 1; }
   /* Versión publicable: complementa prototype/voxa.css. Una sola página con vistas. */
   :root[data-theme="dark"] {
     --bg: #0f1117; --card: #181b24; --text: #e8eaf0; --muted: #9aa1b2;
@@ -601,7 +602,7 @@
       <label for="evMessage" style="margin-top:10px">Tu mensaje clave en una frase (opcional)</label>
       <input id="evMessage" class="field" placeholder="Ej.: Sé convertir datos en decisiones que ahorran dinero">
       <label for="evConcern" style="margin-top:10px">¿Qué es lo que más te preocupa? (opcional)</label>
-      <input id="evConcern" class="field" placeholder="Ej.: que me pregunten por qué dejé mi último trabajo">
+      <input id="evConcern" class="field" placeholder="Ej.: quedarme en blanco, o que me pregunten por mi poca experiencia">
       <details><summary>Agregar contexto: oferta de trabajo, guion o notas (opcional)</summary>
         <textarea id="evContext" maxlength="6000" placeholder="Pega aquí la oferta, tu presentación o tus notas."></textarea>
       </details>
@@ -674,6 +675,7 @@
       <div class="btns"><button class="cta" id="rateSend">Enviar mi calificación</button></div>
       <p class="note" id="rateMsg" aria-live="polite"></p>
     </div>
+    <details class="card full help-card" id="proHelp"><summary>🧭 Buscar un profesional</summary><div class="pro-box"></div></details>
     <details class="card full help-card" id="helpProg"><summary>💙 ¿Te sientes muy mal?</summary><div class="help-box"></div></details>
     <div class="card full hidden" id="ownerCard">
       <h2>Calificaciones de tus usuarios (sólo tú lo ves)</h2>
@@ -697,7 +699,9 @@ const FILLERS = ['eh+', 'em+', 'ehm+', 'mm+', 'este', 'o sea', 'bueno', 'pues', 
 // Las disculpas sólo cuentan cuando piden perdón por existir («perdón por molestar»), no al disculparse de verdad.
 const HEDGES = ['creo que', 'tal vez', 'quizás', 'quizá', 'un poquito', 'perdón por molestar', 'perdona que te moleste',
   'disculpa que te moleste', 'disculpa la molestia', 'no sé si', 'más o menos', 'de alguna manera', 'supongo', 'solo quería', 'sólo quería',
-  'quería saber si', 'quería ver si', 'cuando puedas', 'cuando puedan', 'si no es mucha molestia', 'si no es molestia'];
+  'quería saber si', 'quería ver si', 'cuando puedas', 'cuando puedan', 'si no es mucha molestia', 'si no es molestia',
+  // «de pronto» como atenuador (Colombia) sólo antes de un condicional: «de pronto se cortó la luz» no cuenta.
+  'de pronto podría', 'de pronto podrías', 'de pronto sería', 'de pronto se podría', 'de pronto puedas', 'a lo mejor', 'capaz que'];
 
 const escRe = (s) => s.replace(/[.*?^${}()|[\]\\]/g, '\\$&');
 const asPattern = (w) => w.endsWith('+') ? escRe(w.slice(0, -1)) + '+' : escRe(w);
@@ -709,15 +713,15 @@ const wordRe = (patterns) => new RegExp(`(^|[^\\p{L}])(${patterns.join('|')})(?=
 const PAUSE = String.raw`(?:\s*[,.;:…!?]|\s*$)`;
 const FUNCTION_WORD = String.raw`\s+(?:el|la|los|las|lo|un|una|unos|unas|yo|tú|me|te|se|le|les|nos|que|no|sí|es|era|hay|vamos|tenemos|quiero|eh+|em+|o sea|pues|bueno|este)(?!\p{L})`;
 // Para «este» y «tipo» no cuentan los verbos ni la negación: «Este es el plan», «Este no es el informe».
-const FUNCTION_WORD_NOUN = String.raw`\s+(?:el|la|los|las|lo|un|una|unos|unas|yo|tú|me|te|se|le|les|nos|que|vamos|tenemos|quiero|eh+|em+|o sea|pues|bueno|este)(?!\p{L})`;
+const FUNCTION_WORD_NOUN = String.raw`\s+(?:el|la|los|las|lo|un|una|unos|unas|yo|tú|me|te|se|le|les|nos|que|vamos|tenemos|quiero|eh+|em+|mm+|o sea|pues|bueno|este|no sé|no sé qué)(?!\p{L})`;
 const CONTEXTUAL = {
   // Sonidos de duda alargados: «eh», «eeeh», «ehm», «emm», «mmm».
   'eh+': 'e+h+', 'em+': 'e+m+', 'ehm+': 'e+h+m+', 'mm+': 'm{2,}',
   este: String.raw`este(?=${PAUSE}|${FUNCTION_WORD_NOUN})`,
   // «un tipo que sabe», «ese tipo de cosas»: con determinante delante es sustantivo, no muletilla.
-  tipo: String.raw`(?<!(?:un|el|ese|este|qué|que|cualquier)\s)tipo(?=${PAUSE}|${FUNCTION_WORD_NOUN})`,
+  tipo: String.raw`(?<!(?:un|el|ese|este|qué|que|cualquier)\s)tipo(?=${PAUSE}|${FUNCTION_WORD_NOUN}|\s+(?:muy|mucho|increíble|raro|así|como)(?!\p{L}))`,
   // «pues era necesario» (causal) no cuenta; sí «pues, mira» o «pues nada».
-  pues: String.raw`pues(?=${PAUSE}|\s+(?:eh+|em+|nada|bueno|mira|este|o sea)(?!\p{L}))`,
+  pues: String.raw`pues(?=${PAUSE}|\s+(?:eh+|em+|mm+|nada|bueno|mira|este|o sea)(?!\p{L}))`,
   onda: String.raw`onda(?=${PAUSE}|${FUNCTION_WORD})`,
   // Al inicio de la frase, o seguido de coma («…y, bueno, …»); «El resultado es bueno.» no cuenta.
   bueno: String.raw`(?<=(?:^|[.!?¡¿]\s*))bueno|bueno(?=\s*[,…])`,
@@ -1732,7 +1736,8 @@ function sessionMeets(goal, s) {
     case 'presence': return (s.presence?.[c.key] ?? s.metrics?.[PRESENCE_METRIC[c.key]]?.s ?? -1) >= c.min;
     case 'roleplay': return s.type === 'roleplay' && c.keys.some(k => (s.dims?.[k] ?? -1) >= c.min);
     case 'anxiety': return s.anxietyBefore != null && s.anxietyBefore <= c.max;
-    case 'exposure': return s.anxietyBefore != null && s.anxietyBefore >= c.min;
+    // Cuenta sólo una práctica de verdad (no basta con marcar los nervios): audio, roleplay o 30+ palabras.
+    case 'exposure': return s.anxietyBefore != null && s.anxietyBefore >= c.min && (s.mode === 'audio' || s.type === 'roleplay' || (s.words ?? MIN_WORDS) >= MIN_WORDS);
     case 'writing': return s.type === 'escritura' && !s.ai && s.total >= c.min;   // el texto que escribió la IA no cuenta
     default: return false;
   }
@@ -1751,7 +1756,7 @@ function goalOfTheDay(goals, sessions, today = new Date(), caps = {}) {
   const active = (goals || []).filter(g => { const p = goalProgress(g, sessions, today); return !p.done && !p.expired && goalAvailable(g, caps); });
   if (!active.length) return null;
   const g = active[Math.floor(today.getTime() / 864e5) % active.length], p = goalProgress(g, sessions, today);
-  return { goal: g, text: `${g.title}: ${g.detail.charAt(0).toLowerCase() + g.detail.slice(1)} (llevas ${p.hits} de ${g.count}).` };
+  return { goal: g, text: `${g.title} · ${p.hits}/${g.count} días`, detail: g.detail };
 }
 
 function goalProgress(goal, sessions, today = new Date()) {
@@ -1848,23 +1853,34 @@ function goalsHTML(goals, sessions, today = new Date()) {
 // Revisión local de la estructura según el método (sin IA): ¿están las partes de PREP, STAR, BLUF o SBI?
 // Son marcadores de lenguaje simples; no reemplazan al coach, pero dan feedback concreto siempre.
 
-const stSentences = (t) => t.split(/(?<=[.!?¿¡])\s+|\n+/).map(s => s.trim()).filter(Boolean);
+// Frases; si el texto viene de la transcripción de voz (sin puntos), se corta en bloques de ~20 palabras.
+function stSentences(t) {
+  const ss = t.split(/(?<=[.!?¿¡])\s+|\n+/).map(s => s.trim()).filter(Boolean);
+  const words = t.trim().split(/\s+/);
+  if (ss.length > 1 || words.length <= 40) return ss;
+  const out = [];
+  for (let i = 0; i < words.length; i += 20) out.push(words.slice(i, i + 20).join(' '));
+  return out;
+}
 const stHas = (re, t) => re.test(t);
 // Límites de palabra que entienden tildes (\b de JavaScript no reconoce «é» como letra).
 const stRe = (src, flags = 'iu') => new RegExp(`(?<!\\p{L})(?:${src})(?!\\p{L})`, flags);
 const ST_FILLER_START = /^(bueno|este|eh+|em+|o sea|pues|mm+)(?!\p{L})/iu;
-const ST_NUMBER = /\d+([.,]\d+)?\s?(%|por ciento)?/u;
-const ST_RESULT = stRe(String.raw`(logr(é|amos)|consegu(í|imos)|result(ado|ó)|aument(é|amos|ó)|baj(é|amos|ó)|reduj(e|imos|o)|subi(ó|mos)|crec(ió|imos)|ahorr(é|amos|ó)|gan(é|amos))`);
+// Cifras que cuentan como resultado: no los años («en 2019» es contexto, no un resultado).
+const ST_NUMBER = { test: (t) => (t.match(/\d+([.,]\d+)?/g) || []).some(n => !/^(19|20)\d{2}$/.test(n)) };
+const ST_RESULT = stRe(String.raw`(logr(é|amos|ó|aron)|consegu(í|imos|ió|ieron)|result(ado|ó)|aument(é|amos|ó|aron)|baj(é|amos|ó|aron)|reduj(e|imos|o|eron)|se redujeron|subi(ó|mos|eron)|crec(ió|imos|ieron)|mejor(é|amos|ó|aron)|ahorr(é|amos|ó|aron)|gan(é|amos|ó|aron)|pasaron de|pasamos de|desde entonces)`);
 const ST_ACTION = stRe(String.raw`\p{L}{3,}(é|í)`, 'giu');   // lideré, armé, decidí, hablé…
+// Palabras que terminan en «é»/«í» y no son verbos en primera persona.
+const ST_NOT_VERB = new Set(['así', 'aquí', 'allí', 'ahí', 'café', 'bebé', 'sofá', 'menú', 'jamás', 'quizá', 'también', 'sí', 'mí', 'ti', 'porqué', 'cliché', 'puré', 'consomé', 'frenesí', 'colibrí', 'esquí', 'rubí', 'maní', 'ají', 'jabalí', 'alhelí', 'israelí', 'iraquí', 'marroquí', 'paquistaní', 'bengalí']);
 // Pretéritos irregulares en primera persona (no terminan en «é»/«í») y el «nosotros» del equipo.
 const ST_ACTION_IRREG = stRe(String.raw`(propuse|hice|dije|tuve|puse|traje|conduje|supe|quise|pude|vine|fui|di|estuve|reduje|produje|introduje|deshice|rehice|compuse|dispuse|expuse|mantuve|obtuve|contuve)`, 'giu');
 const ST_ACTION_WE = stRe(String.raw`\p{L}{3,}(amos|imos)`, 'giu');
-const ST_SITUATION = stRe(String.raw`(cuando|en mi (trabajo|empresa|equipo|último|anterior)|el año pasado|hace \w+|en \d{4}|en la empresa|una vez)`);
+const ST_SITUATION = stRe(String.raw`(cuando|en mi (trabajo|empresa|equipo|último|anterior|práctica|pasantía|tesis|curso)|en mis (prácticas|pasantías|clases)|en (la|mi) universidad|en un proyecto|durante|el (año|semestre) pasado|hace \w+|en \d{4}|en la empresa|una vez)`);
 const ST_TASK = stRe(String.raw`(tenía que|ten(í|i)amos que|mi (objetivo|tarea|rol|responsabilidad)|me pidieron|deb(í|ía)a?|el reto era|el problema era)`);
 const ST_REASON = stRe(String.raw`(porque|ya que|la razón|por eso|debido a|dado que)`);
 const ST_EXAMPLE = stRe(String.raw`(por ejemplo|una vez|cuando|el año pasado|en mi (trabajo|vida|caso)|me pasó)`);
 const ST_CLOSE = stRe(String.raw`(en resumen|por eso|así que|en conclusión|para cerrar|en definitiva)`);
-const ST_ASK = /\b(propongo|necesito|te pido|les pido|recomiendo|sugiero|decidimos|la conclusión|mi propuesta|¿(puedes|podemos|podrías|me))/i;
+const ST_ASK = /(?<!\p{L})(propongo|necesito|te pido|les pido|recomiendo|sugiero|decidimos|la conclusión|mi propuesta)(?!\p{L})|¿\s*(puedes|podemos|podrías|podríamos|me)(?!\p{L})/iu;
 const ST_IMPACT = stRe(String.raw`(impact(o|ó)|afect(a|ó)|hizo que|provoc(a|ó)|gener(a|ó)|el resultado fue|eso hace que)`);
 const ST_BEHAVIOR = stRe(String.raw`(dijiste|hiciste|enviaste|llegaste|presentaste|interrumpiste|entregaste|vi que|noté que)`);
 
@@ -1882,12 +1898,13 @@ function stPrep(text) {
   ];
 }
 function stStar(text) {
-  const actions = (text.match(ST_ACTION) || []).length + (text.match(ST_ACTION_IRREG) || []).length;
+  const actions = (text.match(ST_ACTION) || []).filter(w => !ST_NOT_VERB.has(w.toLowerCase())).length + (text.match(ST_ACTION_IRREG) || []).length;
   const we = (text.match(ST_ACTION_WE) || []).length;
   return [
-    { part: 'Situación', ok: stHas(ST_SITUATION, text), tip: 'Ubica el contexto: «En mi trabajo anterior, cuando…».' },
+    { part: 'Situación', ok: stHas(ST_SITUATION, text), tip: 'Ubica el contexto: «En mi trabajo anterior, cuando…» o «En un proyecto de la universidad, cuando…».' },
     { part: 'Tarea', ok: stHas(ST_TASK, text), tip: 'Di cuál era tu reto: «Tenía que…», «Mi objetivo era…».' },
-    { part: 'Acción', ok: actions >= 2 || (actions >= 1 && we >= 1) || /\byo\b/i.test(text), tip: 'Cuenta qué hiciste TÚ, en primera persona: «Armé», «Propuse», «Hablé con…».' },
+    // En STAR la acción es tuya: si domina el «nosotros», no se da por cumplida.
+    { part: 'Acción', ok: (actions >= 2 || (actions >= 1 && we >= 1)) && actions >= we, tip: 'Cuenta qué hiciste TÚ, en primera persona: «Armé», «Propuse», «Hablé con…».' },
     { part: 'Resultado', ok: stHas(ST_RESULT, text) || ST_NUMBER.test(text), tip: 'Cierra con un resultado medible: «Las ventas subieron un 30%».' },
   ];
 }
@@ -2084,27 +2101,37 @@ function scoreSpeech(m, isAudio, seconds, method = '') {
 
 // Cuidado de la persona: recursos de ayuda por país y detección local de mensajes de crisis (funciona sin IA).
 
-// Líneas gratuitas de prevención del suicidio y apoyo emocional (revisar cada año).
+// Líneas gratuitas de prevención del suicidio y apoyo emocional, con la emergencia de cada país (revisar cada año).
 const HELP_LINES = [
-  ['Argentina', '135 (CABA y GBA) o (011) 5275-1135 · Centro de Asistencia al Suicida'],
-  ['Chile', '*4141 · Línea de Prevención del Suicidio, 24 h'],
-  ['Colombia', '106 (Bogotá) o 192 opción 4 (todo el país)'],
-  ['España', '024 · Línea de atención a la conducta suicida'],
-  ['México', '800 911 2000 · Línea de la Vida'],
-  ['Perú', '113 opción 5'],
-  ['Estados Unidos', '988 (opción en español)'],
+  ['Argentina', '135 (CABA y GBA) o (011) 5275-1135 · Centro de Asistencia al Suicida', '911 · SAME 107'],
+  ['Chile', '*4141 · Línea de Prevención del Suicidio, 24 h', '131 ambulancia · 133 policía'],
+  ['Colombia', '192 opción 4 (todo el país) · 106 en Bogotá', '123'],
+  ['España', '024 · Línea de atención a la conducta suicida', '112'],
+  ['México', '800 911 2000 · Línea de la Vida', '911'],
+  ['Perú', '113 opción 5', '106 SAMU · 105 policía'],
+  ['Uruguay', '0800 0767 o *0767 · Línea Vida', '911'],
+  ['Estados Unidos', '988 (marca 2 para español)', '911'],
 ];
 
 function helpHTML() {
-  return `<p><strong>Si estás en peligro ahora, llama a emergencias (911; en España, 112).</strong></p>
+  return `<p><strong>Si estás en peligro ahora, llama a la emergencia de tu país</strong> (al final de cada línea).</p>
     <p>Hablar con alguien ayuda. Estas líneas son gratuitas y confidenciales:</p>
-    <ul>${HELP_LINES.map(([c, l]) => `<li><strong>${esc(c)}:</strong> ${esc(l)}</li>`).join('')}</ul>
+    <ul>${HELP_LINES.map(([c, l, e]) => `<li><strong>${esc(c)}:</strong> ${esc(l)} · <span class="note">emergencias: ${esc(e)}</span></li>`).join('')}</ul>
+    <p class="note">Si tu país no está, busca la línea de prevención de tu país o acude a la guardia de un hospital.</p>
     <p class="note">VOXA es un entrenamiento de comunicación, no un tratamiento. Si el miedo a hablar te hace evitar el trabajo, los estudios o encuentros importantes, una terapia cognitivo-conductual ayuda mucho; VOXA la complementa.</p>`;
 }
 
 // Frases que indican riesgo. Se revisan en el dispositivo: no se envían a ningún lado.
-const CRISIS_RE = /\b(me quiero morir|quiero morirme|no quiero vivir|no quiero seguir viviendo|quitarme la vida|matarme|suicid(arme|io)|hacerme daño|lastimarme|no vale la pena vivir|desaparecer para siempre)\b/iu;
+const CRISIS_RE = /(?<!\p{L})(me quiero morir|quiero morirme|me quiero matar|quiero matarme|matarme|no quiero vivir|no quiero seguir viviendo|quitarme la vida|suicid(arme|io)|hacerme daño|lastimarme|(me corto|cortarme) (los brazos|las muñecas|las venas|la piel)|no vale la pena vivir|mejor no estar|quiero desaparecer|desaparecer para siempre|no aguanto más vivir)(?!\p{L})/iu;
 const isCrisis = (text) => CRISIS_RE.test(text || '');
+
+// Apoyo profesional para el miedo a hablar (no es una crisis: va aparte de las líneas de prevención).
+function professionalHTML() {
+  return `<p>Si el miedo a hablar te hace evitar el trabajo, los estudios o encuentros importantes, una <strong>terapia cognitivo-conductual (TCC)</strong> con exposición gradual es el tratamiento con más evidencia. VOXA la complementa.</p>
+    <ul><li>Consulta por TCC en tu cobertura de salud (obra social, EPS, ISAPRE, prepaga o seguro).</li>
+    <li>Muchas facultades de psicología tienen servicios de atención gratuitos o de bajo costo.</li>
+    <li>Las asociaciones de terapia cognitiva de tu país publican directorios de profesionales.</li></ul>`;
+}
 
 // Nervios en el máximo en las últimas 3 prácticas: sugerir apoyo profesional, sin alarmar.
 function persistentHighAnxiety(sessions) {
@@ -2123,7 +2150,8 @@ const FEATURES = [
 // Se pide en un buen momento (después de lograr algo), no al entrar: tras 3 prácticas y no más de una vez
 // cada 30 días, como recomiendan las guías de calificación en tienda de Apple y Google.
 function shouldAskRating(profile, sessions, now = Date.now()) {
-  if (sessions.length < 3) return false;
+  // Al menos 3 prácticas en 2 días distintos: que haya vuelto, no sólo probado.
+  if (sessions.length < 3 || new Set(sessions.map(s => String(s.date).slice(0, 10))).size < 2) return false;
   const last = profile.rating?.date || profile.ratingDismissed;
   return !last || now - new Date(last) > 30 * 864e5;
 }
@@ -2250,11 +2278,14 @@ function aiErrorText(e) {
   if (['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'].includes(e?.code)) disableAI();
   return AI_ERRORS[e?.code] || 'Hubo un problema de conexión con Claude. Vuelve a intentarlo.';
 }
+// Modo calma: sin números en toda la app (a pedido, o en las primeras 3 prácticas de quien dijo que le cuesta mucho).
+const calmNow = () => !!profile.calmMode || (profile.startNerves >= 5 && loadSessions().filter(s => s.type === 'ensayo' || s.type === 'roleplay').length < 3);
 // Qué puede medir esta vista: el lenguaje corporal necesita a Claude (fotogramas del video).
 const caps = () => ({ presence: !!sample });
 
 // Recursos de ayuda (prototype/help.js) en Hoy y Progreso, y aviso si un texto sugiere una crisis.
 document.querySelectorAll('.help-card .help-box').forEach(b => { b.innerHTML = helpHTML(); });
+document.querySelectorAll('.pro-box').forEach(b => { b.innerHTML = professionalHTML(); });
 const CRISIS_MSG = 'Lo que escribiste suena a un momento muy difícil. No tienes que pasarlo sola ni solo: <button type="button" class="linkish" data-help>ver líneas de ayuda gratuitas</button>. Cuando quieras, seguimos practicando.';
 const crisisCheck = (text) => isCrisis(text);
 document.addEventListener('click', (e) => {
@@ -2359,6 +2390,8 @@ const PLAN = [
   ] },
 ];
 function todayTask(sessions) {
+  // Exposición gradual: a quien le cuesta mucho, el primer paso es el peldaño 1 (escribir y leer a solas, sin grabar).
+  if (!sessions.length && profile.startNerves >= 5) return { day: 0, week: 'Día 0 · Empieza suave', ...T('Escribe 3 frases sobre algo que te encanta y léelas en voz alta, a solas y sin grabarte.', 'ensayar', { scenario: 'passion', mode: 'text' }) };
   if (!sessions.length) return { day: 0, week: 'Día 0 · Punto de partida', ...T('Preséntate en 60 segundos: será tu punto de partida.', 'ensayar', { scenario: 'intro' }) };
   // El plan avanza con los días practicados, no con el calendario: si faltas un día, retomas donde quedaste.
   const today = dayKey(new Date().toISOString());
@@ -2408,6 +2441,7 @@ onShow.hoy = () => {
   if (gd) {
     $('tWeek').textContent = '🎯 Tu meta de hoy';
     $('tText').textContent = gd.text;
+    $('tWhy').textContent = gd.detail;
     $('tGo').onclick = () => go(gd.goal.next.view, gd.goal.next);
     $('tAlt').innerHTML = `<button type="button" class="linkish" id="tPlan">O haz la del plan de 30 días: ${esc(task.text)}</button>`;
     $('tPlan').onclick = () => openTask(task);
@@ -2427,8 +2461,8 @@ onShow.hoy = () => {
   // La semana a la vista: un punto por día practicado (lo que más sostiene el hábito en las apps líderes).
   const days = new Set(sessions.map(x => dayKey(x.date)));
   const week = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - 6 + i); return d; });
-  const strip = week.map(d => `<span class="wk${days.has(localDay(d)) ? ' on' : ''}" title="${d.toLocaleDateString('es', { weekday: 'long' })}">${'DLMXJVS'[d.getDay()]}</span>`).join('');
-  $('tStreak').innerHTML = `<span class="week" aria-label="Días practicados esta semana">${strip}</span> ` + esc((s ? `🔥 ${s} ${s === 1 ? 'día seguido' : 'días seguidos'}` : 'Empieza tu racha hoy') + (last ? ` · Último puntaje: ${last.total} en «${last.scenarioName}»` : ''));
+  const strip = week.map(d => `<span class="wk${days.has(localDay(d)) ? ' on' : ''}${localDay(d) === localDay() ? ' today' : ''}" title="${d.toLocaleDateString('es', { weekday: 'long' })}">${'DLMMJVS'[d.getDay()]}</span>`).join('');
+  $('tStreak').innerHTML = `<span class="week" aria-label="Días practicados esta semana">${strip}</span> ` + esc((s ? `🔥 ${s} ${s === 1 ? 'día seguido' : 'días seguidos'}` : 'Empieza tu racha hoy') + (last && !calmNow() ? ` · Último puntaje: ${last.total} en «${last.scenarioName}»` : ''));
   $('tip').textContent = TIPS[Math.floor(Date.now() / 864e5) % TIPS.length];
   const next = LESSONS.find(l => !profile.lessons?.[l.id]);
   renderGoalsBox();
@@ -2597,26 +2631,31 @@ function showReport(m, isAudio, text) {
     && !!s.partial === partial && s.id !== (sameAsLast ? last.session.id : ''))?.total;
   const ensayos = loadSessions().filter(s => s.type === 'ensayo').length;
   // Modo calma: sin números (a pedido, o en las primeras 3 prácticas de quien dijo que le cuesta mucho).
-  const calm = profile.calmMode || (profile.startNerves >= 5 && ensayos < 3);
+  const calm = calmNow();
   $('report').classList.remove('hidden');
-  $('ring').textContent = calm ? '✓' : r.total;
-  $('ring').style.border = `8px solid ${calm ? 'var(--good)' : colorFor(r.total)}`;
+  // Un puntaje parcial no se muestra como uno completo: número chico y gris.
+  $('ring').innerHTML = calm ? '✓' : partial ? `<span style="font-size:.55em">${r.total}</span>` : r.total;
+  $('ring').style.border = `8px solid ${calm ? 'var(--good)' : partial ? 'var(--line)' : colorFor(r.total)}`;
   $('levelTxt').textContent = calm ? 'Práctica completada' : partial ? 'Puntaje parcial (sólo voz)' : levelFor(r.total);
   const st = streak(loadSessions()) || 1;
   $('encourage').textContent = (calm ? 'Lo hiciste. Cada práctica baja un poco los nervios: así funciona la exposición.'
     : partial ? 'Sin tu texto medimos sólo la voz, así que este puntaje no se compara con otros.' : encouragement(r.total, prev))
     + ` 🔥 Racha: ${st} ${st === 1 ? 'día' : 'días'}.`;
-  if (persistentHighAnxiety([...loadSessions(), { anxietyBefore: feelBefore.get() }])) $('encourage').textContent += ' Llevas varias prácticas con nervios al máximo: si el miedo te limita en tu día a día, conversarlo con un profesional ayuda mucho (más abajo, en «¿Te sientes muy mal?», hay líneas de ayuda).';
+  if (persistentHighAnxiety([...loadSessions(), { anxietyBefore: feelBefore.get() }])) $('encourage').textContent += ' Llevas varias prácticas con nervios al máximo: si el miedo te limita en tu día a día, conversarlo con un profesional ayuda mucho (en Progreso, «Buscar un profesional»).';
   $('scoreSub').textContent = `${scenario().name} · ${isAudio ? `grabación de ${Math.round(m.dur)} s` : 'respuesta escrita'}`;
   const sorted = [...r.items].sort((a, b) => b.s - a.s);
   // El foco no se elige con una métrica poco confiable: los «eeh» acústicos con menos de 3 zonas son una estimación.
   const focusable = sorted.filter(i => i.key !== 'hums' || (m.humZones?.length || 0) >= 3);
   const best = sorted[0], worst = (focusable.length ? focusable : sorted)[(focusable.length ? focusable : sorted).length - 1];
   const allGood = worst.s >= 100;
-  const [why, ex] = allGood ? ['Todas tus métricas están en rango.', 'Sube la dificultad: prueba una situación nueva o una improvisación.'] : TIPS_BY[worst.key](m);
+  // Con todo en 80 o más, el foco es de pulido: no tiene sentido decir «quedó corto» a una respuesta de 94.
+  const polish = !allGood && worst.s >= 80;
+  const [why, ex] = allGood ? ['Todas tus métricas están en rango.', 'Sube la dificultad: prueba una situación nueva o una improvisación.']
+    : polish ? [`Muy buena respuesta. Para pulirla: ${worst.label.toLowerCase()} está casi en el ideal (${worst.display}; ideal ${worst.target}).`, 'Repite una vez agregando un detalle concreto (una cifra, un nombre o una imagen) en tu ejemplo.']
+    : TIPS_BY[worst.key](m);
   $('fb').innerHTML = `
     <div><h3 style="color:var(--good)">✓ Lo que hiciste bien</h3>${STRENGTH[best.key]}</div>
-    <div><h3 style="color:var(--mid)">→ ${allGood ? 'Tu siguiente paso' : `Tu único foco: ${esc(worst.label)}`}</h3>${why}</div>
+    <div><h3 style="color:var(--mid)">→ ${allGood || polish ? 'Tu siguiente paso' : `Tu único foco: ${esc(worst.label)}`}</h3>${why}</div>
     <div><h3 style="color:var(--accent)">⏱ Ejercicio de 2 minutos</h3>${ex}${allGood ? '' : lessonLink(worst.key)}</div>`;
   if (m.partialText) $('fb').insertAdjacentHTML('beforeend', '<div style="grid-column:1/-1"><h3>📝 Texto parcial</h3>Lo que escribiste parece sólo una parte de lo que dijiste, así que no medimos tu ritmo. Para medirlo, escribe todo lo que dijiste.</div>');
   // Sin transcripción (esta página no puede usar el reconocimiento de voz) faltan ritmo, muletillas y contenido.
@@ -2642,8 +2681,11 @@ function showReport(m, isAudio, text) {
   persist();
   $('report').scrollIntoView({ behavior: 'smooth' });
 }
+// Para estructura y contenido, la lección es la del método de la situación (PREP, STAR, BLUF…), no una fija.
+const LESSON_FOR_METHOD = [[/^PREP/, 'prep'], [/^STAR/, 'star'], [/^BLUF/, 'bluf'], [/^SBI/, 'sbi'], [/^CNV/, 'cnv'], [/Story Spine|Historia|Anécdota/, 'historia']];
 function lessonLink(metric) {
-  const l = LESSONS.find(x => x.id === LESSON_FOR_METRIC[metric]);
+  const byMethod = ['structure', 'length', 'variety'].includes(metric) && LESSON_FOR_METHOD.find(([re]) => re.test(scenario().method))?.[1];
+  const l = LESSONS.find(x => x.id === (byMethod || LESSON_FOR_METRIC[metric]));
   return l ? `<p style="margin-top:8px"><button type="button" class="linkish" data-open-lesson="${l.id}">📘 Lección de ${l.minutes} min: ${esc(l.title)}</button></p>` : '';
 }
 document.addEventListener('click', (e) => { const b = e.target.closest('[data-open-lesson]'); if (b) go('aprender', { lesson: b.dataset.openLesson }); });
@@ -2883,9 +2925,10 @@ const OFFLINE_PERSONA = {
 };
 // Simulacro sin IA: preguntas fijas, pero escucha lo básico. Si a una respuesta STAR le falta el resultado,
 // repregunta una vez; si ya contaste un logro con resultado, no te lo vuelve a pedir.
-const MOTIVE_RE = /(?<!\p{L})(me interesa|me gusta|me motiva|quiero|porque|aprender|crecer|aportar|empresa|puesto|rol|equipo|propósito)(?!\p{L})/iu;
+// «Por qué te interesa» pide conectar contigo y con el puesto: nombrar el puesto, la empresa o lo que aportas.
+const MOTIVE_RE = /(?<!\p{L})(este puesto|el puesto|este rol|el rol|esta empresa|la empresa|el equipo|puedo aportar|aportar|mi experiencia|sé hacer|me especialicé|encaja)(?!\p{L})/iu;
 const OFFLINE_QUESTIONS = [
-  { id: 'motivo', text: 'Gracias. ¿Por qué te interesa este puesto?', expect: MOTIVE_RE, miss: 'No contaste por qué te interesa: conecta lo que buscas con lo que ofrece el puesto.' },
+  { id: 'motivo', text: 'Gracias. ¿Por qué te interesa este puesto?', expect: MOTIVE_RE, miss: 'Tu respuesta es general: conecta lo que buscas con este puesto o empresa y di qué puedes aportar («Mi experiencia en… me permite aportar…»).' },
   { id: 'logro', text: 'Cuéntame de un logro del que estés orgulloso u orgullosa. ¿Qué hiciste tú, concretamente?', star: true },
   { id: 'conflicto', text: 'Háblame de un conflicto con un compañero o compañera y cómo lo resolviste.', star: true },
   { id: 'error', text: '¿Cuál es un error que cometiste y qué aprendiste?', star: true },
@@ -2990,8 +3033,8 @@ $('talkForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const text = $('txt').value.trim();
   if (!text || busy) return;
-  // Sin IA no hay quien salga del personaje: la detección local muestra la ayuda.
-  if (!sample && crisisCheck(text)) { $('rpStatus').innerHTML = CRISIS_MSG; return; }
+  // La detección local va siempre, con o sin IA: no depende de que el modelo salga del personaje.
+  if (crisisCheck(text)) { $('rpStatus').innerHTML = CRISIS_MSG; return; }
   $('txt').value = '';
   addTurn('user', text);
   busy = true; $('btnSend').disabled = true;
@@ -3013,7 +3056,7 @@ $('talkForm').addEventListener('submit', async (e) => {
       const next = offlineNext(text);
       if (next) addTurn('persona', next);
       $('hint').textContent = $('showHints').checked ? '💡 ' + offlineHint(text, asked) : '';
-      $('rpStatus').textContent = next ? '' : 'Fin del simulacro. Pulsa «Terminar y evaluar».';
+      $('rpStatus').textContent = next ? `Pregunta ${Math.min(offline.at + 1, OFFLINE_QUESTIONS.length)} de ${OFFLINE_QUESTIONS.length}` : 'Fin del simulacro. Pulsa «Terminar y evaluar».';
     }
   } catch (err) {
     if (err?.code !== 'cancelled') $('rpStatus').textContent = aiErrorText(err);
@@ -3021,6 +3064,9 @@ $('talkForm').addEventListener('submit', async (e) => {
   } finally { busy = false; $('btnSend').disabled = false; $('txt').focus(); }
 });
 $('txt').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('talkForm').requestSubmit(); } });
+// Una cita de la evaluación se muestra sólo si de verdad la dijiste (la IA no puede inventarla).
+const normTxt = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\p{L}\p{N} ]/gu, ' ').replace(/\s+/g, ' ').trim();
+const said = (q) => !!q && normTxt(chatHistory.filter(t => t.role === 'user').map(t => t.text).join(' ')).includes(normTxt(q));
 // Reporte del simulacro: qué faltó en cada respuesta (STAR o lo que pedía la pregunta) y un solo paso siguiente.
 function offlineReport() {
   const rows = OFFLINE_QUESTIONS.filter(q => offline.answers[q.id]).map(q => {
@@ -3039,7 +3085,9 @@ function offlineReport() {
 function offlineHint(text, q) {
   if (q?.expect && !q.expect.test(text)) return q.miss;
   if (q?.star) {
-    const miss = starOf(text)?.parts.filter(p => !p.ok) || [];
+    const st = starOf(text);
+    if (!st) return 'Desarrolla más tu respuesta: cuenta la situación, qué hiciste tú y qué resultado lograste.';
+    const miss = st.parts.filter(p => !p.ok);
     if (miss.length) return `Falta: ${miss.map(p => p.part).join(', ')}. ${miss[0].tip}`;
     return 'Respuesta STAR completa. Así se responde.';
   }
@@ -3079,7 +3127,8 @@ async function endRoleplay() {
   const local = {
     equilibrio_de_habla: Math.round(interview ? band(c.talkRatio * 100, 55, 85, 30) : band(c.talkRatio * 100, 40, 65, 30)),
     ...(interview ? {} : { preguntas: Math.round(band(c.questions, Math.min(2, c.userTurns), 99, 3)) }),
-    fluidez: Math.round(band(c.fillers / Math.max(1, c.userTurns), 0, 0.5, 2)),
+    // Muletillas cada 100 palabras: tres en un turno corto sí cuentan.
+    fluidez: Math.round(band(100 * c.fillers / Math.max(1, c.userWords), 0, 2, 6)),
     desarrollo: Math.round(band(c.userWords / c.userTurns, 25, 130, 40)),
   };
   let ev = null;
@@ -3115,13 +3164,14 @@ Responde SÓLO con JSON: {"summary":"...","scores":{"escucha":0,"empatia":0,"cla
     scenarioName: 'Roleplay: ' + persona.name, total, dims: scores };
   saveSession(rpSession);
   if (markEventPractice(profile.event, rpSession)) saveProfile(profile);
-  const head = `<div class="score-big"><div class="ring" style="border:8px solid ${colorFor(total)}">${total}</div>
-    <div><div style="font-weight:700">${esc(persona.name)} · dificultad ${$('difficulty').value}/3</div>
+  const calm = calmNow();
+  const head = `<div class="score-big"><div class="ring" style="border:8px solid ${calm ? 'var(--good)' : colorFor(total)}">${calm ? '✓' : total}</div>
+    <div><div style="font-weight:700">${esc(persona.name)}${persona.id === 'offline' ? '' : ` · dificultad ${$('difficulty').value}/3`}</div>
     <div class="note">Aportaste el ${Math.round(c.talkRatio * 100)}% de las palabras · ${c.questions} ${c.questions === 1 ? 'intervención' : 'intervenciones'} con preguntas · ${c.fillers} muletillas</div></div></div>
     <div class="dims">${dimBars(scores)}</div>`;
   $('evalOut').innerHTML = head + (ev ? `<div class="ai-box"><p>${esc(ev.summary)}</p>
-    ${ev.best_moment ? `<h3 style="color:var(--good)">Tu mejor momento</h3><blockquote>«${esc(ev.best_moment.quote)}»</blockquote><p>${esc(ev.best_moment.why)}</p>` : ''}
-    ${ev.missed_moment ? `<h3 style="color:var(--mid)">Oportunidad perdida</h3><blockquote>«${esc(ev.missed_moment.quote)}»</blockquote><p><strong>Mejor:</strong> ${esc(ev.missed_moment.better)}</p>` : ''}
+    ${ev.best_moment ? `<h3 style="color:var(--good)">Tu mejor momento</h3>${said(ev.best_moment.quote) ? `<blockquote>«${esc(ev.best_moment.quote)}»</blockquote>` : ''}<p>${esc(ev.best_moment.why)}</p>` : ''}
+    ${ev.missed_moment ? `<h3 style="color:var(--mid)">Oportunidad perdida</h3>${said(ev.missed_moment.quote) ? `<blockquote>«${esc(ev.missed_moment.quote)}»</blockquote>` : ''}<p><strong>Mejor:</strong> ${esc(ev.missed_moment.better)}</p>` : ''}
     <h3>Técnicas que usaste</h3><div class="chips">${(ev.techniques_used || []).map(t => `<span class="chip">${esc(t)}</span>`).join('') || '<span class="note">Ninguna identificada</span>'}</div>
     <h3 style="color:var(--accent)">Siguiente paso</h3><p>${esc(ev.next_step)}</p>${ev.safety_note ? `<p class="note">${esc(ev.safety_note)}</p>` : ''}</div>`
     : persona.id === 'offline' ? offlineReport()
@@ -3199,8 +3249,8 @@ const LADDER = [
   'Hablar 60 s a solas en voz alta, sin grabar.',
   'Grabar sólo audio y escucharte.',
   'Subir una grabación a VOXA y leer tu reporte.',
-  'Roleplay con IA en dificultad baja.',
-  'Roleplay con IA en dificultad alta.',
+  'Roleplay o simulacro en dificultad baja.',
+  'Roleplay o simulacro en dificultad alta (con IA, el personaje presiona).',
   'Practicar frente a una persona de confianza.',
   'Intervenir una vez en una reunión real.',
   'Presentar 3 minutos ante un grupo pequeño.',
@@ -3221,15 +3271,15 @@ onShow.progreso = () => {
   const calm = sessions.filter(x => x.anxietyAfter != null && x.anxietyBefore != null).map(x => x.anxietyBefore - x.anxietyAfter);
   const delta = base && lastE ? lastE.total - base.total : 0;
   $('kpis').innerHTML = [
-    kpi('Prácticas', sessions.length, `${evals.length} ensayos · ${count('roleplay')} roleplays · ${count('escritura')} escritos`),
+    kpi('Prácticas', sessions.length, [[count('ensayo'), 'ensayo', 'ensayos'], [count('roleplay'), 'roleplay', 'roleplays'], [count('escritura'), 'escrito', 'escritos']].map(([n, a, b]) => `${n} ${n === 1 ? a : b}`).join(' · ')),
     kpi('Racha', `${s} ${s === 1 ? 'día' : 'días'}`, 'seguidos practicando'),
-    kpi('Punto de partida', base ? base.total : '–', base ? esc(base.scenarioName) : ''),
-    kpi('Último ensayo', lastE ? lastE.total : '–', base && lastE !== base ? `<span style="color:${delta >= 0 ? 'var(--good)' : 'var(--bad)'}">${delta >= 0 ? '+' : ''}${delta} vs. tu punto de partida</span>` : ''),
+    kpi('Punto de partida', base && !calmNow() ? base.total : '–', base ? esc(base.scenarioName) : ''),
+    kpi('Último ensayo', lastE && !calmNow() ? lastE.total : '–', base && lastE !== base ? `<span style="color:${delta >= 0 ? 'var(--good)' : 'var(--bad)'}">${delta >= 0 ? '+' : ''}${delta} vs. tu punto de partida</span>` : ''),
     kpi('Calma ganada', calm.length ? calmText(mean(calm)) : '–', calm.length && mean(calm) < -0.05 ? 'puntos más de nervios al terminar' : 'puntos menos de nervios al terminar (escala 1–5)'),
   ].join('');
   $('pEmpty').innerHTML = sessions.length ? '' : 'Aún no hay prácticas. Tu primer ensayo será tu punto de partida.';
   $('rows').innerHTML = [...sessions].reverse().slice(0, 50).map(x =>
-    `<tr><td>${new Date(x.date).toLocaleDateString('es')}</td><td>${esc(x.scenarioName)}</td><td><span class="pill" style="color:${colorFor(x.total)}">${x.total}</span></td></tr>`).join('')
+    `<tr><td>${new Date(x.date).toLocaleDateString('es')}</td><td>${esc(x.scenarioName)}</td><td>${calmNow() ? '✓' : `<span class="pill" style="color:${x.partial ? 'var(--muted)' : colorFor(x.total)}">${x.total}${x.partial ? ' · parcial' : ''}</span>`}</td></tr>`).join('')
     || '<tr><td colspan="3" class="note">Sin prácticas todavía.</td></tr>';
   profile.ladder ||= {};
   $('ladder').innerHTML = LADDER.map((t, i) => `<li><label><input type="checkbox" data-i="${i}" ${profile.ladder[i] ? 'checked' : ''}> <span>${i + 1}. ${t}</span></label></li>`).join('');

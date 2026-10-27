@@ -135,7 +135,7 @@ import {
 import { SCENARIOS, GROUPS, IMPRO_TOPICS, methodHelp } from './scenarios.js';
 import { requestMedia, explainError } from './devices.js';
 import { LESSONS, LESSON_FOR_METRIC } from './lessons.js';
-import { guiraud, MIN_SPEECH_SECONDS } from './audiofile.js';
+import { guiraud, MIN_SPEECH_SECONDS, PITCH_MAX_HZ } from './audiofile.js';
 
 renderNav();
 const profile = loadProfile();
@@ -349,7 +349,7 @@ function loop() {
   analyser.getFloatTimeDomainData(buf);
   let sum = 0; for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
   const rms = Math.sqrt(sum / buf.length);
-  const pitch = rms > 0.01 ? detectPitch(buf, audioCtx.sampleRate) : 0;
+  const pitch = rms > 0.01 ? detectPitch(buf, audioCtx.sampleRate, PITCH_MAX_HZ) : 0;
   samples.push({ t, rms, pitch });
   $('vol').style.width = Math.min(100, rms * 600) + '%';
 

@@ -45,11 +45,14 @@ function aiErrorText(e) {
   if (['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'].includes(e?.code)) disableAI();
   return AI_ERRORS[e?.code] || 'Hubo un problema de conexión con Claude. Vuelve a intentarlo.';
 }
+// Modo calma: sin números en toda la app (a pedido, o en las primeras 3 prácticas de quien dijo que le cuesta mucho).
+const calmNow = () => !!profile.calmMode || (profile.startNerves >= 5 && loadSessions().filter(s => s.type === 'ensayo' || s.type === 'roleplay').length < 3);
 // Qué puede medir esta vista: el lenguaje corporal necesita a Claude (fotogramas del video).
 const caps = () => ({ presence: !!sample });
 
 // Recursos de ayuda (prototype/help.js) en Hoy y Progreso, y aviso si un texto sugiere una crisis.
 document.querySelectorAll('.help-card .help-box').forEach(b => { b.innerHTML = helpHTML(); });
+document.querySelectorAll('.pro-box').forEach(b => { b.innerHTML = professionalHTML(); });
 const CRISIS_MSG = 'Lo que escribiste suena a un momento muy difícil. No tienes que pasarlo sola ni solo: <button type="button" class="linkish" data-help>ver líneas de ayuda gratuitas</button>. Cuando quieras, seguimos practicando.';
 const crisisCheck = (text) => isCrisis(text);
 document.addEventListener('click', (e) => {
@@ -154,6 +157,8 @@ const PLAN = [
   ] },
 ];
 function todayTask(sessions) {
+  // Exposición gradual: a quien le cuesta mucho, el primer paso es el peldaño 1 (escribir y leer a solas, sin grabar).
+  if (!sessions.length && profile.startNerves >= 5) return { day: 0, week: 'Día 0 · Empieza suave', ...T('Escribe 3 frases sobre algo que te encanta y léelas en voz alta, a solas y sin grabarte.', 'ensayar', { scenario: 'passion', mode: 'text' }) };
   if (!sessions.length) return { day: 0, week: 'Día 0 · Punto de partida', ...T('Preséntate en 60 segundos: será tu punto de partida.', 'ensayar', { scenario: 'intro' }) };
   // El plan avanza con los días practicados, no con el calendario: si faltas un día, retomas donde quedaste.
   const today = dayKey(new Date().toISOString());
@@ -203,6 +208,7 @@ onShow.hoy = () => {
   if (gd) {
     $('tWeek').textContent = '🎯 Tu meta de hoy';
     $('tText').textContent = gd.text;
+    $('tWhy').textContent = gd.detail;
     $('tGo').onclick = () => go(gd.goal.next.view, gd.goal.next);
     $('tAlt').innerHTML = `<button type="button" class="linkish" id="tPlan">O haz la del plan de 30 días: ${esc(task.text)}</button>`;
     $('tPlan').onclick = () => openTask(task);
@@ -222,8 +228,8 @@ onShow.hoy = () => {
   // La semana a la vista: un punto por día practicado (lo que más sostiene el hábito en las apps líderes).
   const days = new Set(sessions.map(x => dayKey(x.date)));
   const week = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - 6 + i); return d; });
-  const strip = week.map(d => `<span class="wk${days.has(localDay(d)) ? ' on' : ''}" title="${d.toLocaleDateString('es', { weekday: 'long' })}">${'DLMXJVS'[d.getDay()]}</span>`).join('');
-  $('tStreak').innerHTML = `<span class="week" aria-label="Días practicados esta semana">${strip}</span> ` + esc((s ? `🔥 ${s} ${s === 1 ? 'día seguido' : 'días seguidos'}` : 'Empieza tu racha hoy') + (last ? ` · Último puntaje: ${last.total} en «${last.scenarioName}»` : ''));
+  const strip = week.map(d => `<span class="wk${days.has(localDay(d)) ? ' on' : ''}${localDay(d) === localDay() ? ' today' : ''}" title="${d.toLocaleDateString('es', { weekday: 'long' })}">${'DLMMJVS'[d.getDay()]}</span>`).join('');
+  $('tStreak').innerHTML = `<span class="week" aria-label="Días practicados esta semana">${strip}</span> ` + esc((s ? `🔥 ${s} ${s === 1 ? 'día seguido' : 'días seguidos'}` : 'Empieza tu racha hoy') + (last && !calmNow() ? ` · Último puntaje: ${last.total} en «${last.scenarioName}»` : ''));
   $('tip').textContent = TIPS[Math.floor(Date.now() / 864e5) % TIPS.length];
   const next = LESSONS.find(l => !profile.lessons?.[l.id]);
   renderGoalsBox();
@@ -392,26 +398,31 @@ function showReport(m, isAudio, text) {
     && !!s.partial === partial && s.id !== (sameAsLast ? last.session.id : ''))?.total;
   const ensayos = loadSessions().filter(s => s.type === 'ensayo').length;
   // Modo calma: sin números (a pedido, o en las primeras 3 prácticas de quien dijo que le cuesta mucho).
-  const calm = profile.calmMode || (profile.startNerves >= 5 && ensayos < 3);
+  const calm = calmNow();
   $('report').classList.remove('hidden');
-  $('ring').textContent = calm ? '✓' : r.total;
-  $('ring').style.border = `8px solid ${calm ? 'var(--good)' : colorFor(r.total)}`;
+  // Un puntaje parcial no se muestra como uno completo: número chico y gris.
+  $('ring').innerHTML = calm ? '✓' : partial ? `<span style="font-size:.55em">${r.total}</span>` : r.total;
+  $('ring').style.border = `8px solid ${calm ? 'var(--good)' : partial ? 'var(--line)' : colorFor(r.total)}`;
   $('levelTxt').textContent = calm ? 'Práctica completada' : partial ? 'Puntaje parcial (sólo voz)' : levelFor(r.total);
   const st = streak(loadSessions()) || 1;
   $('encourage').textContent = (calm ? 'Lo hiciste. Cada práctica baja un poco los nervios: así funciona la exposición.'
     : partial ? 'Sin tu texto medimos sólo la voz, así que este puntaje no se compara con otros.' : encouragement(r.total, prev))
     + ` 🔥 Racha: ${st} ${st === 1 ? 'día' : 'días'}.`;
-  if (persistentHighAnxiety([...loadSessions(), { anxietyBefore: feelBefore.get() }])) $('encourage').textContent += ' Llevas varias prácticas con nervios al máximo: si el miedo te limita en tu día a día, conversarlo con un profesional ayuda mucho (más abajo, en «¿Te sientes muy mal?», hay líneas de ayuda).';
+  if (persistentHighAnxiety([...loadSessions(), { anxietyBefore: feelBefore.get() }])) $('encourage').textContent += ' Llevas varias prácticas con nervios al máximo: si el miedo te limita en tu día a día, conversarlo con un profesional ayuda mucho (en Progreso, «Buscar un profesional»).';
   $('scoreSub').textContent = `${scenario().name} · ${isAudio ? `grabación de ${Math.round(m.dur)} s` : 'respuesta escrita'}`;
   const sorted = [...r.items].sort((a, b) => b.s - a.s);
   // El foco no se elige con una métrica poco confiable: los «eeh» acústicos con menos de 3 zonas son una estimación.
   const focusable = sorted.filter(i => i.key !== 'hums' || (m.humZones?.length || 0) >= 3);
   const best = sorted[0], worst = (focusable.length ? focusable : sorted)[(focusable.length ? focusable : sorted).length - 1];
   const allGood = worst.s >= 100;
-  const [why, ex] = allGood ? ['Todas tus métricas están en rango.', 'Sube la dificultad: prueba una situación nueva o una improvisación.'] : TIPS_BY[worst.key](m);
+  // Con todo en 80 o más, el foco es de pulido: no tiene sentido decir «quedó corto» a una respuesta de 94.
+  const polish = !allGood && worst.s >= 80;
+  const [why, ex] = allGood ? ['Todas tus métricas están en rango.', 'Sube la dificultad: prueba una situación nueva o una improvisación.']
+    : polish ? [`Muy buena respuesta. Para pulirla: ${worst.label.toLowerCase()} está casi en el ideal (${worst.display}; ideal ${worst.target}).`, 'Repite una vez agregando un detalle concreto (una cifra, un nombre o una imagen) en tu ejemplo.']
+    : TIPS_BY[worst.key](m);
   $('fb').innerHTML = `
     <div><h3 style="color:var(--good)">✓ Lo que hiciste bien</h3>${STRENGTH[best.key]}</div>
-    <div><h3 style="color:var(--mid)">→ ${allGood ? 'Tu siguiente paso' : `Tu único foco: ${esc(worst.label)}`}</h3>${why}</div>
+    <div><h3 style="color:var(--mid)">→ ${allGood || polish ? 'Tu siguiente paso' : `Tu único foco: ${esc(worst.label)}`}</h3>${why}</div>
     <div><h3 style="color:var(--accent)">⏱ Ejercicio de 2 minutos</h3>${ex}${allGood ? '' : lessonLink(worst.key)}</div>`;
   if (m.partialText) $('fb').insertAdjacentHTML('beforeend', '<div style="grid-column:1/-1"><h3>📝 Texto parcial</h3>Lo que escribiste parece sólo una parte de lo que dijiste, así que no medimos tu ritmo. Para medirlo, escribe todo lo que dijiste.</div>');
   // Sin transcripción (esta página no puede usar el reconocimiento de voz) faltan ritmo, muletillas y contenido.
@@ -437,8 +448,11 @@ function showReport(m, isAudio, text) {
   persist();
   $('report').scrollIntoView({ behavior: 'smooth' });
 }
+// Para estructura y contenido, la lección es la del método de la situación (PREP, STAR, BLUF…), no una fija.
+const LESSON_FOR_METHOD = [[/^PREP/, 'prep'], [/^STAR/, 'star'], [/^BLUF/, 'bluf'], [/^SBI/, 'sbi'], [/^CNV/, 'cnv'], [/Story Spine|Historia|Anécdota/, 'historia']];
 function lessonLink(metric) {
-  const l = LESSONS.find(x => x.id === LESSON_FOR_METRIC[metric]);
+  const byMethod = ['structure', 'length', 'variety'].includes(metric) && LESSON_FOR_METHOD.find(([re]) => re.test(scenario().method))?.[1];
+  const l = LESSONS.find(x => x.id === (byMethod || LESSON_FOR_METRIC[metric]));
   return l ? `<p style="margin-top:8px"><button type="button" class="linkish" data-open-lesson="${l.id}">📘 Lección de ${l.minutes} min: ${esc(l.title)}</button></p>` : '';
 }
 document.addEventListener('click', (e) => { const b = e.target.closest('[data-open-lesson]'); if (b) go('aprender', { lesson: b.dataset.openLesson }); });
@@ -552,9 +566,10 @@ const OFFLINE_PERSONA = {
 };
 // Simulacro sin IA: preguntas fijas, pero escucha lo básico. Si a una respuesta STAR le falta el resultado,
 // repregunta una vez; si ya contaste un logro con resultado, no te lo vuelve a pedir.
-const MOTIVE_RE = /(?<!\p{L})(me interesa|me gusta|me motiva|quiero|porque|aprender|crecer|aportar|empresa|puesto|rol|equipo|propósito)(?!\p{L})/iu;
+// «Por qué te interesa» pide conectar contigo y con el puesto: nombrar el puesto, la empresa o lo que aportas.
+const MOTIVE_RE = /(?<!\p{L})(este puesto|el puesto|este rol|el rol|esta empresa|la empresa|el equipo|puedo aportar|aportar|mi experiencia|sé hacer|me especialicé|encaja)(?!\p{L})/iu;
 const OFFLINE_QUESTIONS = [
-  { id: 'motivo', text: 'Gracias. ¿Por qué te interesa este puesto?', expect: MOTIVE_RE, miss: 'No contaste por qué te interesa: conecta lo que buscas con lo que ofrece el puesto.' },
+  { id: 'motivo', text: 'Gracias. ¿Por qué te interesa este puesto?', expect: MOTIVE_RE, miss: 'Tu respuesta es general: conecta lo que buscas con este puesto o empresa y di qué puedes aportar («Mi experiencia en… me permite aportar…»).' },
   { id: 'logro', text: 'Cuéntame de un logro del que estés orgulloso u orgullosa. ¿Qué hiciste tú, concretamente?', star: true },
   { id: 'conflicto', text: 'Háblame de un conflicto con un compañero o compañera y cómo lo resolviste.', star: true },
   { id: 'error', text: '¿Cuál es un error que cometiste y qué aprendiste?', star: true },
@@ -659,8 +674,8 @@ $('talkForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const text = $('txt').value.trim();
   if (!text || busy) return;
-  // Sin IA no hay quien salga del personaje: la detección local muestra la ayuda.
-  if (!sample && crisisCheck(text)) { $('rpStatus').innerHTML = CRISIS_MSG; return; }
+  // La detección local va siempre, con o sin IA: no depende de que el modelo salga del personaje.
+  if (crisisCheck(text)) { $('rpStatus').innerHTML = CRISIS_MSG; return; }
   $('txt').value = '';
   addTurn('user', text);
   busy = true; $('btnSend').disabled = true;
@@ -682,7 +697,7 @@ $('talkForm').addEventListener('submit', async (e) => {
       const next = offlineNext(text);
       if (next) addTurn('persona', next);
       $('hint').textContent = $('showHints').checked ? '💡 ' + offlineHint(text, asked) : '';
-      $('rpStatus').textContent = next ? '' : 'Fin del simulacro. Pulsa «Terminar y evaluar».';
+      $('rpStatus').textContent = next ? `Pregunta ${Math.min(offline.at + 1, OFFLINE_QUESTIONS.length)} de ${OFFLINE_QUESTIONS.length}` : 'Fin del simulacro. Pulsa «Terminar y evaluar».';
     }
   } catch (err) {
     if (err?.code !== 'cancelled') $('rpStatus').textContent = aiErrorText(err);
@@ -690,6 +705,9 @@ $('talkForm').addEventListener('submit', async (e) => {
   } finally { busy = false; $('btnSend').disabled = false; $('txt').focus(); }
 });
 $('txt').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('talkForm').requestSubmit(); } });
+// Una cita de la evaluación se muestra sólo si de verdad la dijiste (la IA no puede inventarla).
+const normTxt = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\p{L}\p{N} ]/gu, ' ').replace(/\s+/g, ' ').trim();
+const said = (q) => !!q && normTxt(chatHistory.filter(t => t.role === 'user').map(t => t.text).join(' ')).includes(normTxt(q));
 // Reporte del simulacro: qué faltó en cada respuesta (STAR o lo que pedía la pregunta) y un solo paso siguiente.
 function offlineReport() {
   const rows = OFFLINE_QUESTIONS.filter(q => offline.answers[q.id]).map(q => {
@@ -708,7 +726,9 @@ function offlineReport() {
 function offlineHint(text, q) {
   if (q?.expect && !q.expect.test(text)) return q.miss;
   if (q?.star) {
-    const miss = starOf(text)?.parts.filter(p => !p.ok) || [];
+    const st = starOf(text);
+    if (!st) return 'Desarrolla más tu respuesta: cuenta la situación, qué hiciste tú y qué resultado lograste.';
+    const miss = st.parts.filter(p => !p.ok);
     if (miss.length) return `Falta: ${miss.map(p => p.part).join(', ')}. ${miss[0].tip}`;
     return 'Respuesta STAR completa. Así se responde.';
   }
@@ -748,7 +768,8 @@ async function endRoleplay() {
   const local = {
     equilibrio_de_habla: Math.round(interview ? band(c.talkRatio * 100, 55, 85, 30) : band(c.talkRatio * 100, 40, 65, 30)),
     ...(interview ? {} : { preguntas: Math.round(band(c.questions, Math.min(2, c.userTurns), 99, 3)) }),
-    fluidez: Math.round(band(c.fillers / Math.max(1, c.userTurns), 0, 0.5, 2)),
+    // Muletillas cada 100 palabras: tres en un turno corto sí cuentan.
+    fluidez: Math.round(band(100 * c.fillers / Math.max(1, c.userWords), 0, 2, 6)),
     desarrollo: Math.round(band(c.userWords / c.userTurns, 25, 130, 40)),
   };
   let ev = null;
@@ -784,13 +805,14 @@ Responde SÓLO con JSON: {"summary":"...","scores":{"escucha":0,"empatia":0,"cla
     scenarioName: 'Roleplay: ' + persona.name, total, dims: scores };
   saveSession(rpSession);
   if (markEventPractice(profile.event, rpSession)) saveProfile(profile);
-  const head = `<div class="score-big"><div class="ring" style="border:8px solid ${colorFor(total)}">${total}</div>
-    <div><div style="font-weight:700">${esc(persona.name)} · dificultad ${$('difficulty').value}/3</div>
+  const calm = calmNow();
+  const head = `<div class="score-big"><div class="ring" style="border:8px solid ${calm ? 'var(--good)' : colorFor(total)}">${calm ? '✓' : total}</div>
+    <div><div style="font-weight:700">${esc(persona.name)}${persona.id === 'offline' ? '' : ` · dificultad ${$('difficulty').value}/3`}</div>
     <div class="note">Aportaste el ${Math.round(c.talkRatio * 100)}% de las palabras · ${c.questions} ${c.questions === 1 ? 'intervención' : 'intervenciones'} con preguntas · ${c.fillers} muletillas</div></div></div>
     <div class="dims">${dimBars(scores)}</div>`;
   $('evalOut').innerHTML = head + (ev ? `<div class="ai-box"><p>${esc(ev.summary)}</p>
-    ${ev.best_moment ? `<h3 style="color:var(--good)">Tu mejor momento</h3><blockquote>«${esc(ev.best_moment.quote)}»</blockquote><p>${esc(ev.best_moment.why)}</p>` : ''}
-    ${ev.missed_moment ? `<h3 style="color:var(--mid)">Oportunidad perdida</h3><blockquote>«${esc(ev.missed_moment.quote)}»</blockquote><p><strong>Mejor:</strong> ${esc(ev.missed_moment.better)}</p>` : ''}
+    ${ev.best_moment ? `<h3 style="color:var(--good)">Tu mejor momento</h3>${said(ev.best_moment.quote) ? `<blockquote>«${esc(ev.best_moment.quote)}»</blockquote>` : ''}<p>${esc(ev.best_moment.why)}</p>` : ''}
+    ${ev.missed_moment ? `<h3 style="color:var(--mid)">Oportunidad perdida</h3>${said(ev.missed_moment.quote) ? `<blockquote>«${esc(ev.missed_moment.quote)}»</blockquote>` : ''}<p><strong>Mejor:</strong> ${esc(ev.missed_moment.better)}</p>` : ''}
     <h3>Técnicas que usaste</h3><div class="chips">${(ev.techniques_used || []).map(t => `<span class="chip">${esc(t)}</span>`).join('') || '<span class="note">Ninguna identificada</span>'}</div>
     <h3 style="color:var(--accent)">Siguiente paso</h3><p>${esc(ev.next_step)}</p>${ev.safety_note ? `<p class="note">${esc(ev.safety_note)}</p>` : ''}</div>`
     : persona.id === 'offline' ? offlineReport()
@@ -868,8 +890,8 @@ const LADDER = [
   'Hablar 60 s a solas en voz alta, sin grabar.',
   'Grabar sólo audio y escucharte.',
   'Subir una grabación a VOXA y leer tu reporte.',
-  'Roleplay con IA en dificultad baja.',
-  'Roleplay con IA en dificultad alta.',
+  'Roleplay o simulacro en dificultad baja.',
+  'Roleplay o simulacro en dificultad alta (con IA, el personaje presiona).',
   'Practicar frente a una persona de confianza.',
   'Intervenir una vez en una reunión real.',
   'Presentar 3 minutos ante un grupo pequeño.',
@@ -890,15 +912,15 @@ onShow.progreso = () => {
   const calm = sessions.filter(x => x.anxietyAfter != null && x.anxietyBefore != null).map(x => x.anxietyBefore - x.anxietyAfter);
   const delta = base && lastE ? lastE.total - base.total : 0;
   $('kpis').innerHTML = [
-    kpi('Prácticas', sessions.length, `${evals.length} ensayos · ${count('roleplay')} roleplays · ${count('escritura')} escritos`),
+    kpi('Prácticas', sessions.length, [[count('ensayo'), 'ensayo', 'ensayos'], [count('roleplay'), 'roleplay', 'roleplays'], [count('escritura'), 'escrito', 'escritos']].map(([n, a, b]) => `${n} ${n === 1 ? a : b}`).join(' · ')),
     kpi('Racha', `${s} ${s === 1 ? 'día' : 'días'}`, 'seguidos practicando'),
-    kpi('Punto de partida', base ? base.total : '–', base ? esc(base.scenarioName) : ''),
-    kpi('Último ensayo', lastE ? lastE.total : '–', base && lastE !== base ? `<span style="color:${delta >= 0 ? 'var(--good)' : 'var(--bad)'}">${delta >= 0 ? '+' : ''}${delta} vs. tu punto de partida</span>` : ''),
+    kpi('Punto de partida', base && !calmNow() ? base.total : '–', base ? esc(base.scenarioName) : ''),
+    kpi('Último ensayo', lastE && !calmNow() ? lastE.total : '–', base && lastE !== base ? `<span style="color:${delta >= 0 ? 'var(--good)' : 'var(--bad)'}">${delta >= 0 ? '+' : ''}${delta} vs. tu punto de partida</span>` : ''),
     kpi('Calma ganada', calm.length ? calmText(mean(calm)) : '–', calm.length && mean(calm) < -0.05 ? 'puntos más de nervios al terminar' : 'puntos menos de nervios al terminar (escala 1–5)'),
   ].join('');
   $('pEmpty').innerHTML = sessions.length ? '' : 'Aún no hay prácticas. Tu primer ensayo será tu punto de partida.';
   $('rows').innerHTML = [...sessions].reverse().slice(0, 50).map(x =>
-    `<tr><td>${new Date(x.date).toLocaleDateString('es')}</td><td>${esc(x.scenarioName)}</td><td><span class="pill" style="color:${colorFor(x.total)}">${x.total}</span></td></tr>`).join('')
+    `<tr><td>${new Date(x.date).toLocaleDateString('es')}</td><td>${esc(x.scenarioName)}</td><td>${calmNow() ? '✓' : `<span class="pill" style="color:${x.partial ? 'var(--muted)' : colorFor(x.total)}">${x.total}${x.partial ? ' · parcial' : ''}</span>`}</td></tr>`).join('')
     || '<tr><td colspan="3" class="note">Sin prácticas todavía.</td></tr>';
   profile.ladder ||= {};
   $('ladder').innerHTML = LADDER.map((t, i) => `<li><label><input type="checkbox" data-i="${i}" ${profile.ladder[i] ? 'checked' : ''}> <span>${i + 1}. ${t}</span></label></li>`).join('');

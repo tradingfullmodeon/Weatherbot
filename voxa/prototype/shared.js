@@ -9,7 +9,9 @@ export const FILLERS = ['eh+', 'em+', 'ehm+', 'mm+', 'este', 'o sea', 'bueno', '
 // Las disculpas sólo cuentan cuando piden perdón por existir («perdón por molestar»), no al disculparse de verdad.
 export const HEDGES = ['creo que', 'tal vez', 'quizás', 'quizá', 'un poquito', 'perdón por molestar', 'perdona que te moleste',
   'disculpa que te moleste', 'disculpa la molestia', 'no sé si', 'más o menos', 'de alguna manera', 'supongo', 'solo quería', 'sólo quería',
-  'quería saber si', 'quería ver si', 'cuando puedas', 'cuando puedan', 'si no es mucha molestia', 'si no es molestia'];
+  'quería saber si', 'quería ver si', 'cuando puedas', 'cuando puedan', 'si no es mucha molestia', 'si no es molestia',
+  // «de pronto» como atenuador (Colombia) sólo antes de un condicional: «de pronto se cortó la luz» no cuenta.
+  'de pronto podría', 'de pronto podrías', 'de pronto sería', 'de pronto se podría', 'de pronto puedas', 'a lo mejor', 'capaz que'];
 
 const escRe = (s) => s.replace(/[.*?^${}()|[\]\\]/g, '\\$&');
 const asPattern = (w) => w.endsWith('+') ? escRe(w.slice(0, -1)) + '+' : escRe(w);
@@ -21,15 +23,15 @@ const wordRe = (patterns) => new RegExp(`(^|[^\\p{L}])(${patterns.join('|')})(?=
 const PAUSE = String.raw`(?:\s*[,.;:…!?]|\s*$)`;
 const FUNCTION_WORD = String.raw`\s+(?:el|la|los|las|lo|un|una|unos|unas|yo|tú|me|te|se|le|les|nos|que|no|sí|es|era|hay|vamos|tenemos|quiero|eh+|em+|o sea|pues|bueno|este)(?!\p{L})`;
 // Para «este» y «tipo» no cuentan los verbos ni la negación: «Este es el plan», «Este no es el informe».
-const FUNCTION_WORD_NOUN = String.raw`\s+(?:el|la|los|las|lo|un|una|unos|unas|yo|tú|me|te|se|le|les|nos|que|vamos|tenemos|quiero|eh+|em+|o sea|pues|bueno|este)(?!\p{L})`;
+const FUNCTION_WORD_NOUN = String.raw`\s+(?:el|la|los|las|lo|un|una|unos|unas|yo|tú|me|te|se|le|les|nos|que|vamos|tenemos|quiero|eh+|em+|mm+|o sea|pues|bueno|este|no sé|no sé qué)(?!\p{L})`;
 const CONTEXTUAL = {
   // Sonidos de duda alargados: «eh», «eeeh», «ehm», «emm», «mmm».
   'eh+': 'e+h+', 'em+': 'e+m+', 'ehm+': 'e+h+m+', 'mm+': 'm{2,}',
   este: String.raw`este(?=${PAUSE}|${FUNCTION_WORD_NOUN})`,
   // «un tipo que sabe», «ese tipo de cosas»: con determinante delante es sustantivo, no muletilla.
-  tipo: String.raw`(?<!(?:un|el|ese|este|qué|que|cualquier)\s)tipo(?=${PAUSE}|${FUNCTION_WORD_NOUN})`,
+  tipo: String.raw`(?<!(?:un|el|ese|este|qué|que|cualquier)\s)tipo(?=${PAUSE}|${FUNCTION_WORD_NOUN}|\s+(?:muy|mucho|increíble|raro|así|como)(?!\p{L}))`,
   // «pues era necesario» (causal) no cuenta; sí «pues, mira» o «pues nada».
-  pues: String.raw`pues(?=${PAUSE}|\s+(?:eh+|em+|nada|bueno|mira|este|o sea)(?!\p{L}))`,
+  pues: String.raw`pues(?=${PAUSE}|\s+(?:eh+|em+|mm+|nada|bueno|mira|este|o sea)(?!\p{L}))`,
   onda: String.raw`onda(?=${PAUSE}|${FUNCTION_WORD})`,
   // Al inicio de la frase, o seguido de coma («…y, bueno, …»); «El resultado es bueno.» no cuenta.
   bueno: String.raw`(?<=(?:^|[.!?¡¿]\s*))bueno|bueno(?=\s*[,…])`,

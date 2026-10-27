@@ -2,23 +2,34 @@
 // Son marcadores de lenguaje simples; no reemplazan al coach, pero dan feedback concreto siempre.
 import { wordCount } from './shared.js';
 
-const stSentences = (t) => t.split(/(?<=[.!?¿¡])\s+|\n+/).map(s => s.trim()).filter(Boolean);
+// Frases; si el texto viene de la transcripción de voz (sin puntos), se corta en bloques de ~20 palabras.
+function stSentences(t) {
+  const ss = t.split(/(?<=[.!?¿¡])\s+|\n+/).map(s => s.trim()).filter(Boolean);
+  const words = t.trim().split(/\s+/);
+  if (ss.length > 1 || words.length <= 40) return ss;
+  const out = [];
+  for (let i = 0; i < words.length; i += 20) out.push(words.slice(i, i + 20).join(' '));
+  return out;
+}
 const stHas = (re, t) => re.test(t);
 // Límites de palabra que entienden tildes (\b de JavaScript no reconoce «é» como letra).
 const stRe = (src, flags = 'iu') => new RegExp(`(?<!\\p{L})(?:${src})(?!\\p{L})`, flags);
 const ST_FILLER_START = /^(bueno|este|eh+|em+|o sea|pues|mm+)(?!\p{L})/iu;
-const ST_NUMBER = /\d+([.,]\d+)?\s?(%|por ciento)?/u;
-const ST_RESULT = stRe(String.raw`(logr(é|amos)|consegu(í|imos)|result(ado|ó)|aument(é|amos|ó)|baj(é|amos|ó)|reduj(e|imos|o)|subi(ó|mos)|crec(ió|imos)|ahorr(é|amos|ó)|gan(é|amos))`);
+// Cifras que cuentan como resultado: no los años («en 2019» es contexto, no un resultado).
+const ST_NUMBER = { test: (t) => (t.match(/\d+([.,]\d+)?/g) || []).some(n => !/^(19|20)\d{2}$/.test(n)) };
+const ST_RESULT = stRe(String.raw`(logr(é|amos|ó|aron)|consegu(í|imos|ió|ieron)|result(ado|ó)|aument(é|amos|ó|aron)|baj(é|amos|ó|aron)|reduj(e|imos|o|eron)|se redujeron|subi(ó|mos|eron)|crec(ió|imos|ieron)|mejor(é|amos|ó|aron)|ahorr(é|amos|ó|aron)|gan(é|amos|ó|aron)|pasaron de|pasamos de|desde entonces)`);
 const ST_ACTION = stRe(String.raw`\p{L}{3,}(é|í)`, 'giu');   // lideré, armé, decidí, hablé…
+// Palabras que terminan en «é»/«í» y no son verbos en primera persona.
+const ST_NOT_VERB = new Set(['así', 'aquí', 'allí', 'ahí', 'café', 'bebé', 'sofá', 'menú', 'jamás', 'quizá', 'también', 'sí', 'mí', 'ti', 'porqué', 'cliché', 'puré', 'consomé', 'frenesí', 'colibrí', 'esquí', 'rubí', 'maní', 'ají', 'jabalí', 'alhelí', 'israelí', 'iraquí', 'marroquí', 'paquistaní', 'bengalí']);
 // Pretéritos irregulares en primera persona (no terminan en «é»/«í») y el «nosotros» del equipo.
 const ST_ACTION_IRREG = stRe(String.raw`(propuse|hice|dije|tuve|puse|traje|conduje|supe|quise|pude|vine|fui|di|estuve|reduje|produje|introduje|deshice|rehice|compuse|dispuse|expuse|mantuve|obtuve|contuve)`, 'giu');
 const ST_ACTION_WE = stRe(String.raw`\p{L}{3,}(amos|imos)`, 'giu');
-const ST_SITUATION = stRe(String.raw`(cuando|en mi (trabajo|empresa|equipo|último|anterior)|el año pasado|hace \w+|en \d{4}|en la empresa|una vez)`);
+const ST_SITUATION = stRe(String.raw`(cuando|en mi (trabajo|empresa|equipo|último|anterior|práctica|pasantía|tesis|curso)|en mis (prácticas|pasantías|clases)|en (la|mi) universidad|en un proyecto|durante|el (año|semestre) pasado|hace \w+|en \d{4}|en la empresa|una vez)`);
 const ST_TASK = stRe(String.raw`(tenía que|ten(í|i)amos que|mi (objetivo|tarea|rol|responsabilidad)|me pidieron|deb(í|ía)a?|el reto era|el problema era)`);
 const ST_REASON = stRe(String.raw`(porque|ya que|la razón|por eso|debido a|dado que)`);
 const ST_EXAMPLE = stRe(String.raw`(por ejemplo|una vez|cuando|el año pasado|en mi (trabajo|vida|caso)|me pasó)`);
 const ST_CLOSE = stRe(String.raw`(en resumen|por eso|así que|en conclusión|para cerrar|en definitiva)`);
-const ST_ASK = /\b(propongo|necesito|te pido|les pido|recomiendo|sugiero|decidimos|la conclusión|mi propuesta|¿(puedes|podemos|podrías|me))/i;
+const ST_ASK = /(?<!\p{L})(propongo|necesito|te pido|les pido|recomiendo|sugiero|decidimos|la conclusión|mi propuesta)(?!\p{L})|¿\s*(puedes|podemos|podrías|podríamos|me)(?!\p{L})/iu;
 const ST_IMPACT = stRe(String.raw`(impact(o|ó)|afect(a|ó)|hizo que|provoc(a|ó)|gener(a|ó)|el resultado fue|eso hace que)`);
 const ST_BEHAVIOR = stRe(String.raw`(dijiste|hiciste|enviaste|llegaste|presentaste|interrumpiste|entregaste|vi que|noté que)`);
 
@@ -36,12 +47,13 @@ function stPrep(text) {
   ];
 }
 function stStar(text) {
-  const actions = (text.match(ST_ACTION) || []).length + (text.match(ST_ACTION_IRREG) || []).length;
+  const actions = (text.match(ST_ACTION) || []).filter(w => !ST_NOT_VERB.has(w.toLowerCase())).length + (text.match(ST_ACTION_IRREG) || []).length;
   const we = (text.match(ST_ACTION_WE) || []).length;
   return [
-    { part: 'Situación', ok: stHas(ST_SITUATION, text), tip: 'Ubica el contexto: «En mi trabajo anterior, cuando…».' },
+    { part: 'Situación', ok: stHas(ST_SITUATION, text), tip: 'Ubica el contexto: «En mi trabajo anterior, cuando…» o «En un proyecto de la universidad, cuando…».' },
     { part: 'Tarea', ok: stHas(ST_TASK, text), tip: 'Di cuál era tu reto: «Tenía que…», «Mi objetivo era…».' },
-    { part: 'Acción', ok: actions >= 2 || (actions >= 1 && we >= 1) || /\byo\b/i.test(text), tip: 'Cuenta qué hiciste TÚ, en primera persona: «Armé», «Propuse», «Hablé con…».' },
+    // En STAR la acción es tuya: si domina el «nosotros», no se da por cumplida.
+    { part: 'Acción', ok: (actions >= 2 || (actions >= 1 && we >= 1)) && actions >= we, tip: 'Cuenta qué hiciste TÚ, en primera persona: «Armé», «Propuse», «Hablé con…».' },
     { part: 'Resultado', ok: stHas(ST_RESULT, text) || ST_NUMBER.test(text), tip: 'Cierra con un resultado medible: «Las ventas subieron un 30%».' },
   ];
 }

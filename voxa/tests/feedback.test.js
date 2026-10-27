@@ -14,8 +14,9 @@ test('resumen: promedio de estrellas, distribución y NPS', () => {
 });
 
 test('se pide calificar después de 3 prácticas y como mucho una vez al mes', () => {
-  const three = [{}, {}, {}], now = new Date('2026-10-27').getTime();
-  assert.ok(!shouldAskRating({}, [{}, {}], now));
+  const three = [{ date: '2026-10-20' }, { date: '2026-10-20' }, { date: '2026-10-21' }], now = new Date('2026-10-27').getTime();
+  assert.ok(!shouldAskRating({}, [{ date: '2026-10-20' }, { date: '2026-10-20' }, { date: '2026-10-20' }], now));   // todo el mismo día: aún no
+  assert.ok(!shouldAskRating({}, three.slice(0, 2), now));
   assert.ok(shouldAskRating({}, three, now));
   assert.ok(!shouldAskRating({ rating: { date: '2026-10-20' } }, three, now));
   assert.ok(!shouldAskRating({ ratingDismissed: '2026-10-20' }, three, now));
@@ -28,6 +29,7 @@ test('cuidado: detecta mensajes de crisis en el dispositivo y nervios máximos s
   assert.ok(isCrisis('Pienso en hacerme daño'));
   assert.ok(!isCrisis('Me muero de nervios antes de la entrevista'));
   assert.ok(!isCrisis('Quiero vivir en otro país'));
+  assert.ok(isCrisis('Me quiero matar')); assert.ok(isCrisis('a veces me corto los brazos')); assert.ok(!isCrisis('Me corto el pelo mañana'));
   assert.ok(persistentHighAnxiety([{ anxietyBefore: 5 }, { anxietyBefore: 5 }, { anxietyBefore: 5 }]));
   assert.ok(!persistentHighAnxiety([{ anxietyBefore: 5 }, { anxietyBefore: 3 }, { anxietyBefore: 5 }]));
   assert.ok(HELP_LINES.length >= 6);
