@@ -55,7 +55,7 @@ export function analyzeWriting(text, k) {
   const avg = lens.length ? words.length / lens.length : 0;
   const longest = Math.max(0, ...lens);
   const read = fernandezHuerta(words, sents.length);
-  const hedges = countMatches(text, HEDGE_RE);
+  const hedges = countMatches(text.replace(APOLOGY_RE, ''), HEDGE_RE);   // las disculpas innecesarias se revisan aparte
   const apologies = (text.match(APOLOGY_RE) || []).length;
   const shouting = (text.match(/\b[A-ZÁÉÍÓÚÑ]{4,}\b/g) || []).length + (text.match(/!{2,}/g) || []).length;
   const askIdx = sents.findIndex(s => ASK_RE.test(s));

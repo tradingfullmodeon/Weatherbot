@@ -6,8 +6,9 @@ export const FILLERS = ['eh+', 'em+', 'ehm+', 'mm+', 'este', 'o sea', 'bueno', '
   'tipo', 'básicamente', 'literalmente', 'en plan', 'vale', 'sabes', 'cachai', 'me explico',
   'onda', 'viste', 'osea', 'güey', 'po'];
 // Atenuadores que restan asertividad cuando se abusa de ellos.
-export const HEDGES = ['creo que', 'tal vez', 'quizás', 'quizá', 'un poco', 'un poquito', 'perdón',
-  'no sé si', 'más o menos', 'de alguna manera', 'supongo', 'disculpa', 'solo quería', 'sólo quería'];
+// Las disculpas sólo cuentan cuando piden perdón por existir («perdón por molestar»), no al disculparse de verdad.
+export const HEDGES = ['creo que', 'tal vez', 'quizás', 'quizá', 'un poquito', 'perdón por molestar', 'perdona que te moleste',
+  'disculpa que te moleste', 'disculpa la molestia', 'no sé si', 'más o menos', 'de alguna manera', 'supongo', 'solo quería', 'sólo quería'];
 
 const escRe = (s) => s.replace(/[.*?^${}()|[\]\\]/g, '\\$&');
 const asPattern = (w) => w.endsWith('+') ? escRe(w.slice(0, -1)) + '+' : escRe(w);
@@ -111,12 +112,15 @@ const PAGES = [
   ['gimnasio.html', 'Gimnasio', 'wave', true], ['escritura.html', 'Escritura', 'pen', false], ['aprender.html', 'Aprender', 'book', false], ['progreso.html', 'Progreso', 'chart', true],
 ];
 const icon = (k) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k]}</svg>`;
+export const STORAGE_WARNING = 'Este navegador no permite guardar datos (modo privado o cookies bloqueadas): tu progreso se perderá al cerrar la página. Ábrela en una ventana normal para conservarlo.';
+
 export function renderNav() {
   const here = location.pathname.split('/').pop() || 'index.html';
   const top = document.createElement('nav');
   top.className = 'tabs'; top.setAttribute('aria-label', 'Secciones');
   top.innerHTML = PAGES.map(([href, label]) => `<a href="${href}" ${href === here ? 'class="on" aria-current="page"' : ''}>${label}</a>`).join('');
   document.querySelector('header').appendChild(top);
+  if (!storageWorks()) document.querySelector('header').insertAdjacentHTML('beforeend', `<p class="warn-banner" role="status">${STORAGE_WARNING}</p>`);
   const bottom = document.createElement('nav');
   bottom.className = 'bottom-nav'; bottom.setAttribute('aria-label', 'Secciones');
   bottom.innerHTML = PAGES.filter(p => p[3]).map(([href, label, ic]) =>
@@ -141,12 +145,24 @@ export function userLocale(profile = loadProfile()) {
 // Se guarda sólo en este navegador. Es una comodidad del prototipo, no almacenamiento fiable.
 const KEY = 'voxa.sessions.v1';
 const PROFILE_KEY = 'voxa.profile.v1';
+// Si el navegador bloquea el almacenamiento (modo privado, cookies bloqueadas), se guarda en memoria durante
+// la visita para que el progreso no desaparezca de golpe; storageWorks() permite avisarlo.
+const memory = {};
+let storageOk = true;
 function read(key, fallback) {
-  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+  if (key in memory) return JSON.parse(memory[key]);
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { storageOk = false; return fallback; }
 }
 function write(key, value) {
-  try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; }
+  try { localStorage.setItem(key, JSON.stringify(value)); delete memory[key]; return true; }
+  catch { storageOk = false; memory[key] = JSON.stringify(value); return false; }
 }
+export const storageWorks = () => { try { localStorage.setItem('voxa.t', '1'); localStorage.removeItem('voxa.t'); } catch { storageOk = false; } return storageOk; };
+export function clearAll() { for (const k of [KEY, PROFILE_KEY]) { delete memory[k]; try { localStorage.removeItem(k); } catch {} } }
+// «Calma ganada»: cuánto bajan los nervios al terminar (positivo = bajan). Sin signos dobles.
+export const calmText = (drop) => Math.abs(drop) < 0.05 ? '0' : Math.abs(drop).toFixed(1);
+// Día local «AAAA-MM-DD» (no UTC: a las 21 h en América ya sería mañana en UTC).
+export const localDay = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 export const loadSessions = () => read(KEY, []);
 export function saveSession(session) {
   const all = loadSessions();

@@ -99,6 +99,9 @@ export function voiceMetrics(samples, text, dur) {
       pauseStart = null;
     } else if (pauseStart === null) pauseStart = s.t;
   }
+  // Un silencio que dura hasta el final también cuenta (antes quedaba abierto y no se contaba).
+  const end = samples.length ? samples[samples.length - 1].t : 0;
+  if (pauseStart !== null && end - pauseStart > 2.5) { longPauses++; pauseZones.push([pauseStart, end]); }
   const voiced = samples.filter(s => s.pitch > 0).map(s => s.pitch);
   const medF0 = voiced.length ? [...voiced].sort((a, b) => a - b)[Math.floor(voiced.length / 2)] : 0;
   const pitchVar = std(voiced.map(f => 12 * Math.log2(f / medF0)).filter(x => Math.abs(x) < 12));
@@ -109,25 +112,41 @@ export function voiceMetrics(samples, text, dur) {
     dur, words, wpm: words / minutes, hasText: words > 0,
     fillers: countMatches(text, FILLER_RE), hedges: countMatches(text, HEDGE_RE),
     speechRatio: samples.length ? speechFrames / samples.length : 0, longPauses, pauseZones,
+    speechSeconds: samples.length ? dur * speechFrames / samples.length : 0, variety: guiraud(text),
     humZones, humsPerMin: humZones.length / minutes, pitchVar, medF0, volCv,
   };
 }
 
+// Variedad de vocabulario (índice de Guiraud: palabras distintas / √palabras). Evita premiar el relleno repetido.
+export function guiraud(text) {
+  const w = (text.toLowerCase().match(/\p{L}+/gu) || []);
+  return w.length ? new Set(w).size / Math.sqrt(w.length) : 0;
+}
+// Mínimo de voz para puntuar una grabación: con menos, el puntaje no significa nada.
+export const MIN_SPEECH_SECONDS = 4;
+
 const level3 = (v, lo, hi) => v < lo ? 'poco' : v > hi ? 'mucho' : 'adecuado';
 export function scoreSpeech(m, isAudio, seconds) {
   const items = [], s = { seconds };
+  if (isAudio && !(m.speechSeconds >= MIN_SPEECH_SECONDS)) return { items, dims: {}, total: null, noVoice: true };
   const add = (dim, key, label, display, target, sc) => items.push({ dim, key, label, display, target, s: Math.round(sc) });
   if (m.hasText) {
     const minutes = isAudio ? Math.max(m.dur / 60, 1 / 60) : Math.max(m.words / 140, 1 / 60);
-    if (isAudio) add('voz', 'wpm', 'Ritmo', `${Math.round(m.wpm)} palabras/min`, '120–165', band(m.wpm, 120, 165, 60));
+    // Con un texto parcial (la persona escribió sólo una parte de lo que dijo) el ritmo saldría falso.
+    m.partialText = isAudio && m.wpm < 70;
+    if (isAudio && !m.partialText) add('voz', 'wpm', 'Ritmo', `${Math.round(m.wpm)} palabras/min`, '120–165', band(m.wpm, 120, 165, 60));
     add('voz', 'fillers', 'Muletillas («este», «o sea»…)', `${m.fillers}`, isAudio ? 'menos de 3 por min' : 'ninguna', isAudio ? band(m.fillers / minutes, 0, 3, 7) : band(m.fillers, 0, 0, 4));
     add('lenguaje', 'hedges', 'Frases que restan seguridad', `${m.hedges}`, 'pocas', band(m.hedges / minutes, 0, 1.5, 4));
     const target = s.seconds * (isAudio ? 1.7 : 2);
-    add('lenguaje', 'length', 'Contenido desarrollado', `${m.words} palabras`, `${Math.round(target)} o más`, band(m.words, target, 1e6, target));
+    const variety = m.variety ?? guiraud(m.text || '');
+    // El largo sólo cuenta como desarrollo si hay ideas distintas: repetir relleno no desarrolla nada.
+    const varietyFactor = m.words >= 25 ? Math.min(1, variety / 4) : 1;
+    add('lenguaje', 'length', 'Contenido desarrollado', `${m.words} palabras`, `${Math.round(target)} o más`, band(m.words, target, 1e6, target) * varietyFactor);
+    if (m.words >= 25) add('lenguaje', 'variety', 'Variedad de vocabulario', variety.toFixed(1), '4 o más', band(variety, 4, 1e6, 3));
   }
   if (isAudio) {
     add('voz', 'hums', 'Sonidos de duda «eeh/mmm» (estimado)', `${m.humsPerMin.toFixed(1)} por min (${m.humZones.length})`, 'menos de 2 por min', band(m.humsPerMin, 0, 2, 6));
-    add('voz', 'pitch', 'Variación de tono', m.medF0 ? `${m.pitchVar.toFixed(1)} semitonos` : 'sin datos', '2 a 6 semitonos', m.medF0 ? band(m.pitchVar, 2, 6, 1.8) : 50);
+    if (m.medF0) add('voz', 'pitch', 'Variación de tono', `${m.pitchVar.toFixed(1)} semitonos`, '2 a 6 semitonos', band(m.pitchVar, 2, 6, 1.8));
     add('voz', 'speech', 'Tiempo hablando', `${Math.round(m.speechRatio * 100)}% del tiempo`, '55–90%', band(m.speechRatio * 100, 55, 90, 35));
     add('voz', 'pauses', 'Silencios largos (más de 2,5 s)', `${m.longPauses}`, '0 a 2', band(m.longPauses, 0, 2, 4));
     add('voz', 'volume', 'Énfasis con el volumen', `${level3(m.volCv, 0.3, 0.9)} (${Math.round(m.volCv * 100)}%)`, 'adecuado', band(m.volCv, 0.3, 0.9, 0.6));

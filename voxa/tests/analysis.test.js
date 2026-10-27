@@ -83,7 +83,7 @@ test('escritura: detecta disculpas innecesarias, apertura vacía y falta de plaz
   assert.match(fails, /plazo/);
   assert.match(fails, /perdón por escribir/i);
   assert.match(fails, /primera frase no dice nada/);
-  assert.ok(r.score < 60);
+  assert.ok(r.score < 70);   // tres problemas, cada uno contado una sola vez
 });
 
 test('escritura: el pedido al final se marca como tardío', () => {
@@ -97,4 +97,23 @@ test('legibilidad Fernández Huerta: texto simple es fácil, texto denso es dif�
   const hard = 'La implementación institucionalizada de metodologías interdisciplinarias representa consideraciones administrativas extraordinariamente complejas.';
   assert.ok(fernandezHuerta(words(easy), 4) > 80);
   assert.ok(fernandezHuerta(words(hard), 1) < 30);
+});
+
+test('disculparse de verdad no resta seguridad; pedir perdón por molestar sí', () => {
+  const apology = analyzeWriting('Hola Marta: perdón por el retraso en tu pedido. Fue un error nuestro y te ofrezco el envío gratis. Te llega el jueves 30. Disculpa las molestias que te causó.', KINDS.find(k => k.id === 'disculpa'));
+  assert.ok(!apology.checks.some(c => !c.ok && /restan seguridad/.test(c.msg)), JSON.stringify(apology.checks));
+  assert.equal(countMatches('Perdón por molestar, sólo quería preguntarte algo.', HEDGE_RE), 2);
+});
+
+test('puntaje del habla: el silencio no se puntúa y el relleno repetido no aprueba', async () => {
+  const { scoreSpeech, voiceMetrics, guiraud } = await import('../prototype/audiofile.js');
+  const silence = Array.from({ length: 1800 }, (_, i) => ({ t: i / 30, rms: 0.001, pitch: 0 }));
+  const m = voiceMetrics(silence, '', 60);
+  assert.equal(m.longPauses, 1);                       // el silencio hasta el final cuenta
+  assert.ok(scoreSpeech(m, true, 60).noVoice);
+  const filler = 'palabra '.repeat(200);
+  const r = scoreSpeech({ words: 200, hasText: true, fillers: 0, hedges: 0, variety: guiraud(filler), dur: 86 }, false, 60);
+  assert.ok(r.total < 55, String(r.total));   // por debajo de «Competente»
+  const real = 'Soy Ana, diseño productos digitales hace ocho años. Me apasiona entender por qué la gente abandona una app y arreglarlo con datos. El año pasado bajamos el abandono del registro a la mitad con tres cambios simples. Si te interesa crecer sin gastar más en anuncios, conversemos.';
+  assert.ok(guiraud(real) >= 4, String(guiraud(real)));
 });

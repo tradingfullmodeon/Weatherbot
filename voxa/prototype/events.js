@@ -1,4 +1,4 @@
-import { esc } from './shared.js';
+import { esc, localDay } from './shared.js';
 
 // Modo «evento real»: la persona carga una entrevista, charla o reunión con fecha y VOXA arma un plan de
 // práctica hasta ese día, las preguntas difíciles probables y la rutina para el día del evento.
@@ -141,7 +141,7 @@ export const DAY_ROUTINE = {
   ],
 };
 
-const isoDay = (d) => d.toISOString().slice(0, 10);
+const isoDay = (d) => localDay(d);
 const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
 
 // Días que faltan (0 = hoy). Fechas en formato AAAA-MM-DD.

@@ -80,10 +80,10 @@ Escala de 1 a 5 (5 = al nivel de la mejor app de la categoría). Las referencias
 | A1 Feedback accionable | BoldVoice 5 | **3,5** | Un solo foco con ejercicio de 2 min, una línea de tiempo con las dudas marcadas y un coach IA que cita tu frase y la reescribe. Falta el nivel palabra por palabra. | Media |
 | A2 Roleplay con IA | Speak 5 | **4** | 6 personajes, 3 niveles, rebobinar y reintentar, y evaluación final. En el link de claude.ai es sólo por texto. | Baja |
 | A3 Diagnóstico → plan | BoldVoice 5 | **4** | Diagnóstico en 8 dimensiones con puntos ciegos, metas que avanzan solas y, desde esta versión, la práctica del día sale de tus metas. | Baja |
-| A4 Hábito diario | Duolingo 5 | **3** | Racha, práctica del día y plan de 30 días, pero **sin recordatorios**. | Alta |
+| A4 Hábito diario | Duolingo 5 | **3,5** | Racha, práctica del día guiada por tus metas, plan de 30 días que avanza con lo practicado y recordatorio diario en tu calendario. Le faltan notificaciones propias. | Media |
 | A5 Progreso visible | BoldVoice 5 | **4** | Línea base, tendencia, radar antes y ahora, metas y calma ganada. | Baja |
-| A6 Reconocimiento de voz | Speak 5 | **2** | La versión completa transcribe con el navegador (bien en Chrome y Edge). En el link de claude.ai **no hay transcripción**: la persona escribe lo que dijo. | **Alta** |
-| A7 Autoridad experta | BoldVoice 4 | **2** | Métodos con nombre (PREP, STAR, SBI, CNV), pero sin expertos visibles ni fuentes en las lecciones. | Media |
+| A6 Reconocimiento de voz | Speak 5 | **2** | La versión completa transcribe con el navegador (bien en Chrome y Edge), también en el diagnóstico. En el link de claude.ai **no hay transcripción**: la persona escribe lo que dijo, y el reporte explica qué no se midió. | **Alta** |
+| A7 Autoridad experta | BoldVoice 4 | **3** | Cada lección cita la base de su método (Minto, Rosenberg, Rogers, CCL, Brooks, Linklater…). Faltan expertos humanos visibles. | Media |
 | A8 Valor gratis | Cake 5 | **5** | Todo es gratis y sin cuenta. | — |
 | A9 Cercanía cultural | Cake 5 | **4** | Español por país, muletillas regionales y escenarios latinos. Le falta lo lúdico. | Baja |
 | A10 Cuidado de reseñas | Babbel 5 | **3** | Desde esta versión pide estrellas y NPS después de 3 prácticas. Todavía no está en tiendas. | Media |
@@ -100,21 +100,23 @@ Escala de 1 a 5 (5 = al nivel de la mejor app de la categoría). Las referencias
 | Q9 Actualizaciones que empeoran | Bajo | Pruebas automáticas e integración continua en cada cambio. |
 | Q10 Duro con principiantes | Bajo | Primera práctica de baja exigencia, un solo foco y lenguaje de ánimo. |
 
-**Promedio de VOXA en los 10 atributos: 3,45 de 5.**
+**Promedio de VOXA en los 10 atributos: 3,6 de 5** (3,45 antes de esta versión).
+
+La [auditoría técnica](AUDITORIA.md) bajó el riesgo de Q2 (puntaje inexacto): una grabación muda ya no se puntúa, las metas no se cumplen repitiendo el mismo intento y el texto de relleno ya no aprueba.
 - Fortalezas que ya compiten con las mejores: gratis y sin cuenta, diagnóstico con metas, roleplay, progreso y foco cultural.
-- Las tres brechas que más pesan en las calificaciones: **transcripción en el link publicado (A6)**, **recordatorios del hábito (A4)** y **autoridad experta visible (A7)**.
+- Las brechas que más pesan siguen siendo la **transcripción en el link publicado (A6)** y la **autoridad experta humana (A7)**. Los recordatorios (A4) quedaron cubiertos con el calendario.
 
 ## 4. Plan de acción por brecha
 
 | Prioridad | Brecha | Acción | Cómo sabremos que funcionó | Estado |
 |---|---|---|---|---|
-| P0 | A6 Transcripción en el link publicado | Corto plazo: en el reporte, mostrar qué métricas no se miden sin transcripción y llevar a la versión completa. Mediano plazo: transcripción en el servidor (modelo de voz a texto en español) para la versión instalable. | Más del 60% de los ensayos con audio tienen texto | Pendiente |
-| P0 | A4 Recordatorios | Recordatorio diario opcional a la hora que elijas: archivo de calendario (.ics) en el link y notificaciones en la app instalable | Retención al día 7 ≥ 25% | Pendiente |
+| P0 | A6 Transcripción en el link publicado | Corto plazo: en el reporte, mostrar qué métricas no se miden sin transcripción y llevar a la versión completa. Mediano plazo: transcripción en el servidor (modelo de voz a texto en español) para la versión instalable. | Más del 60% de los ensayos con audio tienen texto | Corto plazo ✅; mediano plazo pendiente |
+| P0 | A4 Recordatorios | Recordatorio diario a la hora que elijas en tu calendario: Google Calendar en el link, más archivo .ics en la versión completa. Después, notificaciones de la app instalable. | Retención al día 7 ≥ 25% | ✅ Calendario; notificaciones pendientes |
 | P1 | A10 Medir con usuarios reales | Calificación (estrellas, NPS, qué sirve y qué falta) tras 3 prácticas, como mucho una vez al mes; tablero sólo para la dueña o el dueño | ≥ 30 calificaciones con promedio ≥ 4,5 y NPS ≥ 40 | ✅ Hecho |
 | P1 | A3 Plan que sale del diagnóstico | La práctica del día rota entre tus metas activas; el plan de 30 días queda como alternativa | 50% de las prácticas avanzan una meta | ✅ Hecho |
 | P1 | A3 Paridad de versiones | Diagnóstico y metas también en la versión completa (`diagnostico.html`, con grabación en vivo y transcripción) | Flujo completo probado en ambas | ✅ Hecho |
-| P1 | A7 Autoridad experta | Fuente y autor de cada método en las lecciones (Minto, Rosenberg, Toastmasters, investigación de ansiedad), y un panel de profesores que revise el contenido | Lecciones con fuente: 12 de 12 | Pendiente |
-| P1 | Q2 Puntaje creíble | Calibrar los rangos con 50 grabaciones puntuadas por profesores de oratoria y publicar el margen de error | Correlación ≥ 0,6 con los profesores | Pendiente |
+| P1 | A7 Autoridad experta | Fuente y autor de cada método en las lecciones (Minto, Rosenberg, Toastmasters, investigación de ansiedad), y un panel de profesores que revise el contenido | Lecciones con fuente: 12 de 12 | ✅ Fuentes; panel pendiente |
+| P1 | Q2 Puntaje creíble | Hecho: no puntuar el silencio, una práctica por día por meta y castigar el relleno repetido. Pendiente: calibrar los rangos con 50 grabaciones puntuadas por profesores de oratoria y publicar el margen de error. | Correlación ≥ 0,6 con los profesores | Parcial ✅ |
 | P1 | Q4 Soporte | Enlace de ayuda y contacto, y respuesta a cada comentario de la calificación | Respuesta en menos de 48 h | Pendiente |
 | P2 | A1 Feedback palabra por palabra | Marcar en la transcripción las muletillas, los atenuadores y la frase que más se puede mejorar | — | Parcial (muletillas resaltadas en la versión completa) |
 | P2 | A9 Lo lúdico | Retos semanales con amigos y logros por hábitos (no por puntaje) | — | Pendiente |
@@ -132,7 +134,7 @@ Escala de 1 a 5 (5 = al nivel de la mejor app de la categoría). Las referencias
 | Muletillas según el contexto | — | — | — | ◐ | — | — (queja) | ✅ |
 | Escritura | — | — | — | — | — | — | ✅ |
 | Evento real con fecha | — | — | — | ◐ | — | — | ✅ |
-| Recordatorios | ✅ | ✅ | ✅ | — | ✅ | ✅ | — (P0) |
+| Recordatorios | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ calendario |
 | Transcripción precisa | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◐ (sólo versión completa) |
 | Comunidad o personas reales | — | — | — | ◐ | — | ✅ | — |
 | Español regional | — | — | — | ◐ | — | — | ✅ |

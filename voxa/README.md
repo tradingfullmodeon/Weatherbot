@@ -9,9 +9,11 @@ Plataforma para mejorar cómo se comunica una persona (confianza, desarrollo pro
 | Ruta | Qué es |
 |---|---|
 | [`docs/BENCHMARK.md`](docs/BENCHMARK.md) | Benchmark global (Norteamérica, Europa, Asia, mundo hispanohablante), matriz de funcionalidades, necesidades de los usuarios, quejas recurrentes y 27 mejoras diferenciadoras, con fuentes. |
+| [`docs/CALIFICACIONES.md`](docs/CALIFICACIONES.md) | Calificaciones de usuarios de 25 apps de la competencia (App Store, Google Play, G2, Trustpilot), qué hace que una app tenga 4,7 o más y qué la hunde, cómo sale VOXA en esos criterios y plan de acción por brecha. |
+| [`docs/AUDITORIA.md`](docs/AUDITORIA.md) | Auditoría técnica y pedagógica: hallazgos, cómo se reproducían, correcciones y temas abiertos. |
 | [`docs/UX.md`](docs/UX.md) | Revisión de usabilidad: 14 problemas y su solución, principios de diseñadores y comunicadores aplicados, benchmark de UX con las apps mejor valoradas e indicadores antes/después. |
 | [`docs/ESTRATEGIA.md`](docs/ESTRATEGIA.md) | Metodologías de comunicación y aprendizaje, lenguaje no verbal basado en evidencia, competencias y niveles, canales, motor de evaluación, arquitectura, privacidad y regulación, sprint de 30 días, modelo de negocio, plan de desarrollo e indicadores. |
-| [`prototype/`](prototype/) | Web app instalable (PWA): **Hoy** (`index.html`), **Evaluar** (`evaluar.html`), **Roleplay** (`roleplay.html`), **Gimnasio de voz** (`gimnasio.html`), **Escritura** (`escritura.html`) y **Aprender** (`aprender.html`), **Evento real** (`evento.html`) y **Progreso** (`progreso.html`). Escenarios en `scenarios.js`, lecciones en `lessons.js`, eventos en `events.js`, revisión de textos en `writing.js`, plan de 30 días en `plan.js` y acceso a cámara y micrófono en `devices.js`. |
+| [`prototype/`](prototype/) | Web app instalable (PWA): **Hoy** (`index.html`), **Evaluar** (`evaluar.html`), **Roleplay** (`roleplay.html`), **Gimnasio de voz** (`gimnasio.html`), **Escritura** (`escritura.html`) y **Aprender** (`aprender.html`), **Evento real** (`evento.html`), **Diagnóstico** (`diagnostico.html`) y **Progreso** (`progreso.html`). Escenarios en `scenarios.js`, lecciones en `lessons.js`, eventos en `events.js`, diagnóstico y metas en `goals.js`, análisis de grabaciones en `audiofile.js`, calificaciones en `feedback.js`, recordatorios en `reminder.js`, revisión de textos en `writing.js`, plan de 30 días en `plan.js` y acceso a cámara y micrófono en `devices.js`. |
 | [`artifact/`](artifact/) | Versión publicable como página de claude.ai (una sola página, coach IA vía la capacidad `sample`), generada con `build.py`. |
 | [`server/`](server/) | API FastAPI: coach IA (`/api/feedback`), roleplay con personajes (`/api/roleplay`, `/api/roleplay/evaluate`) escritura (`/api/writing`) y preguntas para un evento real (`/api/event-questions`). También sirve el prototipo. |
 
@@ -60,7 +62,7 @@ El flujo `.github/workflows/voxa-ci.yml` corre ambas en cada cambio y verifica q
 
 ## Qué incluye
 
-**Diagnóstico y metas.** Tras la bienvenida, un diagnóstico de unos 8 minutos: 8 afirmaciones sobre cómo te ves, una prueba de voz de 60 s y una prueba escrita. Entrega tu nivel, un radar en 8 dimensiones, fortalezas, prioridades y puntos ciegos (dónde te ves distinto de lo que medimos). De ahí eliges hasta 3 metas con plazo, que avanzan solas con cada práctica que cumple su criterio. A las 4 semanas, Hoy propone repetir el diagnóstico, y Progreso compara el primero con el último. Disponible en el link de claude.ai (`prototype/goals.js`).
+**Diagnóstico y metas.** Tras la bienvenida, un diagnóstico de unos 8 minutos: 8 afirmaciones sobre cómo te ves, una prueba de voz de 60 s y una prueba escrita. Entrega tu nivel, un radar en 8 dimensiones, fortalezas, prioridades y puntos ciegos (dónde te ves distinto de lo que medimos). De ahí eliges hasta 3 metas con plazo, que avanzan solas con cada práctica que cumple su criterio. A las 4 semanas, Hoy propone repetir el diagnóstico, y Progreso compara el primero con el último. Está en las dos versiones (`prototype/goals.js`, `prototype/diagnostico.html`). La práctica del día de Hoy rota entre tus metas activas.
 
 **Hoy.** La primera vez, una bienvenida de 3 preguntas (objetivo, nervios y variante de español), sin crear cuenta, que lleva al diagnóstico. Después, tus metas con su avance, la práctica del día del plan de 30 días a un toque, tu racha, accesos rápidos, un consejo del día y los ajustes.
 
@@ -88,9 +90,13 @@ El reporte empieza con el puntaje, la comparación con tu intento anterior y tre
 
 Desactiva la ganancia automática y la supresión de ruido del navegador para medir niveles reales, por eso conviene usar auriculares.
 
-**Mi progreso.** Línea base, tendencia, racha, "calma ganada", foco recurrente, sprint de 30 días con la tarea del día, escalera de confianza de 9 peldaños y exportación o borrado de datos.
+**Mi progreso.** Línea base, tendencia, racha, "calma ganada", foco recurrente, sprint de 30 días con la tarea del día, escalera de confianza de 9 peldaños y exportación o borrado de todos tus datos.
 
-**Privacidad.** El audio y el video se analizan en el navegador. Al coach IA sólo se envían la transcripción y las métricas, y sólo cuando lo pides. El historial queda en tu navegador. VOXA mide conductas observables y nunca infiere emociones.
+**Califica VOXA.** Tras 3 prácticas, Hoy pide una calificación (estrellas de 1 a 5, como en las tiendas, más NPS, qué sirve y qué falta), como mucho una vez al mes. En el link de claude.ai, quien es dueño ve el tablero con el promedio, la distribución y el NPS. Para que otras personas califiquen, compártelo con permiso de **Colaborador**.
+
+**Recordatorio diario.** En Hoy eliges la hora y lo agregas a Google Calendar (o como archivo .ics en la versión completa).
+
+**Privacidad.** El audio y el video se analizan en el navegador. Al coach IA sólo se envían la transcripción y las métricas, y sólo cuando lo pides. La excepción es el análisis de lenguaje corporal del link de claude.ai: si lo pides, envía 4 fotogramas de tu video a Claude. El historial queda en tu navegador. VOXA mide conductas observables y nunca infiere emociones.
 
 ## Limitaciones conocidas
 

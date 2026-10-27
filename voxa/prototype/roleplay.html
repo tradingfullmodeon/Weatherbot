@@ -128,7 +128,8 @@ function renderPersonas() {
   $('personas').innerHTML = personas.map(p =>
     `<button class="persona" data-id="${p.id}"><strong>${esc(p.name)}</strong><small>${esc(p.role)}</small></button>`).join('');
   $('personas').querySelectorAll('.persona').forEach(b => b.addEventListener('click', () => pick(b.dataset.id)));
-  const wanted = new URLSearchParams(location.search).get('personaje');
+  const q = new URLSearchParams(location.search), wanted = q.get('personaje');
+  if (['1', '2', '3'].includes(q.get('dificultad')) && !$('difficulty').disabled) $('difficulty').value = q.get('dificultad');
   pick(personas.some(p => p.id === wanted) ? wanted : personas[0].id);
 }
 function pick(id) {
@@ -245,6 +246,7 @@ async function send(ms) {
       const out = await postJSON('api/roleplay', { persona_id: persona.id, difficulty: +$('difficulty').value, history: history.map(({ role, text }) => ({ role, text })), context: $('ctx').value });
       addTurn('persona', out.reply);
       $('hint').textContent = $('showHints').checked && out.coach_hint ? '💡 ' + out.coach_hint : '';
+      if (out.safety_note) $('hint').textContent = '💙 ' + String(out.safety_note);
       if (out.end) $('status').textContent = 'La conversación llegó a un cierre. Pulsa «Terminar y evaluar».';
       else $('status').textContent = '';
     } else {
@@ -279,7 +281,14 @@ $('btnRewind').addEventListener('click', () => {
 });
 
 // ---------------------------------------------------------------- evaluación
-$('btnEnd').addEventListener('click', async () => {
+// Evita evaluar dos veces (y guardar dos sesiones) con un doble toque.
+let ending = false;
+$('btnEnd').addEventListener('click', () => {
+  if (ending) return;
+  ending = true; $('btnEnd').disabled = true;
+  endRoleplay().finally(() => { ending = false; $('btnEnd').disabled = false; });
+});
+async function endRoleplay() {
   const c = convoMetrics();
   if (!c.userTurns) { $('status').textContent = 'Responde al menos una vez antes de evaluar.'; return; }
   speechSynthesis?.cancel();
@@ -304,14 +313,16 @@ $('btnEnd').addEventListener('click', async () => {
     difficulty: +$('difficulty').value, metrics: { talkRatio: c.talkRatio, questions: c.questions, fillersPerMin: c.fillersPerMin },
   });
   $('evalOut').innerHTML = renderEval(total, scores, c, ev);
-});
+}
 
 function localScores(c) {
   const band = (v, lo, hi, soft) => Math.round(v >= lo && v <= hi ? 100 : Math.max(0, 100 - 100 * (v < lo ? lo - v : v - hi) / soft));
   const avgWords = c.userWords / c.userTurns;
+  // En una entrevista la persona responde: se espera que hable más y no se le exige preguntar en cada turno.
+  const interview = ['offline', 'reclutadora'].includes(persona.id);
   return {
-    equilibrio_de_habla: band(c.talkRatio * 100, 40, 65, 30),
-    preguntas: band(c.questions, Math.min(2, c.userTurns), 99, 3),
+    equilibrio_de_habla: interview ? band(c.talkRatio * 100, 55, 85, 30) : band(c.talkRatio * 100, 40, 65, 30),
+    ...(interview ? {} : { preguntas: band(c.questions, Math.min(2, c.userTurns), 99, 3) }),
     fluidez: band(c.fillersPerMin, 0, 3, 7),
     desarrollo: band(avgWords, 35, 130, 40),
   };
@@ -324,9 +335,10 @@ function renderEval(total, scores, c, ev) {
     <div><div style="font-weight:600">${esc(persona.name)} · dificultad ${$('difficulty').value}/3</div>
     <div class="note">Hablaste el ${Math.round(c.talkRatio * 100)}% del tiempo · ${c.questions} ${c.questions === 1 ? 'intervención' : 'intervenciones'} con preguntas · ${c.fillers} muletillas</div></div></div>
     <div class="dims">${bars}</div>`;
-  if (!ev) return head + `<div class="fb"><div><h3>Siguiente paso</h3>${c.talkRatio > 0.7
+  const interview = ['offline', 'reclutadora'].includes(persona.id);
+  if (!ev) return head + `<div class="fb"><div><h3>Siguiente paso</h3>${!interview && c.talkRatio > 0.7
     ? 'Hablaste mucho más que tu interlocutor: practica hacer una pregunta abierta y escuchar.'
-    : c.questions === 0 ? 'No hiciste preguntas: en tu próxima práctica incluye al menos dos preguntas abiertas.'
+    : !interview && c.questions === 0 ? 'No hiciste preguntas: en tu próxima práctica incluye al menos dos preguntas abiertas.'
     : 'Repite la conversación en dificultad más alta y apunta a respuestas con resultados concretos.'}</div></div>`;
   return head + `<div class="ai-box">
     <p>${esc(ev.summary)}</p>

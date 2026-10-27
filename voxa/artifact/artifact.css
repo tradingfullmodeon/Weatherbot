@@ -29,7 +29,6 @@
   .quick button span { font-size: .85rem; color: var(--muted); }
   .visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .file-btn { border: 1px dashed var(--accent); color: var(--accent); cursor: pointer; margin: 6px 0; }
-  input[type="file"]:focus-visible + .file-btn, .file-btn:focus-within { outline: 3px solid var(--accent); }
   .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
   .seg button[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); font-weight: 700; }
   .stats { display: flex; gap: 14px; flex-wrap: wrap; font-size: .85rem; color: var(--muted); margin-top: 6px; }

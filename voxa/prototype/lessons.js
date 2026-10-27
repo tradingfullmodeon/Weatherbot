@@ -56,7 +56,7 @@ export const LESSONS = [
     mistakes: ['Querer eliminar todas las muletillas de golpe: apunta a reducirlas a la mitad.', 'Reemplazarlas por otra muletilla («¿no?», «tipo»).'],
     quiz: { q: '¿Qué técnica física ayuda a evitar el «eeh»?', options: ['Hablar más rápido', 'Cerrar los labios y respirar por la nariz al terminar la frase', 'Mirar al suelo al pensar'], answer: 1,
       explain: 'Con la boca cerrada no puedes vocalizar el relleno, y la respiración te da tiempo para pensar.' },
-    practice: { view: 'gimnasio', exercise: 'pausas', label: 'Lectura con pausas en el gimnasio' },
+    practice: { view: 'gimnasio', exercise: 'pausas', label: 'Lectura con pausas en el gimnasio', liteLabel: 'Graba la apertura de una charla con pausas' },
   },
   {
     id: 'voz', title: 'Una voz que mantiene la atención', area: 'Voz', minutes: 3,
@@ -72,7 +72,7 @@ export const LESSONS = [
     mistakes: ['Terminar las afirmaciones con tono de pregunta: resta seguridad.', 'Gritar para proyectar: proyectar es apoyar con aire, no forzar la garganta.'],
     quiz: { q: 'Para sonar seguro al afirmar algo, al final de la frase el tono…', options: ['sube', 'baja', 'da igual'], answer: 1,
       explain: 'El tono descendente marca certeza; el ascendente suena a duda o a pregunta.' },
-    practice: { view: 'gimnasio', exercise: 'sirena', label: 'Sirena de tono en el gimnasio' },
+    practice: { view: 'gimnasio', exercise: 'sirena', label: 'Sirena de tono en el gimnasio', liteLabel: 'Graba 60 s variando el tono' },
   },
   {
     id: 'presencia', title: 'Presencia en cámara', area: 'Lenguaje corporal', minutes: 3,
@@ -88,7 +88,7 @@ export const LESSONS = [
     mistakes: ['Mirar todo el tiempo tu propia imagen.', 'Leer un guion en pantalla: se nota en los ojos.', 'Gestos repetitivos (tocarse la cara o el pelo).'],
     quiz: { q: 'Para que el público sienta contacto visual en una videollamada, miras…', options: ['su cara en la pantalla', 'el lente de la cámara', 'tus notas'], answer: 1,
       explain: 'Sólo mirando al lente parece que miras a los ojos de quien te ve.' },
-    practice: { view: 'evaluar', scenario: 'intro', audience: true, label: 'Preséntate con la audiencia virtual' },
+    practice: { view: 'evaluar', scenario: 'intro', audience: true, label: 'Preséntate con la audiencia virtual', liteLabel: 'Grábate presentándote en video' },
   },
   {
     id: 'nervios', title: 'Calmar los nervios en 2 minutos', area: 'Confianza', minutes: 2,
@@ -169,14 +169,14 @@ export const LESSONS = [
     mistakes: ['Ensayar gestos de manual que no son tuyos.', 'Interpretar un gesto aislado como prueba de algo.'],
     quiz: { q: '¿Qué tiene más evidencia a su favor?', options: ['Postura de poder 2 minutos antes', 'Coherencia entre palabras, voz y cuerpo', 'Imitar los gestos del interlocutor'], answer: 1,
       explain: 'La coherencia multimodal es lo que hace creíble un mensaje; los «trucos» aislados tienen poca o ninguna evidencia.' },
-    practice: { view: 'evaluar', scenario: 'opening', audience: true, label: 'Apertura de una charla con audiencia virtual' },
+    practice: { view: 'evaluar', scenario: 'opening', audience: true, label: 'Apertura de una charla con audiencia virtual', liteLabel: 'Grábate en video con la apertura de una charla' },
   },
 ];
 
 // Lección sugerida para la métrica que más falla (ver Progreso → foco recurrente).
 export const LESSON_FOR_METRIC = {
   fillers: 'pausa', hums: 'pausa', pauses: 'prep', wpm: 'voz', pitch: 'voz', volume: 'voz', speech: 'prep',
-  hedges: 'bluf', length: 'star', gaze: 'presencia', face: 'presencia', smile: 'presencia', head: 'presencia', duration: 'bluf',
+  hedges: 'bluf', length: 'star', gaze: 'presencia', face: 'presencia', smile: 'presencia', head: 'presencia', duration: 'bluf', variety: 'prep',
 };
 
 // ---------------------------------------------------------------- interfaz compartida
@@ -203,7 +203,8 @@ export const LESSON_SOURCES = {
   mitos: 'Mehrabian (1971): la regla 7-38-55 sólo vale para sentimientos expresados con señales contradictorias; las «posturas de poder» no se replicaron en sus efectos hormonales (Ranehill et al., 2015).',
 };
 
-export function lessonHTML(l, done = false) {
+// lite: versión sin gimnasio ni audiencia virtual (la publicada), con la etiqueta alternativa de la práctica.
+export function lessonHTML(l, done = false, lite = false) {
   return `<article class="lesson" data-id="${l.id}">
     <div class="note">${esc(l.area)} · ${l.minutes} min de lectura</div>
     <h2 style="font-size:1.3rem;margin:4px 0 8px">${esc(l.title)}</h2>
@@ -221,7 +222,7 @@ export function lessonHTML(l, done = false) {
     <p><strong>${esc(l.quiz.q)}</strong></p>
     <div class="quiz" role="group" aria-label="Opciones">${l.quiz.options.map((o, i) => `<button type="button" data-opt="${i}">${esc(o)}</button>`).join('')}</div>
     <p class="note quiz-out" aria-live="polite">${done ? '✅ Ya completaste esta lección.' : ''}</p>
-    <div class="btns"><button type="button" class="cta" data-practice="${l.id}">▶ Practicar ahora: ${esc(l.practice.label)}</button><button type="button" data-back>Volver a las lecciones</button></div>
+    <div class="btns"><button type="button" class="cta" data-practice="${l.id}">▶ Practicar ahora: ${esc(lite && l.practice.liteLabel || l.practice.label)}</button><button type="button" data-back>Volver a las lecciones</button></div>
   </article>`;
 }
 

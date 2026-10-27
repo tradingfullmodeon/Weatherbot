@@ -442,6 +442,12 @@ orgs / teams / seats                               -- B2B
 - **v5:** acceso robusto a cámara y micrófono (respaldo a «sólo voz», errores explicados por navegador, prueba de dispositivos); **Aprender** con 12 micro-lecciones conectadas a la práctica; en el link de claude.ai, grabación con la cámara nativa del celular y análisis de lenguaje corporal desde fotogramas del video.
 - **v6:** **modo evento real** (plan hasta la fecha, preguntas difíciles probables y personalizadas, rutina del día); detección de muletillas según el contexto (sin contar «este informe» o «vale la pena»); 23 pruebas automáticas del motor de análisis y del contenido, más integración continua en GitHub.
 - **v7: estado inicial → diagnóstico → metas.** Tras la bienvenida, un diagnóstico de unos 8 minutos en 8 dimensiones (estructura, voz, fluidez, presencia, escucha, asertividad, confianza y escritura). Combina una autoevaluación de 8 afirmaciones (40%) con una prueba de voz de 60 s y una prueba escrita (60%). Entrega nivel, radar, 2 fortalezas, 3 prioridades y los puntos ciegos entre cómo te ves y lo medido (ventana de Johari). De las prioridades salen metas específicas con plazo y una razón personal (Locke y Latham), que avanzan solas con cada práctica que cumple su criterio. Pasadas 4 semanas se sugiere repetir el diagnóstico y se compara con el primero. En el link de claude.ai, las grabaciones del iPhone (.MOV) que el navegador no decodifica se analizan reproduciéndolas en silencio.
+- **v8: auditoría y calificaciones.** Auditoría completa con 29 hallazgos: los críticos e importantes están corregidos (ver [`AUDITORIA.md`](AUDITORIA.md)). Benchmark de calificaciones de usuarios de 25 apps y plan por brecha ([`CALIFICACIONES.md`](CALIFICACIONES.md)). Además:
+  - calificación dentro de la app (estrellas y NPS) con tablero para quien es dueño del link;
+  - diagnóstico también en la versión completa;
+  - práctica del día guiada por las metas;
+  - recordatorio diario en el calendario;
+  - fuentes en cada lección.
 - **Mi progreso** (`progreso.html`): línea base, tendencia por dimensión, racha, nervios antes/después, foco recurrente, sprint de 30 días con la tarea del día, escalera de confianza y exportación o borrado de datos.
 
 ---

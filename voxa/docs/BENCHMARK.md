@@ -6,6 +6,8 @@
 
 ---
 
+> Calificaciones de usuarios de 25 apps de la competencia, comparación con VOXA y plan de acción: [`CALIFICACIONES.md`](CALIFICACIONES.md). Auditoría técnica y pedagógica: [`AUDITORIA.md`](AUDITORIA.md).
+
 ## 1. Resumen ejecutivo
 
 1. **El mercado se está moviendo a empresas y a roleplay con IA.** Yoodli, el referente de Norteamérica, levantó una Serie B de US$40M en diciembre de 2025 con una valoración superior a US$300M, y hoy obtiene la mayor parte de sus ingresos de clientes empresariales (Google, Snowflake, Databricks). Second Nature (US$22M, octubre de 2025), Hyperbound (Serie A, septiembre de 2025) y Retorio (€9M, Europa) apuntan al mismo lugar: **roleplay de ventas y liderazgo para equipos**.

@@ -135,6 +135,7 @@ import {
 import { SCENARIOS, GROUPS, IMPRO_TOPICS, methodHelp } from './scenarios.js';
 import { requestMedia, explainError } from './devices.js';
 import { LESSONS, LESSON_FOR_METRIC } from './lessons.js';
+import { guiraud, MIN_SPEECH_SECONDS } from './audiofile.js';
 
 renderNav();
 const profile = loadProfile();
@@ -448,6 +449,8 @@ function computeMetrics() {
       pauseStart = null;
     } else if (pauseStart === null) pauseStart = s.t;
   }
+  // Un silencio que dura hasta el final también cuenta.
+  if (pauseStart !== null && dur - pauseStart > 2.5) { longPauses++; pauseZones.push([pauseStart, dur]); }
   const speechRatio = samples.length ? speechFrames / samples.length : 0;
   const humZones = findFilledPauses(samples);
 
@@ -470,7 +473,7 @@ function computeMetrics() {
   return {
     dur, words, wpm: words / minutes, fillers, fillersPerMin: fillers / minutes, hedges, hedgesPerMin: hedges / minutes,
     longPauses, speechRatio, humZones, humsPerMin: humZones.length / minutes, pitchVar, medF0, volume, volCv, hasText: words > 0,
-    hasVision, facePct, gazePct, smilePct, headMove, pauseZones, thr,
+    hasVision, facePct, gazePct, smilePct, headMove, pauseZones, thr, speechSeconds: dur * speechRatio, variety: guiraud(text),
     attention: attention.length ? mean(attention) : null,
   };
 }
@@ -483,10 +486,15 @@ function score(m) {
     add('voz', 'wpm', 'Ritmo', m.wpm, `${Math.round(m.wpm)} palabras/min`, '120–165', band(m.wpm, 120, 165, 60));
     add('voz', 'fillers', 'Muletillas («este», «o sea»…)', m.fillersPerMin, `${m.fillersPerMin.toFixed(1)} por min (${m.fillers})`, 'menos de 3 por min', band(m.fillersPerMin, 0, 3, 7));
     add('lenguaje', 'hedges', 'Frases que restan seguridad', m.hedgesPerMin, `${m.hedgesPerMin.toFixed(1)} por min (${m.hedges})`, 'menos de 1,5 por min', band(m.hedgesPerMin, 0, 1.5, 4));
-    add('lenguaje', 'length', 'Contenido desarrollado', m.words, `${m.words} palabras`, `${Math.round(scenario().seconds * 1.7)} o más`, band(m.words, scenario().seconds * 1.7, 1e6, scenario().seconds * 1.7));
+    // El largo sólo cuenta como desarrollo si hay ideas distintas: repetir relleno no desarrolla nada.
+    const varietyFactor = m.words >= 25 ? Math.min(1, m.variety / 4) : 1;
+    add('lenguaje', 'length', 'Contenido desarrollado', m.words, `${m.words} palabras`, `${Math.round(scenario().seconds * 1.7)} o más`, band(m.words, scenario().seconds * 1.7, 1e6, scenario().seconds * 1.7) * varietyFactor);
+    if (m.words >= 25) add('lenguaje', 'variety', 'Variedad de vocabulario', m.variety, m.variety.toFixed(1), '4 o más', band(m.variety, 4, 1e6, 3));
   }
+  const sec = scenario().seconds;
+  add('voz', 'duration', 'Duración', m.dur, `${Math.round(m.dur)} s`, `≈ ${sec} s`, band(m.dur, sec * 0.7, sec * 1.3, sec * 0.6));
   add('voz', 'hums', 'Sonidos de duda «eeh/mmm» (estimado)', m.humsPerMin, `${m.humsPerMin.toFixed(1)} por min (${m.humZones.length})`, 'menos de 2 por min', band(m.humsPerMin, 0, 2, 6));
-  add('voz', 'pitch', 'Variación de tono', m.pitchVar, m.medF0 ? `${m.pitchVar.toFixed(1)} semitonos` : 'sin datos', '2 a 6 semitonos', m.medF0 ? band(m.pitchVar, 2, 6, 1.8) : 50);
+  if (m.medF0) add('voz', 'pitch', 'Variación de tono', m.pitchVar, `${m.pitchVar.toFixed(1)} semitonos`, '2 a 6 semitonos', band(m.pitchVar, 2, 6, 1.8));
   add('voz', 'speech', 'Tiempo hablando', m.speechRatio, `${Math.round(m.speechRatio * 100)}% del tiempo`, '55–90%', band(m.speechRatio * 100, 55, 90, 35));
   add('voz', 'pauses', 'Silencios largos (más de 2,5 s)', m.longPauses, `${m.longPauses}`, '0 a 2', band(m.longPauses, 0, 2, 4));
   add('voz', 'volume', 'Énfasis con el volumen', m.volCv, `${level3(m.volCv, 0.3, 0.9)} (${Math.round(m.volCv * 100)}%)`, 'adecuado', band(m.volCv, 0.3, 0.9, 0.6));
@@ -529,6 +537,8 @@ const TIPS = {
   smile: (m) => m.smilePct < 0.1
     ? ['Tu expresión se mantuvo seria todo el tiempo.', 'Sonríe al saludar y al cerrar. Ensaya tu primera frase frente a un espejo.']
     : ['Sonreíste casi todo el tiempo y eso puede restar seriedad.', 'Acompaña el contenido: sonrisa en lo positivo, expresión neutra en los datos.'],
+  variety: () => ['Repites mucho las mismas palabras.', 'Antes de repetir, anota tres ideas distintas con un ejemplo cada una.'],
+  duration: (m) => m.dur > scenario().seconds * 1.3 ? ['Te extendiste más de lo pedido.', 'Quita todo lo que no sirva a tu idea principal y repite dentro del tiempo.'] : ['Quedó más corto de lo pedido.', 'Agrega un ejemplo concreto o un dato antes de cerrar.'],
   head: (m) => m.headMove > 0.08
     ? ['Moviste mucho la cabeza.', 'Apoya bien los pies y la espalda; mueve la cabeza sólo para enfatizar.']
     : ['Tu postura se vio muy rígida.', 'Permítete asentir y gesticular con naturalidad en las ideas clave.'],
@@ -537,7 +547,7 @@ const STRENGTH = {
   hums: 'Silencios limpios, sin «eeh» de relleno.', wpm: 'Tu ritmo es cómodo de seguir.', fillers: 'Hablaste casi sin muletillas.', hedges: 'Tu lenguaje es seguro y directo.',
   length: 'Desarrollaste bien tus ideas.', pitch: 'Tu voz es expresiva y varía bien el tono.', speech: 'Buen equilibrio entre hablar y hacer pausas.',
   pauses: 'Hablaste con fluidez, sin bloqueos largos.', volume: 'Usas el volumen para marcar lo importante.', face: 'Buen encuadre.',
-  gaze: 'Excelente contacto visual con la cámara.', smile: 'Tu expresión acompaña lo que dices.', head: 'Presencia estable y natural.',
+  variety: 'Usas un vocabulario variado.', duration: 'Respetaste el tiempo.', gaze: 'Excelente contacto visual con la cámara.', smile: 'Tu expresión acompaña lo que dices.', head: 'Presencia estable y natural.',
 };
 
 // ---------------------------------------------------------------- reporte
@@ -554,6 +564,11 @@ function encouragement(total, prev) {
 let lastReport = null;
 function buildReport() {
   const m = computeMetrics();
+  if (!(m.speechSeconds >= MIN_SPEECH_SECONDS)) {
+    $('report').style.display = 'none';
+    $('status').textContent = 'No detectamos voz suficiente (menos de 4 segundos hablando). Revisa que el micrófono no esté silenciado y vuelve a intentarlo.';
+    return;
+  }
   const r = score(m);
   const prev = loadSessions().filter(s => s.type === 'evaluacion' && s.scenario === scenario().id).pop()?.total;
   $('report').style.display = 'block';
@@ -571,11 +586,12 @@ function buildReport() {
 
   const sorted = [...r.items].sort((a, b) => b.s - a.s);
   const best = sorted[0], worst = sorted[sorted.length - 1];
-  const [why, exercise] = worst.s < 100 ? TIPS[worst.key](m) : ['Todas tus métricas están en rango.', 'Sube la dificultad: prueba una improvisación o una situación nueva.'];
+  const allGood = worst.s >= 100;
+  const [why, exercise] = allGood ? ['Todas tus métricas están en rango.', 'Sube la dificultad: prueba una improvisación o una situación nueva.'] : TIPS[worst.key](m);
   $('fb').innerHTML = `
     <div><h3 style="color:var(--good)">✓ Lo que hiciste bien</h3>${STRENGTH[best.key]}</div>
-    <div><h3 style="color:var(--mid)">→ Tu único foco: ${esc(worst.label)}</h3>${why}</div>
-    <div><h3 style="color:var(--accent)">⏱ Ejercicio de 2 minutos</h3>${exercise}${lessonLink(worst.key)}</div>`;
+    <div><h3 style="color:var(--mid)">→ ${allGood ? 'Tu siguiente paso' : `Tu único foco: ${esc(worst.label)}`}</h3>${why}</div>
+    <div><h3 style="color:var(--accent)">⏱ Ejercicio de 2 minutos</h3>${exercise}${allGood ? '' : lessonLink(worst.key)}</div>`;
 
   $('finalTranscript').innerHTML = highlight(finalText + interimText) || '<span class="note">Sin transcripción.</span>';
   drawChart(m);
@@ -585,7 +601,7 @@ function buildReport() {
   lastReport = { m, r, session: {
     id: Date.now().toString(36), date: new Date().toISOString(), type: 'evaluacion',
     scenario: scenario().id, scenarioName: scenario().name, goal: profile.goal,
-    total: r.total, dims: r.dims, duration: Math.round(m.dur), attention: m.attention,
+    total: r.total, dims: r.dims, duration: Math.round(m.dur), attention: m.attention, words: m.words, mode: 'audio',
     metrics: Object.fromEntries(r.items.map(i => [i.key, { value: i.value, s: i.s }])),
     anxietyBefore: feelBefore.get(), anxietyAfter: null,
   } };

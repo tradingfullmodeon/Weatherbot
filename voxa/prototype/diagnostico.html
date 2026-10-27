@@ -65,7 +65,7 @@ import { $, renderNav, loadProfile, saveProfile, loadSessions, wordCount, countM
 import { requestMedia, explainError } from './devices.js';
 import { SCENARIOS } from './scenarios.js';
 import { KINDS, analyzeWriting } from './writing.js';
-import { analyzeAudio, analyzeByPlayback, voiceMetrics, scoreSpeech } from './audiofile.js';
+import { analyzeAudio, analyzeByPlayback, voiceMetrics, scoreSpeech, guiraud } from './audiofile.js';
 import { SELF_ITEMS, computeProfile, measuredFrom, suggestGoals, createGoal, selfAssessmentHTML, drawRadar, diagnosisHTML, goalPickerHTML } from './goals.js';
 
 renderNav();
@@ -131,7 +131,7 @@ async function speechItems() {
   const progress = p => { $('dgBar').style.width = Math.round(p * 100) + '%'; };
   if (!recording) {
     if (wordCount(text) < 5) return [];
-    return scoreSpeech({ words: wordCount(text), hasText: true, fillers: countMatches(text, FILLER_RE), hedges: countMatches(text, HEDGE_RE), dur: wordCount(text) / 140 * 60 }, false, intro.seconds).items;
+    return scoreSpeech({ words: wordCount(text), hasText: true, fillers: countMatches(text, FILLER_RE), hedges: countMatches(text, HEDGE_RE), variety: guiraud(text), dur: wordCount(text) / 140 * 60 }, false, intro.seconds).items;
   }
   $('dgProgress').classList.remove('hidden');
   $('dgVoiceStatus').textContent = 'Analizando tu voz…';
@@ -140,6 +140,11 @@ async function speechItems() {
     try { a = await analyzeAudio(recording, progress); }
     catch (err) {
       if (err.code !== 'needs-playback') throw err;
+      // Reproducir necesita un toque nuevo de la persona (regla de los navegadores móviles, sobre todo iPhone).
+      $('dgProgress').classList.add('hidden');
+      $('dgVoiceStatus').innerHTML = 'Tu celular guardó la grabación en un formato que no podemos leer directo. <button type="button" id="dgPlay" class="primary">▶ Escuchar y analizar</button>';
+      await new Promise(ok => $('dgPlay').addEventListener('click', ok, { once: true }));
+      $('dgProgress').classList.remove('hidden');
       $('dgVoiceStatus').textContent = 'Escuchando tu grabación (tarda lo que dura; no se oirá nada)…';
       a = await analyzeByPlayback(recording, progress);
     }

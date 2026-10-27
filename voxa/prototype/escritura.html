@@ -61,23 +61,26 @@ const kind = () => KINDS.find(k => k.id === $('kind').value);
 const renderGuide = () => { $('guide').innerHTML = `<strong>${esc(kind().name)}</strong>${esc(kind().guide)}`; };
 renderGuide();
 
-let last = null, timer = 0;
+// Cada borrador es una práctica; uno nuevo empieza al cambiar de tipo, al vaciar el texto o al adoptar la versión de la IA.
+let last = null, timer = 0, draftId = Date.now().toString(36), draftByAI = false;
+const newDraft = (byAI = false) => { draftId = Date.now().toString(36); draftByAI = byAI; };
 function update() {
   const text = $('text').value;
-  if (!text.trim()) { $('checks').innerHTML = '<li class="warn"><span class="i">·</span><span>Escribe tu borrador y la revisión aparecerá aquí.</span></li>'; $('stats').textContent = ''; $('scoreBadge').textContent = '–'; $('btnAI').disabled = true; return; }
+  if (!text.trim()) { newDraft(); $('checks').innerHTML = '<li class="warn"><span class="i">·</span><span>Escribe tu borrador y la revisión aparecerá aquí.</span></li>'; $('stats').textContent = ''; $('scoreBadge').textContent = '–'; $('btnAI').disabled = true; return; }
   last = analyzeWriting(text, kind());
   $('checks').innerHTML = last.checks.map(c => `<li class="${c.ok ? 'ok' : 'warn'}"><span class="i">${c.ok ? '✓' : '!'}</span><span>${esc(c.msg)}</span></li>`).join('');
   $('stats').innerHTML = `<span>${last.words} palabras</span><span>${last.sentences} frases</span><span>~${Math.max(1, Math.round(last.words / 200 * 60))} s de lectura</span>`;
   $('scoreBadge').textContent = `${last.score}/100`;
   $('btnAI').disabled = false;
   clearTimeout(timer);
-  // Guarda una sesión cuando la persona deja de escribir (una por borrador, se actualiza al editar).
+  // Guarda una sesión cuando la persona deja de escribir (una por borrador, se actualiza al editar),
+  // sólo si el texto tiene el largo mínimo del tipo.
+  if (last.words < Math.min(15, kind().words[0])) return;
   timer = setTimeout(() => saveSession({ id: draftId, date: new Date().toISOString(), type: 'escritura', scenario: 'escritura:' + kind().id,
-    scenarioName: 'Escritura: ' + kind().name, total: last.score, dims: { escritura: last.score }, metrics: { words: last.words, readability: last.read } }), 1500);
+    scenarioName: 'Escritura: ' + kind().name, total: last.score, dims: { escritura: last.score }, metrics: { words: last.words, readability: last.read }, words: last.words, ai: draftByAI }), 1500);
 }
-const draftId = Date.now().toString(36);
 $('text').addEventListener('input', update);
-$('kind').addEventListener('change', () => { renderGuide(); update(); });
+$('kind').addEventListener('change', () => { newDraft(); renderGuide(); update(); });
 
 // ---------------------------------------------------------------- coach IA
 aiStatus().then(s => { $('aiBadge').textContent = s.ai ? 'conectado' : 'sin conexión'; $(s.ai ? 'aiOnline' : 'aiOffline').classList.remove('hidden'); });
@@ -99,7 +102,7 @@ $('btnAI').addEventListener('click', async () => {
       <h3 style="color:var(--mid)">Qué cambiamos y por qué</h3><ul>${out.changes.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
       ${out.safety_note ? `<p class="note">${esc(out.safety_note)}</p>` : ''}</div>`;
     $('btnCopyRw').addEventListener('click', async () => { try { await navigator.clipboard.writeText(out.rewrite); $('btnCopyRw').textContent = 'Copiado ✓'; } catch {} });
-    $('btnUse').addEventListener('click', () => { $('text').value = out.rewrite; update(); $('text').focus(); });
+    $('btnUse').addEventListener('click', () => { $('text').value = out.rewrite; newDraft(true); update(); $('text').focus(); });
   } catch (e) {
     $('aiOut').innerHTML = `<p class="note">No se pudo mejorar el texto: ${esc(e.message)}</p>`;
   } finally { $('btnAI').disabled = false; }

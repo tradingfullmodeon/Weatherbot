@@ -1,6 +1,6 @@
 // Sprint de 30 días: una dimensión por semana (práctica deliberada). Cada tarea enlaza a la práctica
 // concreta para que «la práctica de hoy» sea un solo toque desde Inicio.
-import { loadSessions } from './shared.js';
+import { loadSessions, localDay } from './shared.js';
 
 const t = (text, href) => ({ text, href });
 
@@ -43,13 +43,14 @@ export const SPRINT = [
   ] },
 ];
 
-const dayKey = (iso) => iso.slice(0, 10);
+const dayKey = (iso) => localDay(new Date(iso));
 
-// Día del sprint (0–27) contado desde la primera sesión, o null si aún no hay sesiones.
+// Día del sprint (0–27): cuántos días distintos ya practicaste antes de hoy (si faltas un día, retomas donde
+// quedaste en vez de saltarte tareas). null si aún no hay sesiones.
 export function sprintDay(sessions = loadSessions()) {
   if (!sessions.length) return null;
-  const first = [...sessions].sort((a, b) => a.date.localeCompare(b.date))[0];
-  return Math.floor((new Date(dayKey(new Date().toISOString())) - new Date(dayKey(first.date))) / 864e5);
+  const today = localDay();
+  return new Set(sessions.map(s => dayKey(s.date)).filter(d => d < today)).size;
 }
 
 export function todayTask(sessions = loadSessions()) {
@@ -63,8 +64,8 @@ export function todayTask(sessions = loadSessions()) {
 export function streak(sessions = loadSessions()) {
   const days = new Set(sessions.map(s => dayKey(s.date)));
   let n = 0; const d = new Date();
-  if (!days.has(dayKey(d.toISOString()))) d.setDate(d.getDate() - 1);   // la racha sigue viva si practicaste ayer
-  while (days.has(dayKey(d.toISOString()))) { n++; d.setDate(d.getDate() - 1); }
+  if (!days.has(localDay(d))) d.setDate(d.getDate() - 1);   // la racha sigue viva si practicaste ayer
+  while (days.has(localDay(d))) { n++; d.setDate(d.getDate() - 1); }
   return n;
 }
 

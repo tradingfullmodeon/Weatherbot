@@ -54,8 +54,15 @@ test('las metas avanzan solas con las prácticas que las cumplen', () => {
   assert.ok(sessionMeets(g, ok)); assert.ok(!sessionMeets(g, bad));
   let p = goalProgress(g, [ok, bad, before], new Date('2026-10-05T00:00:00Z'));
   assert.equal(p.hits, 1); assert.ok(!p.done && !p.expired);
-  p = goalProgress(g, [ok, ok, ok], new Date('2026-10-05T00:00:00Z'));
+  // El mismo intento repetido el mismo día cuenta una sola vez.
+  assert.equal(goalProgress(g, [ok, ok, ok], new Date('2026-10-05T00:00:00Z')).hits, 1);
+  const days = [2, 3, 4].map(d => ({ ...ok, date: `2026-10-0${d}T15:00:00Z` }));
+  p = goalProgress(g, days, new Date('2026-10-05T00:00:00Z'));
   assert.ok(p.done); assert.equal(p.ratio, 1);
+  // Un texto corto sin atenuadores no prueba asertividad.
+  const a = createGoal('asertividad', {}, start);
+  assert.ok(!sessionMeets(a, { type: 'ensayo', date: '2026-10-02', words: 5, metrics: { hedges: { s: 100 } } }));
+  assert.ok(sessionMeets(a, { type: 'ensayo', date: '2026-10-02', words: 80, metrics: { hedges: { s: 100 } } }));
   assert.ok(goalProgress(g, [], new Date('2026-11-05T00:00:00Z')).expired);
   const rp = createGoal('escucha', {}, start);
   assert.ok(sessionMeets(rp, { type: 'roleplay', date: '2026-10-02', dims: { escucha: 80 } }));
@@ -71,10 +78,18 @@ test('una meta de 30 días muestra 30 días restantes el día en que se crea', (
 
 test('la práctica del día rota entre las metas activas y omite las cumplidas', () => {
   const now = new Date(2026, 9, 27, 12);
-  const a = createGoal('voz', {}, now), b = createGoal('escritura', {}, now);
-  const done = [1, 2, 3].map(i => ({ type: 'escritura', date: new Date(2026, 9, 27, 13 + i).toISOString(), total: 90 }));
+  const a = createGoal('voz', {}, now), b = createGoal('escritura', {}, new Date(2026, 9, 20));
+  const done = [1, 2, 3].map(i => ({ type: 'escritura', date: new Date(2026, 9, 24 + i, 13).toISOString(), total: 90 }));
   assert.equal(goalOfTheDay([], [], now), null);
   assert.equal(goalOfTheDay([a, b], done, new Date(2026, 9, 27, 18)).goal.dim, 'voz');
   const days = new Set([0, 1, 2, 3].map(d => goalOfTheDay([a, b], [], new Date(2026, 9, 28 + d, 12)).goal.dim));
   assert.deepEqual([...days].sort(), ['escritura', 'voz']);
+});
+
+test('el plan de 30 días avanza con los días practicados, no con el calendario', async () => {
+  const { sprintDay } = await import('../prototype/plan.js');
+  const ago = (d) => { const x = new Date(); x.setDate(x.getDate() - d); return x.toISOString(); };
+  // Practicó hace 10 días y hace 2 (faltó 7 días entremedio): va en el día 3 del plan, no en el 11.
+  assert.equal(sprintDay([{ date: ago(10) }, { date: ago(2) }, { date: ago(2) }]), 2);
+  assert.equal(sprintDay([{ date: ago(0) }]), 0);
 });

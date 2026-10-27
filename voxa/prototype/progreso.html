@@ -82,13 +82,13 @@
     <table><thead><tr><th>Fecha</th><th>Práctica</th><th>Puntaje</th><th>Nervios</th></tr></thead><tbody id="rows"></tbody></table>
     <div class="btns">
       <button id="btnExport">Exportar mis datos (JSON)</button>
-      <button id="btnClear">Borrar historial</button>
+      <button id="btnClear">Borrar todos mis datos</button>
     </div>
   </section>
 </main>
 
 <script type="module">
-import { $, esc, colorFor, mean, renderNav, loadSessions, loadProfile, saveProfile } from './shared.js';
+import { $, esc, colorFor, mean, renderNav, loadSessions, loadProfile, saveProfile, clearAll, calmText } from './shared.js';
 import { todayTask, streak } from './plan.js';
 import { diagnosisHTML, drawRadar, goalsHTML, goalHref } from './goals.js';
 
@@ -110,7 +110,7 @@ $('kpis').innerHTML = [
   kpi('Punto de partida', base ? base.total : '–', base ? esc(base.scenarioName) : ''),
   kpi('Última', last ? last.total : '–', base && last !== base ? `<span style="color:${delta >= 0 ? 'var(--good)' : 'var(--bad)'}">${delta >= 0 ? '+' : ''}${delta} vs. tu punto de partida</span>` : ''),
   kpi('Mejor', best ? best.total : '–', best ? esc(best.scenarioName) : ''),
-  kpi('Calma ganada', sessions.length ? (Math.abs(anxDrop) < 0.05 ? '0' : (anxDrop > 0 ? '−' : '+') + Math.abs(anxDrop).toFixed(1)) : '–', 'puntos menos de nervios al terminar'),
+  kpi('Calma ganada', sessions.length ? calmText(anxDrop) : '–', sessions.length && anxDrop < -0.05 ? 'puntos más de nervios al terminar' : 'puntos menos de nervios al terminar (escala 1–5)'),
 ].join('');
 
 // ---------------------------------------------------------------- Sprint 30 días
@@ -242,9 +242,9 @@ document.addEventListener('click', (e) => {
 });
 
 $('btnClear').addEventListener('click', () => {
-  if (!confirm('¿Borrar todo tu historial de este navegador?')) return;
-  try { localStorage.removeItem('voxa.sessions.v1'); } catch {}
-  location.reload();
+  if (!confirm('¿Borrar todos tus datos de este navegador? Se borrarán tus prácticas, tu diagnóstico, tus metas, tus lecciones y tu evento (incluido el material que pegaste).')) return;
+  clearAll();
+  location.href = 'index.html';
 });
 </script>
 </body>
