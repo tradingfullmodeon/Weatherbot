@@ -135,7 +135,7 @@ import {
 import { SCENARIOS, GROUPS, IMPRO_TOPICS, methodHelp } from './scenarios.js';
 import { requestMedia, explainError } from './devices.js';
 import { LESSONS, LESSON_FOR_METRIC } from './lessons.js';
-import { guiraud, MIN_SPEECH_SECONDS, PITCH_MAX_HZ } from './audiofile.js';
+import { guiraud, MIN_SPEECH_SECONDS, PITCH_MAX_HZ, scoreSpeech } from './audiofile.js';
 
 renderNav();
 const profile = loadProfile();
@@ -471,7 +471,7 @@ function computeMetrics() {
   const headMove = hasVision ? std(present.map(f => f.yaw)) + std(present.map(f => f.pitch)) : null;
 
   return {
-    dur, words, wpm: words / minutes, fillers, fillersPerMin: fillers / minutes, hedges, hedgesPerMin: hedges / minutes,
+    dur, words, text, wpm: words / minutes, fillers, fillersPerMin: fillers / minutes, hedges, hedgesPerMin: hedges / minutes,
     longPauses, speechRatio, humZones, humsPerMin: humZones.length / minutes, pitchVar, medF0, volume, volCv, hasText: words > 0,
     hasVision, facePct, gazePct, smilePct, headMove, pauseZones, thr, speechSeconds: dur * speechRatio, variety: guiraud(text),
     attention: attention.length ? mean(attention) : null,
@@ -482,22 +482,9 @@ const level3 = (v, lo, hi) => v < lo ? 'poco' : v > hi ? 'mucho' : 'adecuado';
 function score(m) {
   const items = [];
   const add = (dim, key, label, value, display, target, s) => items.push({ dim, key, label, value, display, target, s: Math.round(s) });
-  if (m.hasText) {
-    add('voz', 'wpm', 'Ritmo', m.wpm, `${Math.round(m.wpm)} palabras/min`, '120–165', band(m.wpm, 120, 165, 60));
-    add('voz', 'fillers', 'Muletillas («este», «o sea»…)', m.fillersPerMin, `${m.fillersPerMin.toFixed(1)} por min (${m.fillers})`, 'menos de 3 por min', band(m.fillersPerMin, 0, 3, 7));
-    add('lenguaje', 'hedges', 'Frases que restan seguridad', m.hedgesPerMin, `${m.hedgesPerMin.toFixed(1)} por min (${m.hedges})`, 'menos de 1,5 por min', band(m.hedgesPerMin, 0, 1.5, 4));
-    // El largo sólo cuenta como desarrollo si hay ideas distintas: repetir relleno no desarrolla nada.
-    const varietyFactor = m.words >= 25 ? Math.min(1, m.variety / 4) : 1;
-    add('lenguaje', 'length', 'Contenido desarrollado', m.words, `${m.words} palabras`, `${Math.round(scenario().seconds * 1.7)} o más`, band(m.words, scenario().seconds * 1.7, 1e6, scenario().seconds * 1.7) * varietyFactor);
-    if (m.words >= 25) add('lenguaje', 'variety', 'Variedad de vocabulario', m.variety, m.variety.toFixed(1), '4 o más', band(m.variety, 4, 1e6, 3));
-  }
-  const sec = scenario().seconds;
-  add('voz', 'duration', 'Duración', m.dur, `${Math.round(m.dur)} s`, `≈ ${sec} s`, band(m.dur, sec * 0.7, sec * 1.3, sec * 0.6));
-  add('voz', 'hums', 'Sonidos de duda «eeh/mmm» (estimado)', m.humsPerMin, `${m.humsPerMin.toFixed(1)} por min (${m.humZones.length})`, 'menos de 2 por min', band(m.humsPerMin, 0, 2, 6));
-  if (m.medF0) add('voz', 'pitch', 'Variación de tono', m.pitchVar, `${m.pitchVar.toFixed(1)} semitonos`, '2 a 6 semitonos', band(m.pitchVar, 2, 6, 1.8));
-  add('voz', 'speech', 'Tiempo hablando', m.speechRatio, `${Math.round(m.speechRatio * 100)}% del tiempo`, '55–90%', band(m.speechRatio * 100, 55, 90, 35));
-  add('voz', 'pauses', 'Silencios largos (más de 2,5 s)', m.longPauses, `${m.longPauses}`, '0 a 2', band(m.longPauses, 0, 2, 4));
-  add('voz', 'volume', 'Énfasis con el volumen', m.volCv, `${level3(m.volCv, 0.3, 0.9)} (${Math.round(m.volCv * 100)}%)`, 'adecuado', band(m.volCv, 0.3, 0.9, 0.6));
+  // Voz y lenguaje con el mismo motor que la versión publicada (audiofile.js): estructura por método, variedad,
+  // duración, «eeh» y demás; aquí se suma la presencia medida en vivo.
+  items.push(...scoreSpeech(m, true, scenario().seconds, scenario().method).items);
   if (m.hasVision) {
     add('presencia', 'face', 'Rostro en cuadro', m.facePct, `${Math.round(m.facePct * 100)}% del tiempo`, '90% o más', band(m.facePct * 100, 90, 100, 50));
     add('presencia', 'gaze', 'Mirada a cámara', m.gazePct, `${Math.round(m.gazePct * 100)}% del tiempo`, '60% o más', band(m.gazePct * 100, 60, 100, 50));
@@ -537,6 +524,7 @@ const TIPS = {
   smile: (m) => m.smilePct < 0.1
     ? ['Tu expresión se mantuvo seria todo el tiempo.', 'Sonríe al saludar y al cerrar. Ensaya tu primera frase frente a un espejo.']
     : ['Sonreíste casi todo el tiempo y eso puede restar seriedad.', 'Acompaña el contenido: sonrisa en lo positivo, expresión neutra en los datos.'],
+  structure: (m) => { const miss = m.structure.parts.filter(p => !p.ok); return [`A tu respuesta le falta: ${miss.map(p => p.part).join(', ')}.`, miss.map(p => p.tip).join(' ')]; },
   variety: () => ['Repites mucho las mismas palabras.', 'Antes de repetir, anota tres ideas distintas con un ejemplo cada una.'],
   duration: (m) => m.dur > scenario().seconds * 1.3 ? ['Te extendiste más de lo pedido.', 'Quita todo lo que no sirva a tu idea principal y repite dentro del tiempo.'] : ['Quedó más corto de lo pedido.', 'Agrega un ejemplo concreto o un dato antes de cerrar.'],
   head: (m) => m.headMove > 0.08
@@ -547,7 +535,7 @@ const STRENGTH = {
   hums: 'Silencios limpios, sin «eeh» de relleno.', wpm: 'Tu ritmo es cómodo de seguir.', fillers: 'Hablaste casi sin muletillas.', hedges: 'Tu lenguaje es seguro y directo.',
   length: 'Desarrollaste bien tus ideas.', pitch: 'Tu voz es expresiva y varía bien el tono.', speech: 'Buen equilibrio entre hablar y hacer pausas.',
   pauses: 'Hablaste con fluidez, sin bloqueos largos.', volume: 'Usas el volumen para marcar lo importante.', face: 'Buen encuadre.',
-  variety: 'Usas un vocabulario variado.', duration: 'Respetaste el tiempo.', gaze: 'Excelente contacto visual con la cámara.', smile: 'Tu expresión acompaña lo que dices.', head: 'Presencia estable y natural.',
+  variety: 'Usas un vocabulario variado.', structure: 'Tu respuesta tiene todas las partes del método.', duration: 'Respetaste el tiempo.', gaze: 'Excelente contacto visual con la cámara.', smile: 'Tu expresión acompaña lo que dices.', head: 'Presencia estable y natural.',
 };
 
 // ---------------------------------------------------------------- reporte

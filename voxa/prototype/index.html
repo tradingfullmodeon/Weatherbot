@@ -104,7 +104,7 @@ import { todayTask, streak, practicedToday } from './plan.js';
 import { mountDeviceCheck } from './devices.js';
 import { LESSONS } from './lessons.js';
 import { EVENT_TYPES, validEvent, daysUntil, nextEventPractice } from './events.js';
-import { goalsHTML, goalHref, goalOfTheDay } from './goals.js';
+import { goalsHTML, goalHref, goalOfTheDay, indexLine } from './goals.js';
 import { googleCalendarUrl, icsReminder } from './reminder.js';
 import { helpHTML, professionalHTML } from './help.js';
 
@@ -195,7 +195,7 @@ if (!diag) $('goalsBox').innerHTML = `<p class="lead">Empieza por saber dónde e
   <div class="btns"><a class="btn-link cta" href="diagnostico.html">Haz tu diagnóstico inicial (8 min)</a></div>`;
 else {
   const age = Math.floor((Date.now() - new Date(diag.date)) / 864e5);
-  $('goalsBox').innerHTML = `<p class="note">Nivel ${esc(diag.level)} · ${diag.total} puntos · diagnóstico del ${new Date(diag.date).toLocaleDateString('es')}</p>
+  $('goalsBox').innerHTML = `<p class="note">${indexLine(profile.diagnoses)}</p>
     ${goalsHTML(profile.goals, sessions)}
     ${age >= 28 ? '<p style="margin-top:10px"><a href="diagnostico.html">🔁 Pasaron 4 semanas: repite el diagnóstico y compara</a></p>' : ''}`;
 }

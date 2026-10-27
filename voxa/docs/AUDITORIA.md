@@ -76,3 +76,16 @@ Revisión completa de las dos versiones de VOXA: la publicada en claude.ai y la 
   - borradores de escritura;
   - calificación;
   - racha y eventos en la zona horaria de México a las 20 h.
+
+## Revisión de eficiencia y consistencia (octubre de 2026)
+
+| Tema | Hallazgo | Cambio |
+|---|---|---|
+| Costo de IA | Sin medición: no se sabía cuánto costaba cada uso | `/api/status` acumula tokens y costo estimado por uso (coach, roleplay, evaluación, escritura, evento). Es la base del costo por usuario |
+| Respuestas cortadas | `max_tokens` de 1.500–4.000 con razonamiento activo podía cortar la respuesta, y cada corte es un reintento pagado | Techos de 4.000 (roleplay) y 16.000 (resto). El techo no se cobra; sólo se cobra lo generado |
+| Caché | Cada turno del roleplay reenviaba todo el historial al precio completo | Caché del prefijo de la conversación: las lecturas de caché cuestan un 5% de la entrada normal en Opus 5.5 |
+| Modelo por uso | Un solo modelo para todo | `VOXA_MODEL_<USO>` permite elegir el modelo por uso sin tocar código. La elección queda como decisión de calidad, con su costo en [CASO_NEGOCIO.md](CASO_NEGOCIO.md) |
+| Duplicación | El simulacro sin IA y el puntaje de voz estaban duplicados (y desalineados) entre las dos versiones | `interview.js` y `audiofile.js` compartidos. La evaluación en vivo usa el mismo motor (incluida la estructura por método). Una corrección se aplica en las dos versiones a la vez |
+| Gasto gratuito | — | El link de claude.ai usa la cuenta de Claude de quien la abre: costo de IA 0 para VOXA |
+| Pruebas | 44 pruebas del motor y 18 de la API | **47 del motor y 20 de la API**, más recorridos en el navegador de ambas versiones |
+

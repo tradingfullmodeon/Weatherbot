@@ -12,11 +12,16 @@ export const INTERVIEW_PERSONA = {
 
 const MOTIVE_RE = /(?<!\p{L})(este puesto|el puesto|este rol|el rol|esta empresa|la empresa|el equipo|puedo aportar|aportar|mi experiencia|sé hacer|me especialicé|encaja)(?!\p{L})/iu;
 export const INTERVIEW_QUESTIONS = [
-  { id: 'motivo', text: 'Gracias. ¿Por qué te interesa este puesto?', expect: MOTIVE_RE, miss: 'Tu respuesta es general: conecta lo que buscas con este puesto o empresa y di qué puedes aportar («Mi experiencia en… me permite aportar…»).' },
-  { id: 'logro', text: 'Cuéntame de un logro del que estés orgulloso u orgullosa. ¿Qué hiciste tú, concretamente?', star: true },
-  { id: 'conflicto', text: 'Háblame de un conflicto con un compañero o compañera y cómo lo resolviste.', star: true },
-  { id: 'error', text: '¿Cuál es un error que cometiste y qué aprendiste?', star: true },
-  { id: 'cierre', text: 'Para terminar, ¿tienes alguna pregunta para mí?', expect: /\?|(?<!\p{L})(qué|cómo|cuál|cuándo)(?!\p{L})/iu, miss: 'Lleva preparada una pregunta para el final: muestra interés real.' },
+  { id: 'motivo', text: 'Gracias. ¿Por qué te interesa este puesto?', expect: MOTIVE_RE,
+    model: 'Me interesa porque el puesto combina dos cosas que hago bien: analizar datos y explicarlos simple. En mi práctica armé un tablero de ventas que el equipo usaba cada lunes, y quiero aportar eso aquí, donde las decisiones se toman con datos.', miss: 'Tu respuesta es general: conecta lo que buscas con este puesto o empresa y di qué puedes aportar («Mi experiencia en… me permite aportar…»).' },
+  { id: 'logro', text: 'Cuéntame de un logro del que estés orgulloso u orgullosa. ¿Qué hiciste tú, concretamente?', star: true,
+    model: 'En mi último trabajo, los pedidos llegaban tarde un 20% de las veces (situación). Mi tarea era bajar ese número en un trimestre (tarea). Revisé cada paso, propuse un control diario y capacité a tres compañeros (acción). En tres meses los atrasos bajaron al 6% (resultado).' },
+  { id: 'conflicto', text: 'Háblame de un conflicto con un compañero o compañera y cómo lo resolviste.', star: true,
+    model: 'En un proyecto de la universidad, un compañero entregaba tarde y el grupo se molestó (situación). Yo coordinaba y tenía que cumplir la fecha (tarea). Hablé a solas con él, le pregunté qué pasaba y acordamos dividir su parte en entregas semanales (acción). Terminamos un día antes y él siguió en el equipo (resultado).' },
+  { id: 'error', text: '¿Cuál es un error que cometiste y qué aprendiste?', star: true,
+    model: 'En mi práctica envié un informe con una cifra equivocada (situación). Tenía que corregirlo antes de la reunión con el cliente (tarea). Avisé de inmediato, envié la versión corregida y desde entonces reviso los números con una lista de control (acción). No volvió a pasar y ahora reviso los informes del equipo (resultado).' },
+  { id: 'cierre', text: 'Para terminar, ¿tienes alguna pregunta para mí?', expect: /\?|(?<!\p{L})(qué|cómo|cuál|cuándo)(?!\p{L})/iu, miss: 'Lleva preparada una pregunta para el final: muestra interés real.',
+    model: '¿Cómo se ve un muy buen primer trimestre en este puesto?' },
 ];
 
 const starOf = (text) => checkStructure(text, 'STAR');
@@ -70,7 +75,9 @@ export function interviewReportHTML(st) {
   const rows = INTERVIEW_QUESTIONS.filter(q => st.answers[q.id]).map(q => {
     const a = st.answers[q.id];
     const miss = q.star ? (starOf(a)?.parts.filter(p => !p.ok).map(p => p.part) || ['respuesta muy corta']) : q.expect && !q.expect.test(a) ? [q.miss] : [];
-    return `<li><strong>${esc(q.text.replace(/^Gracias\. /, ''))}</strong><br>${!miss.length ? '✓ Completa' : q.star ? `Faltó: ${esc(miss.join(', '))}` : esc(miss[0])}</li>`;
+    // Respuesta modelo para comparar e imitar (como las apps líderes de entrevistas).
+    const model = miss.length && q.model ? `<details><summary>Así podría sonar</summary><blockquote>${esc(q.model)}</blockquote></details>` : '';
+    return `<li><strong>${esc(q.text.replace(/^Gracias\. /, ''))}</strong><br>${!miss.length ? '✓ Completa' : q.star ? `Faltó: ${esc(miss.join(', '))}` : esc(miss[0])}${model}</li>`;
   });
   const counts = {};
   INTERVIEW_QUESTIONS.filter(q => q.star && st.answers[q.id]).forEach(q => (starOf(st.answers[q.id])?.parts || []).filter(p => !p.ok).forEach(p => { counts[p.part] = (counts[p.part] || 0) + 1; }));

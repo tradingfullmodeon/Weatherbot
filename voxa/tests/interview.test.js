@@ -23,3 +23,9 @@ test('las citas de la evaluación sólo se muestran si la persona las dijo', () 
   assert.ok(quoteSaid('subieron un 30 %', ['Las ventas subieron un 30% en seis meses.']));
   assert.ok(!quoteSaid('dupliqué las ventas', ['Las ventas subieron un 30%.']));
 });
+
+test('las respuestas modelo del simulacro cumplen su propia estructura STAR', async () => {
+  const { INTERVIEW_QUESTIONS } = await import('../prototype/interview.js');
+  const { checkStructure } = await import('../prototype/structure.js');
+  for (const q of INTERVIEW_QUESTIONS.filter(x => x.star)) assert.equal(checkStructure(q.model, 'STAR').score, 100, q.id);
+});

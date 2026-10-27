@@ -1142,7 +1142,7 @@ function renderGoalsBox() {
   // Quien viene por una situación con fecha (entrevista, charla, conversación) ve primero cómo prepararla.
   const eventCta = !validEvent(profile.event) && ['entrevista', 'presentaciones', 'conversaciones', 'ventas'].includes(profile.goal)
     ? `<div class="prompt" style="margin-bottom:10px"><strong>¿Tienes una fecha?</strong>Si tu entrevista, charla o reunión ya tiene día, arma tu plan hasta ese día con preguntas difíciles probables. <button class="linkish" data-go="evento">📅 Preparar mi evento</button></div>` : '';
-  $('goalsBox').innerHTML = eventCta + `<p class="note">Nivel ${esc(d.level)} · ${d.total} puntos · diagnóstico del ${new Date(d.date).toLocaleDateString('es')}</p>
+  $('goalsBox').innerHTML = eventCta + `<p class="note">${indexLine(profile.diagnoses)}</p>
     ${goalsHTML(profile.goals, loadSessions())}
     ${age >= 28 ? '<p style="margin-top:10px"><button class="linkish" data-go="diagnostico">🔁 Pasaron 4 semanas: repite el diagnóstico y compara</button></p>' : ''}`;
 }

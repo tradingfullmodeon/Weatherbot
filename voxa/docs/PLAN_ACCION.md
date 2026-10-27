@@ -61,19 +61,28 @@ Las tres ya se corrigieron en esta versión (ver [PANEL.md](PANEL.md)). Lo que m
 
 **Regla de decisión.** Cada viernes se corrige el problema más repetido de la semana. Si el NPS de la semana 2 es menor que 0, se pausan las invitaciones nuevas hasta corregirlo.
 
-### Fase 2: cerrar las brechas que quedan (semanas 3 a 8)
+### Fase 2 (potenciada): la app instalable más lo que el benchmark muestra que más valora la gente (semanas 3 a 11)
 
-| Prioridad | Acción | Criterio | Indicador de éxito |
-|---|---|---|---|
-| P0 | **Transcripción automática.** El link de claude.ai no puede usar el micrófono. Se publicará la app instalable con transcripción en el servidor (modelo de voz a texto en español) para que nadie tenga que escribir lo que dijo. | A6 | ≥ 80% de las grabaciones con texto |
-| P0 | **Roleplay por voz** en la app instalable: tocar para hablar y voz del personaje | A2 | ≥ 50% de los roleplays por voz |
-| P1 | **Calibración con profesores.** Los 6 docentes de la beta puntúan 50 grabaciones y se ajustan los rangos. Se publica el margen de error. | A6, A7 | Correlación ≥ 0,6 con los profesores |
-| P1 | **Diagnóstico paginado** (una afirmación por pantalla, con barra de progreso) y primera victoria en menos de 60 s | A3, A4 | ≥ 80% de quienes empiezan lo terminan |
-| P1 | **Pantalla de cierre** con celebración y «Mañana: …» | A4 | Retención al día 7 ≥ 25% |
-| P1 | **Notificaciones** de la app instalable, además del calendario | A4 | Igual que la anterior |
-| P2 | **Panel de expertos dentro de la app.** Tras cada ensayo, tres miradas breves (profesora, reclutador, psicóloga) con IA, cada una con su criterio | A7, A1 | Uso ≥ 30% de los reportes |
-| P2 | **Modo equipos (B2B).** Código de grupo, escenarios con el material de la empresa y resultados agregados y anónimos con consentimiento | Valor B2B | 2 pilotos con empresas |
-| P2 | **Voseo y modismos por país** en los textos (Argentina, Chile, México, España) | A9 | Comentarios positivos de esos países |
+El orden sigue el impacto en el valor percibido (barrido regional en [BENCHMARK.md](BENCHMARK.md) §5.2), el costo (ver [CASO_NEGOCIO.md](CASO_NEGOCIO.md)) y la regla «no agregar por agregar»: cada punto responde a una queja o a una mecánica que explica la nota de una app líder.
+
+| Prioridad | Acción | Por qué (evidencia) | Indicador | Estado |
+|---|---|---|---|---|
+| P0 | **App instalable** (Capacitor: iOS, Android y web) con micrófono y cámara en vivo ([APP_NATIVA.md](APP_NATIVA.md)) | Las 4 brechas principales la necesitan | En tiendas en 8–11 semanas | Diseño listo |
+| P0 | **Transcripción automática**: en el dispositivo y gratis, con respaldo en el servidor a US$0,003/min | Todas las líderes la tienen; es lo peor evaluado (A6 2,9) | ≥ 80% de las grabaciones con texto | Pendiente (app) |
+| P0 | **Roleplay por voz** (tocar para hablar y voz del personaje) | Speak, Praktika, Babbel Speak | ≥ 50% de los roleplays por voz | Ya existe en la versión completa; falta en la app |
+| P0 | **Plan gratis sin IA en el servidor, prueba de 7 días y precio medio** | Con IA gratis el margen es negativo (−86%) | Margen ≥ 35% | Definido en el caso de negocio |
+| P1 | **Índice VOXA** único que se vuelve a medir | Wellspoken Index, banda IELTS de Stimuler | Re-diagnóstico ≥ 40% al mes | ✅ Hecho |
+| P1 | **Modelos para imitar**: respuestas modelo y «Escuchar cómo sonaría» | BoldVoice, Cake, Mockee | Uso ≥ 30% de los reportes | ✅ Hecho |
+| P1 | **Técnicas por personaje** en la evaluación con IA, con citas verificadas | Pedido del panel; Yoodli (rúbricas) | — | ✅ Hecho |
+| P1 | **Cierre de la práctica** con avance de meta y «Mañana: …» | Duolingo: una racha de 7 días hace 2,4 veces más probable volver | Retención al día 7 ≥ 25% | ✅ Hecho; faltan las notificaciones (app) |
+| P1 | **Coach conectado al evento real** (empresa, audiencia, mensaje, preocupación) | Mockee, apps coreanas (preguntas desde el CV y la oferta) | — | ✅ Hecho |
+| P1 | **Calibración con profesores** (50 grabaciones) y un pequeño **estudio de eficacia** antes y después | Liulishuo lo usa como prueba; A7 3,6 | Correlación ≥ 0,6; mejora del índice ≥ 10 puntos en 4 semanas | Pendiente (beta) |
+| P1 | **Diagnóstico paginado** con primera victoria en 60 s | Panel (diseño) | ≥ 80% lo termina | Pendiente |
+| P2 | **Ejercicios generados desde tus errores** (IA) | Speak «Made for You», Preply | Uso semanal ≥ 25% | Pendiente |
+| P2 | **Modo equipos (B2B)**: código de grupo, material de la empresa, resultados agregados con consentimiento | 75% de la contribución proyectada; Yoodli, Speeko y ELSA venden asientos | 2–3 pilotos en el mes 6 | Pendiente |
+| P2 | **Recuperar la racha** y retos con amigos | Duolingo recuperó más de 15 M de rachas con una campaña | — | Pendiente |
+| P2 | **Voseo y modismos por país** | A9 3,5 | — | Pendiente |
+| No hacer | Copiloto «invisible» durante entrevistas reales | Final Round AI: riesgo ético y de reputación (Trustpilot 2,8) | — | Descartado |
 
 ### Fase 3: lanzamiento (semanas 8 a 12)
 

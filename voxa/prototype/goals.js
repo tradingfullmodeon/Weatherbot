@@ -208,9 +208,9 @@ export function diagnosisHTML(r, previous = null) {
     : `<li>En <strong>${esc(dimName(g.dim))}</strong> eres más exigente contigo (${g.self}) de lo que medimos (${g.measured}): lo haces mejor de lo que crees.</li>`).join('');
   return `
     <div class="score-big"><div class="ring" style="border:8px solid ${colorFor(r.total)}">${r.total}</div>
-      <div><div style="font-size:1.15rem;font-weight:700">Nivel ${esc(r.level)}</div>
+      <div><div style="font-size:1.15rem;font-weight:700">Índice VOXA ${r.total} · nivel ${esc(r.level)}</div>
       <div class="lead">${previous ? `Antes: ${previous.total} (nivel ${esc(previous.level)}). ${r.total - previous.total >= 0 ? '+' : ''}${r.total - previous.total} puntos.` : 'Este es tu punto de partida.'}</div>
-      <div class="note">Combina cómo te ves (40%) con lo que medimos en tus pruebas (60%).</div></div></div>
+      <div class="note">Tu índice de comunicación de 0 a 100: combina cómo te ves (40%) con lo que medimos en tus pruebas (60%). Vuelve a medirlo cada 4 semanas.</div></div></div>
     <canvas id="radar" width="520" height="420" aria-label="Perfil de comunicación por dimensión" style="width:100%;max-width:520px;height:auto;margin:8px auto;display:block"></canvas>
     <div class="fb">
       <div><h3 style="color:var(--good)">Tus fortalezas</h3><ul>${r.strengths.map(d => `<li>${esc(dimName(d))}${src(d)}</li>`).join('')}</ul></div>
@@ -221,6 +221,14 @@ export function diagnosisHTML(r, previous = null) {
       <div class="table-wrap"><table><thead><tr><th>Dimensión</th><th>Cómo te ves</th><th>Medido</th><th>Perfil</th></tr></thead><tbody>${rows}</tbody></table></div>
       <p class="note">«–» significa que esa dimensión todavía no se midió en una prueba: haz la prueba de voz o de escritura para completarla.</p>
     </details>`;
+}
+
+// Línea corta del Índice VOXA para Hoy: valor actual y cambio desde el primer diagnóstico.
+export function indexLine(diagnoses) {
+  const first = diagnoses?.[0], last = diagnoses?.at(-1);
+  if (!last) return '';
+  const d = diagnoses.length > 1 ? last.total - first.total : null;
+  return `Índice VOXA <strong>${last.total}</strong> · nivel ${esc(last.level)}${d != null ? ` · <span style="color:${d >= 0 ? 'var(--good)' : 'var(--bad)'}">${d >= 0 ? '+' : ''}${d} desde tu primer diagnóstico</span>` : ''} · ${new Date(last.date).toLocaleDateString('es')}`;
 }
 
 export function goalPickerHTML(suggestions) {

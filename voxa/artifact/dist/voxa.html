@@ -1811,9 +1811,9 @@ function diagnosisHTML(r, previous = null) {
     : `<li>En <strong>${esc(dimName(g.dim))}</strong> eres más exigente contigo (${g.self}) de lo que medimos (${g.measured}): lo haces mejor de lo que crees.</li>`).join('');
   return `
     <div class="score-big"><div class="ring" style="border:8px solid ${colorFor(r.total)}">${r.total}</div>
-      <div><div style="font-size:1.15rem;font-weight:700">Nivel ${esc(r.level)}</div>
+      <div><div style="font-size:1.15rem;font-weight:700">Índice VOXA ${r.total} · nivel ${esc(r.level)}</div>
       <div class="lead">${previous ? `Antes: ${previous.total} (nivel ${esc(previous.level)}). ${r.total - previous.total >= 0 ? '+' : ''}${r.total - previous.total} puntos.` : 'Este es tu punto de partida.'}</div>
-      <div class="note">Combina cómo te ves (40%) con lo que medimos en tus pruebas (60%).</div></div></div>
+      <div class="note">Tu índice de comunicación de 0 a 100: combina cómo te ves (40%) con lo que medimos en tus pruebas (60%). Vuelve a medirlo cada 4 semanas.</div></div></div>
     <canvas id="radar" width="520" height="420" aria-label="Perfil de comunicación por dimensión" style="width:100%;max-width:520px;height:auto;margin:8px auto;display:block"></canvas>
     <div class="fb">
       <div><h3 style="color:var(--good)">Tus fortalezas</h3><ul>${r.strengths.map(d => `<li>${esc(dimName(d))}${src(d)}</li>`).join('')}</ul></div>
@@ -1824,6 +1824,14 @@ function diagnosisHTML(r, previous = null) {
       <div class="table-wrap"><table><thead><tr><th>Dimensión</th><th>Cómo te ves</th><th>Medido</th><th>Perfil</th></tr></thead><tbody>${rows}</tbody></table></div>
       <p class="note">«–» significa que esa dimensión todavía no se midió en una prueba: haz la prueba de voz o de escritura para completarla.</p>
     </details>`;
+}
+
+// Línea corta del Índice VOXA para Hoy: valor actual y cambio desde el primer diagnóstico.
+function indexLine(diagnoses) {
+  const first = diagnoses?.[0], last = diagnoses?.at(-1);
+  if (!last) return '';
+  const d = diagnoses.length > 1 ? last.total - first.total : null;
+  return `Índice VOXA <strong>${last.total}</strong> · nivel ${esc(last.level)}${d != null ? ` · <span style="color:${d >= 0 ? 'var(--good)' : 'var(--bad)'}">${d >= 0 ? '+' : ''}${d} desde tu primer diagnóstico</span>` : ''} · ${new Date(last.date).toLocaleDateString('es')}`;
 }
 
 function goalPickerHTML(suggestions) {
@@ -1947,11 +1955,16 @@ const INTERVIEW_PERSONA = {
 
 const MOTIVE_RE = /(?<!\p{L})(este puesto|el puesto|este rol|el rol|esta empresa|la empresa|el equipo|puedo aportar|aportar|mi experiencia|sé hacer|me especialicé|encaja)(?!\p{L})/iu;
 const INTERVIEW_QUESTIONS = [
-  { id: 'motivo', text: 'Gracias. ¿Por qué te interesa este puesto?', expect: MOTIVE_RE, miss: 'Tu respuesta es general: conecta lo que buscas con este puesto o empresa y di qué puedes aportar («Mi experiencia en… me permite aportar…»).' },
-  { id: 'logro', text: 'Cuéntame de un logro del que estés orgulloso u orgullosa. ¿Qué hiciste tú, concretamente?', star: true },
-  { id: 'conflicto', text: 'Háblame de un conflicto con un compañero o compañera y cómo lo resolviste.', star: true },
-  { id: 'error', text: '¿Cuál es un error que cometiste y qué aprendiste?', star: true },
-  { id: 'cierre', text: 'Para terminar, ¿tienes alguna pregunta para mí?', expect: /\?|(?<!\p{L})(qué|cómo|cuál|cuándo)(?!\p{L})/iu, miss: 'Lleva preparada una pregunta para el final: muestra interés real.' },
+  { id: 'motivo', text: 'Gracias. ¿Por qué te interesa este puesto?', expect: MOTIVE_RE,
+    model: 'Me interesa porque el puesto combina dos cosas que hago bien: analizar datos y explicarlos simple. En mi práctica armé un tablero de ventas que el equipo usaba cada lunes, y quiero aportar eso aquí, donde las decisiones se toman con datos.', miss: 'Tu respuesta es general: conecta lo que buscas con este puesto o empresa y di qué puedes aportar («Mi experiencia en… me permite aportar…»).' },
+  { id: 'logro', text: 'Cuéntame de un logro del que estés orgulloso u orgullosa. ¿Qué hiciste tú, concretamente?', star: true,
+    model: 'En mi último trabajo, los pedidos llegaban tarde un 20% de las veces (situación). Mi tarea era bajar ese número en un trimestre (tarea). Revisé cada paso, propuse un control diario y capacité a tres compañeros (acción). En tres meses los atrasos bajaron al 6% (resultado).' },
+  { id: 'conflicto', text: 'Háblame de un conflicto con un compañero o compañera y cómo lo resolviste.', star: true,
+    model: 'En un proyecto de la universidad, un compañero entregaba tarde y el grupo se molestó (situación). Yo coordinaba y tenía que cumplir la fecha (tarea). Hablé a solas con él, le pregunté qué pasaba y acordamos dividir su parte en entregas semanales (acción). Terminamos un día antes y él siguió en el equipo (resultado).' },
+  { id: 'error', text: '¿Cuál es un error que cometiste y qué aprendiste?', star: true,
+    model: 'En mi práctica envié un informe con una cifra equivocada (situación). Tenía que corregirlo antes de la reunión con el cliente (tarea). Avisé de inmediato, envié la versión corregida y desde entonces reviso los números con una lista de control (acción). No volvió a pasar y ahora reviso los informes del equipo (resultado).' },
+  { id: 'cierre', text: 'Para terminar, ¿tienes alguna pregunta para mí?', expect: /\?|(?<!\p{L})(qué|cómo|cuál|cuándo)(?!\p{L})/iu, miss: 'Lleva preparada una pregunta para el final: muestra interés real.',
+    model: '¿Cómo se ve un muy buen primer trimestre en este puesto?' },
 ];
 
 const starOf = (text) => checkStructure(text, 'STAR');
@@ -2005,7 +2018,9 @@ function interviewReportHTML(st) {
   const rows = INTERVIEW_QUESTIONS.filter(q => st.answers[q.id]).map(q => {
     const a = st.answers[q.id];
     const miss = q.star ? (starOf(a)?.parts.filter(p => !p.ok).map(p => p.part) || ['respuesta muy corta']) : q.expect && !q.expect.test(a) ? [q.miss] : [];
-    return `<li><strong>${esc(q.text.replace(/^Gracias\. /, ''))}</strong><br>${!miss.length ? '✓ Completa' : q.star ? `Faltó: ${esc(miss.join(', '))}` : esc(miss[0])}</li>`;
+    // Respuesta modelo para comparar e imitar (como las apps líderes de entrevistas).
+    const model = miss.length && q.model ? `<details><summary>Así podría sonar</summary><blockquote>${esc(q.model)}</blockquote></details>` : '';
+    return `<li><strong>${esc(q.text.replace(/^Gracias\. /, ''))}</strong><br>${!miss.length ? '✓ Completa' : q.star ? `Faltó: ${esc(miss.join(', '))}` : esc(miss[0])}${model}</li>`;
   });
   const counts = {};
   INTERVIEW_QUESTIONS.filter(q => q.star && st.answers[q.id]).forEach(q => (starOf(st.answers[q.id])?.parts || []).filter(p => !p.ok).forEach(p => { counts[p.part] = (counts[p.part] || 0) + 1; }));
@@ -3585,7 +3600,7 @@ function renderGoalsBox() {
   // Quien viene por una situación con fecha (entrevista, charla, conversación) ve primero cómo prepararla.
   const eventCta = !validEvent(profile.event) && ['entrevista', 'presentaciones', 'conversaciones', 'ventas'].includes(profile.goal)
     ? `<div class="prompt" style="margin-bottom:10px"><strong>¿Tienes una fecha?</strong>Si tu entrevista, charla o reunión ya tiene día, arma tu plan hasta ese día con preguntas difíciles probables. <button class="linkish" data-go="evento">📅 Preparar mi evento</button></div>` : '';
-  $('goalsBox').innerHTML = eventCta + `<p class="note">Nivel ${esc(d.level)} · ${d.total} puntos · diagnóstico del ${new Date(d.date).toLocaleDateString('es')}</p>
+  $('goalsBox').innerHTML = eventCta + `<p class="note">${indexLine(profile.diagnoses)}</p>
     ${goalsHTML(profile.goals, loadSessions())}
     ${age >= 28 ? '<p style="margin-top:10px"><button class="linkish" data-go="diagnostico">🔁 Pasaron 4 semanas: repite el diagnóstico y compara</button></p>' : ''}`;
 }

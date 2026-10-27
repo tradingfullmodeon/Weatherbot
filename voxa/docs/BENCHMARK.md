@@ -6,7 +6,7 @@
 
 ---
 
-> Calificaciones de usuarios de 25 apps de la competencia, comparación con VOXA y plan de acción: [`CALIFICACIONES.md`](CALIFICACIONES.md). Auditoría técnica y pedagógica: [`AUDITORIA.md`](AUDITORIA.md).
+> Calificaciones de usuarios de 25 apps de la competencia, comparación con VOXA y plan de acción: [`CALIFICACIONES.md`](CALIFICACIONES.md). Auditoría técnica y pedagógica: [`AUDITORIA.md`](AUDITORIA.md). Economía unitaria y precios: [`CASO_NEGOCIO.md`](CASO_NEGOCIO.md). Qué falta para las apps: [`APP_NATIVA.md`](APP_NATIVA.md).
 
 ## 1. Resumen ejecutivo
 
@@ -179,6 +179,42 @@ Cada mejora responde a una brecha concreta. La columna "Estado" indica qué ya e
 | **Locke y Latham** (teoría de metas) | — | — | Metas claras y desafiantes, con compromiso, feedback y submetas para tareas complejas | Metas con criterio, plazo y «por qué», avance visible y práctica siguiente a un toque |
 
 Diferencia de VOXA: combina lo que la persona cree de sí misma con lo que se mide en una prueba real, y muestra la brecha. Así aparecen los puntos ciegos (te ves mejor de lo que suenas) y la autocrítica excesiva (lo haces mejor de lo que crees), algo que ninguno de los anteriores muestra junto.
+
+### 5.2 Barrido regional de las mejor calificadas (octubre de 2026): qué falta y qué profundizar
+
+| Región | Apps destacadas (calificación) | Lo que explica su nota y VOXA no tiene |
+|---|---|---|
+| **Asia** | Speak 4,8 · Cake 4,9 · ELSA 4,8 · Praktika 4,7 · Stimuler 4,7–4,8 (India, 4 M de instalaciones) · Liulishuo 4,5 · Speak Buddy (Japón) | Roleplay **por voz**. Lecciones **«Made for You»** generadas con tus errores (Speak). **Imitar clips reales** (Cake). Puntaje en una escala conocida, como la banda IELTS (Stimuler). **Estudio de eficacia** independiente (Liulishuo). Respuestas modelo en entrevistas coreanas (Mockee) |
+| **Europa** | Babbel 4,7 (Babbel Speak por voz con tareas visibles) · Busuu 4,5–4,6 (comunidad que corrige) · Preply 4,7 (la IA crea práctica entre clases) · Gymglish (lección diaria por email) · Vocal Image 4,5 (plan diario de 5–10 microejercicios) | Voz en el roleplay. Comunidad. Capa humana opcional. Rutina diaria corta de voz física |
+| **Américas** | BoldVoice 4,8 (el coach demuestra y luego practicas) · Yoodli 4,8 G2 (equipos, slides en el roleplay) · Wellspoken 4,8 (índice único) · Domestika 4,8 · Open English 4,7 | Demostración antes de practicar. **Índice único** fácil de recordar. Modo equipos. Producción profesional del contenido |
+| **Español** | No hay ninguna app de oratoria con tracción verificada. Interview Warmup de Google **sólo funciona en inglés** | — |
+
+**Las 10 brechas con más impacto en el valor percibido**, ordenadas:
+1. Transcripción automática.
+2. Roleplay por voz.
+3. App en tiendas con notificaciones.
+4. Cuentas y sincronización.
+5. Feedback por palabra o sonido, con un índice que se entienda fuera de la app.
+6. Modelos para imitar.
+7. Contenido generado desde tus errores.
+8. Juego y elementos sociales.
+9. Capa humana opcional.
+10. Modo equipos.
+
+Las cuatro primeras necesitan la app instalable ([APP_NATIVA.md](APP_NATIVA.md)).
+
+**Lo que VOXA ya tiene y conviene profundizar** (esta versión avanza en varios puntos):
+
+| Qué | Evidencia | Estado |
+|---|---|---|
+| Diagnóstico → **Índice VOXA** único (0–100), que se vuelve a medir cada 4 semanas | Wellspoken Index, banda IELTS de Stimuler | ✅ Índice VOXA visible en Hoy y en el diagnóstico, con el cambio desde el primero |
+| **Modelos para imitar** | BoldVoice, Cake, Mockee | ✅ Respuestas modelo STAR en el simulacro; «🔊 Escuchar cómo sonaría» con la reescritura del coach |
+| **Personajes**: tono, memoria y material compartido | Yoodli, Lily de Duolingo | ✅ La evaluación puntúa las técnicas propias de cada personaje, con citas verificadas; pendiente: memoria entre sesiones |
+| **Del error a la micro-lección** | Speak «Made for You», Preply | ✅ El foco enlaza la lección del método de la situación; pendiente: ejercicios generados con IA desde tu ensayo |
+| **Evento y simulador** con preguntas desde el CV o la oferta | Mockee, apps coreanas | ✅ Preguntas personalizadas con IA y el coach conectado a tu evento real |
+| **Hábito diario corto** | Vocal Image, Duolingo | ✅ Semana visible, cierre de la práctica con «Mañana: …»; pendiente: recuperar la racha y notificaciones |
+
+Fuentes: [Speak](https://recurdash.com/subscription-pricing/speak), [Stimuler](https://apps.apple.com/app/id1627501632), [Praktika (TechCrunch)](https://techcrunch.com/2024/05/22/praktika-raises-35-5m-to-use-ai-avatars-to-make-learning-languages-feel-more-natural), [Liulishuo (Bedfordshire)](https://www.beds.ac.uk/news/2019/august/app-transforming-english-learning-says-new-bedfordshire-study/), [Babbel Speak](https://www.babbel.com/press/en-us/releases/babbel-speak), [Busuu](https://uk.trustpilot.com/review/www.busuu.com?page=4), [Preply](https://openai.com/kn-IN/index/preply/), [Vocal Image (Sacra)](https://sacra.com/research/vocal-image), [BoldVoice](https://pulse2.com/boldvoice-21-million-series-a/), [Yoodli](https://yoodli.ai/blog), [Wellspoken](https://www.capterra.co.uk/software/1216209/Wellspoken), [Domestika](https://apppricinglab.com/app/apple/1444399346), [Open English](https://apps.apple.com/us/app/open-english-learn-english/id1434101832), [Interview Warmup](https://www.genbeta.com/web/google-presenta-interview-warmup-inteligencia-artificial-gratis-para-entrenar-tus-respuestas-a-entrevistas-trabajo), [Duolingo Max](https://blog.duolingo.com/duolingo-max). Precios y economía unitaria en [CASO_NEGOCIO.md](CASO_NEGOCIO.md).
 
 ## 6. Posicionamiento
 

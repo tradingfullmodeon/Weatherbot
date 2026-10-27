@@ -12,6 +12,8 @@ Plataforma para mejorar cómo se comunica una persona (confianza, desarrollo pro
 | [`docs/CALIFICACIONES.md`](docs/CALIFICACIONES.md) | Calificaciones de usuarios de 25 apps de la competencia (App Store, Google Play, G2, Trustpilot), qué hace que una app tenga 4,7 o más y qué la hunde, cómo sale VOXA en esos criterios y plan de acción por brecha. |
 | [`docs/PANEL.md`](docs/PANEL.md) | Panel experto simulado (profesora de oratoria, coach ejecutivo, psicóloga, diseñadora de producto, investigador en voz e IA y una usuaria principiante): método, puntajes por ronda y qué se corrigió. |
 | [`docs/PLAN_ACCION.md`](docs/PLAN_ACCION.md) | Plan para subir la calificación y llegar a las primeras 30 personas: a quiénes invitar, mensaje de invitación listo, guía de prueba de 7 días, indicadores y reglas de decisión. |
+| [`docs/APP_NATIVA.md`](docs/APP_NATIVA.md) | Qué se necesita para tener VOXA en iOS, Android y web con todas las funcionalidades: arquitectura (Capacitor y el servidor actual), componentes, requisitos de tiendas, plan de 8–11 semanas y costos. |
+| [`docs/CASO_NEGOCIO.md`](docs/CASO_NEGOCIO.md) | Mini caso de negocio: costo por usuario, precios frente a la competencia, margen, valor de vida, punto de equilibrio y proyección a 18 meses. El modelo reproducible está en `docs/negocio/modelo.py`. |
 | [`docs/AUDITORIA.md`](docs/AUDITORIA.md) | Auditoría técnica y pedagógica: hallazgos, cómo se reproducían, correcciones y temas abiertos. |
 | [`docs/UX.md`](docs/UX.md) | Revisión de usabilidad: 14 problemas y su solución, principios de diseñadores y comunicadores aplicados, benchmark de UX con las apps mejor valoradas e indicadores antes/después. |
 | [`docs/ESTRATEGIA.md`](docs/ESTRATEGIA.md) | Metodologías de comunicación y aprendizaje, lenguaje no verbal basado en evidencia, competencias y niveles, canales, motor de evaluación, arquitectura, privacidad y regulación, sprint de 30 días, modelo de negocio, plan de desarrollo e indicadores. |
@@ -54,7 +56,7 @@ uvicorn app:app --port 8000
 
 Sólo el prototipo, sin servidor: `cd voxa/prototype && python3 -m http.server 8000`. Todo funciona igual menos el coach IA (el roleplay usa un entrevistador con preguntas fijas y la escritura sólo hace la revisión instantánea).
 
-El modelo se configura con `VOXA_MODEL` (por defecto `claude-opus-5-5`). Las llamadas usan salida JSON con esquema estricto y `fallbacks: "default"` ante rechazos del modelo.
+El modelo se configura con `VOXA_MODEL` (por defecto `claude-opus-5-5`) y se puede elegir por uso con `VOXA_MODEL_FEEDBACK`, `VOXA_MODEL_ROLEPLAY`, `VOXA_MODEL_EVALUATE`, `VOXA_MODEL_WRITING` y `VOXA_MODEL_EVENT`. `/api/status` muestra los tokens y el costo estimado por uso. Las llamadas usan salida JSON con esquema estricto y `fallbacks: "default"` ante rechazos del modelo.
 
 Pruebas:
 - Servidor, con un cliente de Anthropic simulado y sin consumir la API: `cd voxa/server && python3 -m pytest -q`.
