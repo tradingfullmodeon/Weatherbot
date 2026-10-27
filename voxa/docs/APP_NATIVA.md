@@ -13,7 +13,7 @@ Hoy existen dos versiones:
 | Roleplay por voz | ✗ (por texto) | ✅ tocar para hablar |
 | Lenguaje corporal | 4 fotogramas revisados por IA | ✅ en vivo (MediaPipe) |
 | Gimnasio de voz y audiencia virtual | ✗ | ✅ |
-| Coach IA | ✅ con la cuenta de Claude de quien la abre (**costo 0 para nosotros**) | ✅ con nuestra clave en el servidor (costo nuestro) |
+| Coach IA | Demo: usa la cuenta de Claude de quien la abre | ✅ **IA de VOXA incluida**: nuestra clave en el servidor, con cupos por plan y tope de gasto mensual |
 | Cuentas y sincronización | ✗ (todo en el navegador) | ✗ (todo en el navegador) |
 | Notificaciones | ✗ (calendario) | ✗ (calendario o .ics) |
 | Pagos | ✗ | ✗ |
@@ -90,7 +90,41 @@ Las dos brechas que más bajan la calificación son la **transcripción automát
 - **No es una app de salud:** el modo calma y las líneas de ayuda acompañan, no diagnostican. Se mantiene el aviso de que VOXA no reemplaza una terapia.
 - **Protección de datos:** política de privacidad y términos en español, cumplimiento de las leyes de cada país donde se distribuya (por ejemplo, el RGPD en España) y acuerdo de tratamiento de datos para clientes empresa.
 
+## 3.4 La IA, incluida y controlada (ya implementado en el servidor)
+
+```
+Teléfono / navegador ──(texto, métricas; nunca la clave)──► Servidor VOXA ──► Claude (API de Anthropic)
+                                                              │
+                                    cupos por plan · tope de gasto del mes · medición por uso
+```
+
+- **La clave de Anthropic vive sólo en el servidor** (variable de entorno). La app nunca la ve, así que nadie la puede copiar desde el teléfono.
+- **Planes** (`server/quotas.py`):
+
+  | Plan | Cupo de IA |
+  |---|---|
+  | `gratis` | Sin IA en el servidor (el análisis local sigue completo) |
+  | `prueba` | 7 días: 15 consejos, unos 10 roleplays, 6 evaluaciones, 6 correos y 2 eventos |
+  | `pro` | Uso justo mensual: 60 consejos, unos 50 roleplays, 30 evaluaciones, 30 correos y 10 eventos |
+
+  Al superar el cupo, la app muestra un mensaje claro y nunca se corta a mitad de una práctica.
+- **Tope de gasto total** con `VOXA_MONTHLY_BUDGET_USD`. Si se alcanza, el coach se pausa con un aviso y el análisis local sigue funcionando. Conviene fijar además un límite de gasto en la consola de Anthropic.
+- **Quién es quién:** hoy, un identificador anónimo del dispositivo (`X-VOXA-User`). Con cuentas, el id de la cuenta. Los pagos (RevenueCat o la web) llaman a `set_plan` al confirmar una compra o una baja.
+- **`/api/me`** le dice a la app el plan y los cupos que quedan, y **`/api/status`** muestra el gasto del mes y por uso.
+- **Lenguaje corporal en la app:** se mide en vivo en el teléfono (MediaPipe), sin costo de IA. El análisis de fotogramas con IA queda sólo para videos subidos.
+
 ## 4. Plan de trabajo y costo de construcción
+
+**Paso 0 (1 día): publicar ya la versión completa con nuestra IA en la web.**
+- Qué incluye: el servidor más la app en un solo servicio, con `Dockerfile` y `render.yaml` en `voxa/`.
+- Qué se obtiene: un link https con micrófono y cámara en vivo, coach IA incluido y app instalable desde el navegador (PWA). Todo, menos las tiendas y los pagos.
+- Costo: unos US$7–25 al mes de servidor, más la IA que se use, con tope.
+
+Pasos:
+1. Crear la cuenta de API en la consola de Anthropic, cargar crédito, fijar un límite de gasto y crear una clave.
+2. En Render: New → Blueprint → este repositorio, y pegar la clave en `ANTHROPIC_API_KEY`.
+3. Abrir el link https e invitar a la beta. Cada persona recibe automáticamente la prueba de 7 días.
+
 
 | Etapa | Qué se entrega | Duración estimada (1 desarrollador full-stack) |
 |---|---|---|

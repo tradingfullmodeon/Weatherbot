@@ -44,6 +44,16 @@ Como Pages no ejecuta el servidor, el coach IA no está disponible ahí (todo lo
 
 Para regenerarla tras cambiar el prototipo: `python3 voxa/artifact/build.py` (combina `prototype/shared.js`, `prototype/scenarios.js`, `prototype/lessons.js`, `prototype/writing.js`, `prototype/events.js`, `prototype/goals.js`, `prototype/voxa.css` y `server/personas.py` con `artifact/app.js` en `artifact/dist/voxa.html`).
 
+## Publicar la versión completa con la IA de VOXA (un solo servicio)
+
+La IA la pone VOXA: la clave de Anthropic vive sólo en el servidor y cada persona tiene cupos según su plan (`server/quotas.py`: gratis sin IA, prueba de 7 días y Pro con uso justo), más un tope de gasto mensual (`VOXA_MONTHLY_BUDGET_USD`).
+
+Para publicarla en Render:
+1. New → Blueprint → este repositorio (usa `voxa/render.yaml` y `voxa/Dockerfile`).
+2. Carga `ANTHROPIC_API_KEY` en el panel.
+
+Se obtiene un link https con micrófono y cámara en vivo, coach IA incluido y app instalable desde el navegador. `/api/me` muestra el plan y los cupos que le quedan a cada persona; `/api/status` muestra el gasto del mes.
+
 ## Ejecutar la versión completa
 
 ```bash

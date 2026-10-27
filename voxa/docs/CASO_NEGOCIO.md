@@ -4,17 +4,20 @@ Octubre de 2026. El modelo es reproducible: los supuestos están en [`negocio/mo
 
 ## En simple: qué cuesta y cuándo
 
-**Hoy no pagas nada.** El link de claude.ai funciona con la cuenta de Claude de cada visitante, así que la IA no te cuesta. No hay servidor que mantener.
+**La IA la pone VOXA, incluida en la app.** La persona no necesita ninguna cuenta de IA. La clave de Anthropic vive sólo en el servidor de VOXA, y nosotros pagamos cada llamada. Todos los costos de este documento ya lo suponen.
+
+El link de claude.ai es sólo una **demo** para mostrar la idea: allí la IA corre con la cuenta de quien la abre. **No es el producto.**
 
 Los **US$3.000 al mes no son un costo obligatorio.** Eran un escenario: lo que costaría pagarle a un desarrollador y a un creador de contenido a medio tiempo. Hay un escenario mucho más barato.
 
 | Tipo de costo | Cuándo aparece | Cuánto |
 |---|---|---|
-| Probar con las primeras 30 personas | Ahora | **US$0** (link de claude.ai) |
+| Probar con las primeras 30 personas | Ahora | Versión completa en la web con nuestra IA: servidor US$7–25 al mes + IA de unos US$1,6 por persona activa (≈ US$50 al mes con 30 personas). Tope de gasto configurable: `VOXA_MONTHLY_BUDGET_USD` |
 | Construir la app instalable | Una vez, si decides hacerla | Tu tiempo con un asistente de programación con IA (8–11 semanas) **o** un desarrollador freelance |
 | Publicar en tiendas | Al lanzar | Apple US$99 al año + Google US$25 una vez (≈ US$10 al mes) |
 | Servidor y base de datos | Cuando la app esté publicada | US$30–80 al mes al inicio |
-| IA y transcripción | Sólo cuando alguien la usa | Unos US$1,6 al mes por cada persona que paga, con la máxima calidad (Opus 5.5) |
+| IA y transcripción | Sólo cuando alguien la usa (la pagamos nosotros) | Unos US$1,6 al mes por cada persona que paga, con la máxima calidad (Opus 5.5). El plan gratis no usa IA en el servidor y la prueba tiene cupos |
+| Cuenta de Anthropic (API) | Al publicar | Pago por uso, sin mensualidad; se carga crédito y se fijan límites de gasto |
 
 **Con la operación «solo»** (fundador más IA para programar, unos US$150 al mes de fijos) y el precio medio:
 - se cubren los costos con **unos 140 pagadores, o 33 asientos de empresa**;
@@ -59,7 +62,12 @@ Precios de Claude: Opus 5.5 US$4/20, Sonnet 5.5 US$2/10 y Haiku 5.5 US$0,10/0,50
 
 Los tokens son estimaciones del código de los prompts. Con la app en uso, el servidor ya mide el gasto real por uso en `/api/status`, y conviene reemplazar estas cifras por las medidas.
 
-> **El link de claude.ai cuesta US$0 de IA para VOXA**, porque usa la cuenta de Claude de cada visitante. Sirve como versión gratuita y como canal de captación mientras se construye la app.
+> **En el producto, la IA la paga VOXA.** El servidor controla el gasto en tres niveles:
+> 1. Cupos por plan: gratis sin IA, prueba de 7 días con cupos, Pro con uso justo.
+> 2. Tope de gasto total del mes.
+> 3. Medición del costo real por uso (`/api/status`).
+>
+> El link de claude.ai queda sólo como demo.
 
 ### 2.2 Costo mensual de una persona que paga
 
@@ -166,7 +174,7 @@ Con este ritmo, lo invertido se recupera alrededor del mes 22. El 75% de la cont
 
 ## 6. Recomendación
 
-1. **Mantener el link de claude.ai como versión gratuita y canal de prueba** (IA a costo cero) mientras se construye la app ([APP_NATIVA.md](APP_NATIVA.md), 8–11 semanas).
+1. **Publicar ya la versión completa en la web con nuestra IA** (servidor más app en un solo servicio, con cupos y tope de gasto; ver [APP_NATIVA.md](APP_NATIVA.md) §4, paso 0) para la beta. En paralelo, construir la app de tiendas (8–11 semanas).
 2. **En la app:** plan gratis sin IA en el servidor, prueba de 7 días con IA completa, precio medio y pagos honestos.
 3. **Salir a vender pilotos B2B desde el mes 3** a universidades y empresas medianas en LatAm, con precio de US$8–12 por asiento.
 4. **Decidir el modelo de IA por uso con datos.** Medir el costo real de las primeras 200 sesiones y la calidad con el panel. Si Sonnet 5.5 mantiene la calidad en algún uso, el margen al consumidor sube de 3% a 47%.

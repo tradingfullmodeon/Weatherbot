@@ -1,0 +1,25 @@
+# Despliegue en Render (https://render.com): un servicio web con disco para los cupos y el gasto.
+# 1) New + → Blueprint → este repositorio. 2) Cargar ANTHROPIC_API_KEY en el panel (no se guarda aquí).
+services:
+  - type: web
+    name: voxa
+    runtime: docker
+    rootDir: voxa
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    healthCheckPath: /api/status
+    disk:
+      name: voxa-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: VOXA_MODEL
+        value: claude-opus-5-5
+      - key: VOXA_DEFAULT_PLAN
+        value: prueba
+      - key: VOXA_MONTHLY_BUDGET_USD
+        value: "50"
+      - key: VOXA_RATE_LIMIT
+        value: "30"

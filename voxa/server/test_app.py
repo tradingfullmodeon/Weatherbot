@@ -30,8 +30,10 @@ api = TestClient(voxa.app)
 
 
 @pytest.fixture(autouse=True)
-def _reset_rate_limit():
+def _reset_rate_limit(tmp_path, monkeypatch):
     voxa._hits.clear()
+    monkeypatch.setenv("VOXA_DB", str(tmp_path / "voxa.db"))   # cupos y gasto en una base temporal por prueba
+    monkeypatch.setenv("VOXA_DEFAULT_PLAN", "pro")
     yield
 
 FEEDBACK = {
@@ -193,3 +195,28 @@ def test_usage_is_measured_per_route_and_roleplay_caches_history(monkeypatch):
     assert st["usage"]["roleplay"]["calls"] == 2
     # 1000 entrada + 500 salida: Opus 0,014 USD + Sonnet 0,007 USD
     assert abs(st["usage"]["roleplay"]["usd"] - 0.021) < 1e-6
+
+
+def test_plans_quotas_and_monthly_budget(monkeypatch):
+    fake_client(monkeypatch, FEEDBACK)
+    body = {"scenario": "E", "method": "STAR", "prompt": "P"}
+    # Plan gratis: sin IA en el servidor (el análisis local sigue en el teléfono).
+    voxa.quotas.set_plan("usuario_gratis1", "gratis")
+    r = api.post("/api/feedback", json=body, headers={"X-VOXA-User": "usuario_gratis1"})
+    assert r.status_code == 402 and "Pro" in r.json()["detail"]
+    # Prueba de 7 días: cupo de 15 consejos; al agotarlo, 402.
+    voxa.quotas.set_plan("usuario_prueba1", "prueba", until=__import__("time").time() + 3600)
+    monkeypatch.setitem(voxa.quotas.PLANS["prueba"], "feedback", 2)
+    codes = [api.post("/api/feedback", json=body, headers={"X-VOXA-User": "usuario_prueba1"}).status_code for _ in range(3)]
+    assert codes == [200, 200, 402]
+    me = api.get("/api/me", headers={"X-VOXA-User": "usuario_prueba1"}).json()
+    assert me["plan"] == "prueba" and me["remaining"]["feedback"] == 0
+    # Prueba vencida: pasa a gratis.
+    voxa.quotas.set_plan("usuario_prueba2", "prueba", until=1.0)
+    assert api.get("/api/me", headers={"X-VOXA-User": "usuario_prueba2"}).json()["plan"] == "gratis"
+    # Tope de gasto mensual: con el presupuesto agotado, el coach se pausa con un mensaje claro.
+    monkeypatch.setenv("VOXA_MONTHLY_BUDGET_USD", "0.01")
+    r = api.post("/api/feedback", json=body, headers={"X-VOXA-User": "usuario_pro_0001"})
+    assert r.status_code == 503
+    assert api.get("/api/status").json()["spent_this_month_usd"] > 0
+

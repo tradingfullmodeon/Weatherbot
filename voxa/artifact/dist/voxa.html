@@ -899,8 +899,16 @@ function aiStatus() {
   statusPromise ??= fetch('api/status').then(r => r.ok ? r.json() : { ai: false }).catch(() => ({ ai: false }));
   return statusPromise;
 }
+// Identificador anónimo del dispositivo: el servidor lo usa para los cupos del plan (hasta que haya cuentas).
+function deviceId() {
+  try {
+    let id = localStorage.getItem('voxa.device');
+    if (!id) { id = 'd' + crypto.getRandomValues(new Uint32Array(4)).join('').slice(0, 30); localStorage.setItem('voxa.device', id); }
+    return id;
+  } catch { return ''; }
+}
 async function postJSON(path, body) {
-  const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-VOXA-User': deviceId() }, body: JSON.stringify(body) });
   if (!r.ok) {
     let detail = `Error ${r.status}`;
     try { detail = (await r.json()).detail || detail; } catch {}
