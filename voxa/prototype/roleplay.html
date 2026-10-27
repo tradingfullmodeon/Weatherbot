@@ -92,23 +92,16 @@ import {
   $, FILLER_RE, countMatches, wordCount, mean, esc, colorFor, highlight, renderNav, saveSession, aiStatus, postJSON, userLocale,
 } from './shared.js';
 import { unblockHelp } from './devices.js';
+import { INTERVIEW_PERSONA, createInterview, currentQuestion, interviewNext, interviewHint, interviewProgress, interviewScore, interviewReportHTML, quoteSaid } from './interview.js';
+import { isCrisis } from './help.js';
 
 renderNav();
 const locale = userLocale();
 
-// Modo sin IA: entrevista con banco de preguntas por competencias.
-const OFFLINE_PERSONA = {
-  id: 'offline', name: 'Entrevistador VOXA', role: 'entrevista por competencias (modo sin IA)',
-  scenario: 'Entrevista de trabajo con preguntas fijas.', goal: 'Responder cada pregunta con STAR y resultados concretos.',
-  skills: ['STAR', 'resultados medibles'], opening: 'Hola, gracias por tu tiempo. Cuéntame brevemente sobre ti.',
-};
-const OFFLINE_QUESTIONS = [
-  'Gracias. ¿Por qué te interesa este puesto?',
-  'Cuéntame de un logro del que estés orgulloso u orgullosa. ¿Qué hiciste tú, concretamente?',
-  'Háblame de un conflicto con un compañero o compañera y cómo lo resolviste.',
-  '¿Cuál es un error que cometiste y qué aprendiste?',
-  'Para terminar, ¿tienes alguna pregunta para mí?',
-];
+// Modo sin IA: simulacro de entrevista compartido con la versión publicada (interview.js).
+const OFFLINE_PERSONA = INTERVIEW_PERSONA;
+let offline = createInterview();
+const userTexts = () => history.filter(t => t.role === 'user').map(t => t.text);
 
 let personas = [], persona = null, ai = false;
 let history = [];               // {role: 'user'|'persona', text, ms?}
@@ -141,7 +134,7 @@ function pick(id) {
 }
 
 $('btnBegin').addEventListener('click', () => {
-  history = []; userSpeechMs = 0;
+  history = []; userSpeechMs = 0; offline = createInterview();
   $('chat').innerHTML = ''; $('hint').textContent = '';
   $('stage').style.display = 'block'; $('report').style.display = 'none';
   addTurn('persona', persona.opening);
@@ -237,6 +230,8 @@ let busy = false;
 async function send(ms) {
   const text = $('txt').value.trim();
   if (!text || busy || !persona) return;
+  // Detección local de crisis (funciona con o sin IA): pausa la práctica y muestra ayuda.
+  if (isCrisis(text)) { $('status').innerHTML = 'Lo que dijiste suena a un momento muy difícil. No tienes que pasarlo sola ni solo: en <a href="index.html#ayuda">Hoy → «¿Te sientes muy mal?»</a> hay líneas de ayuda gratuitas.'; return; }
   $('txt').value = '';
   userSpeechMs += ms;
   addTurn('user', text, ms);
@@ -250,22 +245,15 @@ async function send(ms) {
       if (out.end) $('status').textContent = 'La conversación llegó a un cierre. Pulsa «Terminar y evaluar».';
       else $('status').textContent = '';
     } else {
-      const n = history.filter(t => t.role === 'user').length;
-      const next = OFFLINE_QUESTIONS[n - 1];
+      const asked = currentQuestion(offline);
+      const next = interviewNext(offline, text, userTexts());
       if (next) addTurn('persona', next);
-      $('hint').textContent = $('showHints').checked ? '💡 ' + offlineHint(text) : '';
-      $('status').textContent = next ? '' : 'Fin de la entrevista. Pulsa «Terminar y evaluar».';
+      $('hint').textContent = $('showHints').checked ? '💡 ' + interviewHint(text, asked) : '';
+      $('status').textContent = next ? interviewProgress(offline) : 'Fin del simulacro. Pulsa «Terminar y evaluar».';
     }
   } catch (e) {
     $('status').textContent = 'Error: ' + e.message;
   } finally { busy = false; }
-}
-function offlineHint(text) {
-  const w = wordCount(text);
-  if (w < 25) return 'Desarrolla más: da un ejemplo concreto (Situación y Acción).';
-  if (!/\d/.test(text)) return 'Añade un resultado medible: un número, porcentaje o plazo.';
-  if (countMatches(text, FILLER_RE) > 2) return 'Cambia las muletillas por una pausa breve.';
-  return 'Buen desarrollo. Cierra cada respuesta con el resultado.';
 }
 
 // Rebobinar: elimina tu última intervención (y la respuesta que provocó) para intentarlo otra vez.
@@ -305,10 +293,11 @@ async function endRoleplay() {
       });
     } catch (e) { $('status').textContent = 'Evaluación IA no disponible: ' + e.message; }
   }
-  const scores = ev ? ev.scores : local;
-  // Con IA, lograr el objetivo de la conversación pesa 40%.
-  const { logro_objetivo: goalScore, ...rest } = scores;
-  const total = Math.round(goalScore != null ? 0.4 * goalScore + 0.6 * mean(Object.values(rest)) : mean(Object.values(scores)));
+  let scores = ev ? ev.scores : local, total;
+  // Con IA, lograr el objetivo de la conversación pesa 40%; el simulacro sin IA pondera la estructura STAR.
+  if (ev) { const { logro_objetivo: goalScore = 0, ...rest } = scores; total = Math.round(0.4 * goalScore + 0.6 * mean(Object.values(rest))); }
+  else if (persona.id === 'offline') ({ scores, total } = interviewScore(offline, scores));
+  else total = Math.round(mean(Object.values(scores)));
   saveSession({
     id: Date.now().toString(36), date: new Date().toISOString(), type: 'roleplay',
     scenario: 'roleplay:' + persona.id, scenarioName: 'Roleplay: ' + persona.name, total, dims: scores,
@@ -334,18 +323,19 @@ function renderEval(total, scores, c, ev) {
   const bars = Object.entries(scores).map(([k, v]) =>
     `<div class="dim"><div>${esc(k.replace(/_/g, ' '))} <strong style="float:right">${v}</strong></div><div class="bar"><div style="width:${v}%;background:${colorFor(v)}"></div></div></div>`).join('');
   const head = `<div class="score-big"><div class="ring" style="border:8px solid ${colorFor(total)}">${total}</div>
-    <div><div style="font-weight:600">${esc(persona.name)} · dificultad ${$('difficulty').value}/3</div>
+    <div><div style="font-weight:600">${esc(persona.name)}${persona.id === 'offline' ? '' : ` · dificultad ${$('difficulty').value}/3`}</div>
     <div class="note">Hablaste el ${Math.round(c.talkRatio * 100)}% del tiempo · ${c.questions} ${c.questions === 1 ? 'intervención' : 'intervenciones'} con preguntas · ${c.fillers} muletillas</div></div></div>
     <div class="dims">${bars}</div>`;
   const interview = ['offline', 'reclutadora'].includes(persona.id);
+  if (!ev && persona.id === 'offline') return head + interviewReportHTML(offline);
   if (!ev) return head + `<div class="fb"><div><h3>Siguiente paso</h3>${!interview && c.talkRatio > 0.7
     ? 'Hablaste mucho más que tu interlocutor: practica hacer una pregunta abierta y escuchar.'
     : !interview && c.questions === 0 ? 'No hiciste preguntas: en tu próxima práctica incluye al menos dos preguntas abiertas.'
     : 'Repite la conversación en dificultad más alta y apunta a respuestas con resultados concretos.'}</div></div>`;
   return head + `<div class="ai-box">
     <p>${esc(ev.summary)}</p>
-    <h3 style="color:var(--good)">Tu mejor momento</h3><blockquote>«${esc(ev.best_moment.quote)}»</blockquote><p>${esc(ev.best_moment.why)}</p>
-    <h3 style="color:var(--mid)">Oportunidad perdida</h3><blockquote>«${esc(ev.missed_moment.quote)}»</blockquote><p><strong>Mejor:</strong> ${esc(ev.missed_moment.better)}</p>
+    <h3 style="color:var(--good)">Tu mejor momento</h3>${quoteSaid(ev.best_moment.quote, userTexts()) ? `<blockquote>«${esc(ev.best_moment.quote)}»</blockquote>` : ''}<p>${esc(ev.best_moment.why)}</p>
+    <h3 style="color:var(--mid)">Oportunidad perdida</h3>${quoteSaid(ev.missed_moment.quote, userTexts()) ? `<blockquote>«${esc(ev.missed_moment.quote)}»</blockquote>` : ''}<p><strong>Mejor:</strong> ${esc(ev.missed_moment.better)}</p>
     <h3>Técnicas que usaste</h3><div class="chips">${ev.techniques_used.map(t => `<span class="chip">${esc(t)}</span>`).join('') || '<span class="note">Ninguna identificada</span>'}</div>
     <h3 style="color:var(--accent)">Siguiente paso</h3><p>${esc(ev.next_step)}</p>
     ${ev.safety_note ? `<p class="note">${esc(ev.safety_note)}</p>` : ''}</div>`;

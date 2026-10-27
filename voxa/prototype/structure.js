@@ -76,8 +76,8 @@ function stSbi(text) {
 const ST_CHECKERS = [[/^PREP/, stPrep], [/^STAR/, stStar], [/^BLUF/, stBluf], [/^SBI/, stSbi]];
 
 // Devuelve { method, parts: [{part, ok, tip}], score } o null si el método no tiene revisión local.
-export function checkStructure(text, method = '') {
-  if (wordCount(text) < 15) return null;
+export function checkStructure(text, method = '', { minWords = 15 } = {}) {
+  if (wordCount(text) < minWords) return null;
   const fn = ST_CHECKERS.find(([re]) => re.test(method))?.[1];
   if (!fn) return null;
   const parts = fn(text);

@@ -35,6 +35,7 @@ def main() -> None:
         as_script(ROOT / "prototype" / "events.js"),
         as_script(ROOT / "prototype" / "goals.js"),
         as_script(ROOT / "prototype" / "structure.js"),
+        as_script(ROOT / "prototype" / "interview.js"),
         as_script(ROOT / "prototype" / "audiofile.js"),
         as_script(ROOT / "prototype" / "help.js"),
         as_script(ROOT / "prototype" / "feedback.js"),

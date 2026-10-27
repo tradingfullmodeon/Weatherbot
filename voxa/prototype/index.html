@@ -80,6 +80,9 @@
     <div class="btns"><button id="remindIcs" class="cta">📅 Agregar a mi calendario</button><a class="btn-link file-btn" id="remindGoogle" target="_blank" rel="noopener">Google Calendar</a></div>
   </section>
 
+  <details class="card full help-card" id="ayuda"><summary>💙 ¿Te sientes muy mal?</summary><div id="helpBox"></div></details>
+  <details class="card full help-card"><summary>🧭 Buscar un profesional</summary><div id="proBox"></div></details>
+
   <section class="card" id="dispositivos">
     <h2>Tus dispositivos</h2>
     <div id="deviceCheck"></div>
@@ -103,6 +106,7 @@ import { LESSONS } from './lessons.js';
 import { EVENT_TYPES, validEvent, daysUntil, nextEventPractice } from './events.js';
 import { goalsHTML, goalHref, goalOfTheDay } from './goals.js';
 import { googleCalendarUrl, icsReminder } from './reminder.js';
+import { helpHTML, professionalHTML } from './help.js';
 
 mountDeviceCheck($('deviceCheck'));
 
@@ -199,6 +203,10 @@ document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-goal-next]'); if (!b) return;
   const g = (profile.goals || []).find(x => x.id === b.dataset.goalNext); if (g) location.href = goalHref(g);
 });
+
+// ---------------------------------------------------------------- ayuda
+$('helpBox').innerHTML = helpHTML(); $('proBox').innerHTML = professionalHTML();
+if (location.hash === '#ayuda') { $('ayuda').classList.remove('hidden'); $('ayuda').open = true; $('ayuda').scrollIntoView(); }
 
 // ---------------------------------------------------------------- recordatorio diario
 const appUrl = location.href.replace(/[^/]*$/, 'index.html');

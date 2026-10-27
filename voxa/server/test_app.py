@@ -16,7 +16,8 @@ class FakeMessages:
     def create(self, **kwargs):
         self.calls.append(kwargs)
         return SimpleNamespace(stop_reason=self.stop_reason,
-                               content=[SimpleNamespace(type="text", text=json.dumps(self.payload))])
+                               content=[SimpleNamespace(type="text", text=json.dumps(self.payload))],
+                               usage=SimpleNamespace(input_tokens=1000, output_tokens=500, cache_read_input_tokens=0))
 
 
 def fake_client(monkeypatch, payload, stop_reason="end_turn"):
@@ -177,3 +178,18 @@ def test_rate_limit(monkeypatch):
     codes = [api.post("/api/feedback", json={"scenario": "E", "method": "STAR", "prompt": "P"}).status_code for _ in range(4)]
     assert codes == [200, 200, 200, 429]
     voxa._hits.clear()
+
+
+def test_usage_is_measured_per_route_and_roleplay_caches_history(monkeypatch):
+    voxa.USAGE.clear()
+    messages = fake_client(monkeypatch, {"reply": "Hola", "end": False, "coach_hint": "", "safety_note": ""})
+    api.post("/api/roleplay", json={"persona_id": "jefe", "history": [{"role": "persona", "text": "Hola"}, {"role": "user", "text": "Hola"}]})
+    call = messages.calls[-1]
+    assert call["cache_control"] == {"type": "ephemeral"} and call["max_tokens"] >= 4000
+    monkeypatch.setenv("VOXA_MODEL_ROLEPLAY", "claude-sonnet-5-5")
+    api.post("/api/roleplay", json={"persona_id": "jefe", "history": [{"role": "persona", "text": "Hola"}, {"role": "user", "text": "Hola"}]})
+    assert messages.calls[-1]["model"] == "claude-sonnet-5-5"
+    st = api.get("/api/status").json()
+    assert st["usage"]["roleplay"]["calls"] == 2
+    # 1000 entrada + 500 salida: Opus 0,014 USD + Sonnet 0,007 USD
+    assert abs(st["usage"]["roleplay"]["usd"] - 0.021) < 1e-6
