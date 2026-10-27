@@ -34,7 +34,7 @@
     <select id="wLocale" aria-label="Variante de español" style="max-width:320px"></select>
 
     <div class="btns" style="margin-top:18px">
-      <button id="wDone" class="cta" disabled>Empezar mi primera práctica</button>
+      <button id="wDone" class="cta" disabled>Empezar mi diagnóstico</button>
     </div>
     <p class="note">No necesitas crear una cuenta. Tus datos quedan en este dispositivo.</p>
   </section>
@@ -44,7 +44,13 @@
     <h2 style="font-size:1.4rem;margin:4px 0 8px" id="tText"></h2>
     <p class="muted" id="tWhy"></p>
     <div class="btns"><a class="btn-link cta" id="tGo" href="evaluar.html">▶ Hacer la práctica de hoy</a></div>
+    <p class="note" id="tAlt"></p>
     <p class="note" id="tStreak"></p>
+  </section>
+
+  <section class="card full" id="goalsCard">
+    <h2>Tu diagnóstico y tus metas</h2>
+    <div id="goalsBox"></div>
   </section>
 
   <section class="card full">
@@ -56,6 +62,7 @@
       <a href="evento.html"><strong>📅 Evento real</strong><span>Prepara una entrevista, charla o reunión con fecha.</span></a>
       <a href="escritura.html"><strong>✍️ Escritura</strong><span>Mejora un correo o mensaje antes de enviarlo.</span></a>
       <a href="aprender.html"><strong>📘 Aprender</strong><span>Lecciones de 2 minutos con práctica incluida.</span></a>
+      <a href="diagnostico.html"><strong>🧭 Diagnóstico</strong><span>Tu nivel en 8 dimensiones y metas a tu medida.</span></a>
       <a href="progreso.html"><strong>📈 Mi progreso</strong><span>Tu evolución, tu racha y tu plan de 30 días.</span></a>
     </div>
   </section>
@@ -64,6 +71,13 @@
     <h2>Consejo del día</h2>
     <p id="tip" class="lead"></p>
     <p id="nextLesson"></p>
+  </section>
+
+  <section class="card" id="remindCard">
+    <h2>⏰ Recordatorio diario</h2>
+    <p class="note">Practicar siempre a la misma hora ayuda a crear el hábito. Elige la hora y tu calendario te avisará cada día.</p>
+    <div class="row"><div><label for="remindTime">Hora</label><input type="time" id="remindTime" class="field" value="08:30"></div></div>
+    <div class="btns"><button id="remindIcs" class="cta">📅 Agregar a mi calendario</button><a class="btn-link file-btn" id="remindGoogle" target="_blank" rel="noopener">Google Calendar</a></div>
   </section>
 
   <section class="card" id="dispositivos">
@@ -87,6 +101,8 @@ import { todayTask, streak, practicedToday } from './plan.js';
 import { mountDeviceCheck } from './devices.js';
 import { LESSONS } from './lessons.js';
 import { EVENT_TYPES, validEvent, daysUntil, nextEventPractice } from './events.js';
+import { goalsHTML, goalHref, goalOfTheDay } from './goals.js';
+import { googleCalendarUrl, icsReminder } from './reminder.js';
 
 mountDeviceCheck($('deviceCheck'));
 
@@ -135,8 +151,8 @@ if (location.hash === '#dispositivos') { $('dispositivos').classList.remove('hid
 $('wDone').addEventListener('click', () => {
   Object.assign(profile, { goal: wGoal, locale: $('wLocale').value, onboarded: true, startNerves: wNerves });
   saveProfile(profile);
-  // A quien le cuesta mucho, la primera práctica es de baja exigencia: hablar de algo que le gusta.
-  location.href = wNerves >= 5 ? 'evaluar.html?escenario=passion' : 'evaluar.html?escenario=intro';
+  // Estado inicial primero: el diagnóstico define las metas.
+  location.href = 'diagnostico.html';
 });
 
 // ---------------------------------------------------------------- práctica de hoy
@@ -145,6 +161,14 @@ const s = streak(sessions);
 $('tWeek').textContent = task.week + (task.day ? ` · día ${task.day} de 28` : '');
 $('tText').textContent = task.text;
 $('tGo').href = task.href;
+// Con metas activas, la práctica del día avanza una meta; el plan de 30 días queda como alternativa.
+const gd = goalOfTheDay(profile.goals, sessions);
+if (gd) {
+  $('tWeek').textContent = '🎯 Tu meta de hoy';
+  $('tText').textContent = gd.text;
+  $('tGo').href = goalHref(gd.goal);
+  $('tAlt').innerHTML = `<a href="${task.href}">O haz la del plan de 30 días: ${esc(task.text)}</a>`;
+}
 // Con un evento real próximo, la práctica del día es la del plan del evento.
 const ev = profile.event;
 if (validEvent(ev) && daysUntil(ev.date) >= 0) {
@@ -160,6 +184,33 @@ $('tWhy').textContent = practicedToday(sessions)
 const last = sessions.filter(x => x.type === 'evaluacion').pop();
 $('tStreak').textContent = (s ? `🔥 ${s} ${s === 1 ? 'día seguido' : 'días seguidos'}` : 'Empieza tu racha hoy') +
   (last ? ` · Último puntaje: ${last.total} en «${last.scenarioName}»` : '');
+
+// ---------------------------------------------------------------- diagnóstico y metas
+const diag = profile.diagnoses?.at(-1);
+if (!diag) $('goalsBox').innerHTML = `<p class="lead">Empieza por saber dónde estás: un diagnóstico de 8 minutos en 8 dimensiones te da tu nivel, tus fortalezas y metas a tu medida.</p>
+  <div class="btns"><a class="btn-link cta" href="diagnostico.html">Haz tu diagnóstico inicial (8 min)</a></div>`;
+else {
+  const age = Math.floor((Date.now() - new Date(diag.date)) / 864e5);
+  $('goalsBox').innerHTML = `<p class="note">Nivel ${esc(diag.level)} · ${diag.total} puntos · diagnóstico del ${new Date(diag.date).toLocaleDateString('es')}</p>
+    ${goalsHTML(profile.goals, sessions)}
+    ${age >= 28 ? '<p style="margin-top:10px"><a href="diagnostico.html">🔁 Pasaron 4 semanas: repite el diagnóstico y compara</a></p>' : ''}`;
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-goal-next]'); if (!b) return;
+  const g = (profile.goals || []).find(x => x.id === b.dataset.goalNext); if (g) location.href = goalHref(g);
+});
+
+// ---------------------------------------------------------------- recordatorio diario
+const appUrl = location.href.replace(/[^/]*$/, 'index.html');
+if (profile.remindTime) $('remindTime').value = profile.remindTime;
+const updateRemind = () => { $('remindGoogle').href = googleCalendarUrl($('remindTime').value || '08:30', appUrl); };
+$('remindTime').addEventListener('change', () => { profile.remindTime = $('remindTime').value; saveProfile(profile); updateRemind(); });
+updateRemind();
+$('remindIcs').addEventListener('click', () => {
+  const url = URL.createObjectURL(new Blob([icsReminder($('remindTime').value || '08:30', appUrl)], { type: 'text/calendar' }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: 'voxa-recordatorio.ics' });
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000);
+});
 
 // ---------------------------------------------------------------- ajustes
 const saved = () => { saveProfile(profile); $('sSaved').textContent = 'Guardado.'; setTimeout(() => $('sSaved').textContent = '', 1500); };

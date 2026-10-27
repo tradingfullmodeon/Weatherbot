@@ -187,6 +187,22 @@ export function lessonListHTML(done = {}) {
     `<button class="lesson-item" data-lesson="${l.id}"><span>${done[l.id] ? '✅' : '📘'}</span><span><strong>${esc(l.title)}</strong><small>${l.minutes} min</small></span></button>`).join('')}</div>`).join('');
 }
 
+// De dónde viene cada método (autoridad visible: los usuarios confían más en técnicas con autor y evidencia).
+export const LESSON_SOURCES = {
+  star: 'Método STAR de la entrevista por competencias, popularizado por Development Dimensions International (DDI).',
+  prep: 'PREP (punto, razón, ejemplo, punto): estructura clásica de la oratoria improvisada.',
+  bluf: 'BLUF, norma de redacción del Ejército de EE. UU., y el principio de la pirámide de Barbara Minto (McKinsey).',
+  pausa: 'El rol de «contador de muletillas» (Ah-Counter) de las reuniones de Toastmasters.',
+  voz: 'Entrenamiento vocal de Kristin Linklater («Freeing the Natural Voice», 1976) y la práctica de actores y locutores.',
+  presencia: 'Guías de presencia en video de la práctica profesional; lo que no tiene evidencia se trata en «Lenguaje corporal: mitos y evidencia».',
+  nervios: 'Reinterpretar la activación como entusiasmo (Alison Wood Brooks, Harvard, 2014) y respiración con exhalación larga (Balban et al., Stanford, 2023).',
+  sbi: 'Modelo SBI (situación, conducta, impacto) del Center for Creative Leadership.',
+  cnv: 'Comunicación No Violenta de Marshall Rosenberg.',
+  escucha: 'Escucha activa de Carl Rogers y Richard Farson («Active Listening», 1957).',
+  historia: 'La «espina de la historia» (Story Spine) de Kenn Adams, usada en improvisación y por guionistas.',
+  mitos: 'Mehrabian (1971): la regla 7-38-55 sólo vale para sentimientos expresados con señales contradictorias; las «posturas de poder» no se replicaron en sus efectos hormonales (Ranehill et al., 2015).',
+};
+
 export function lessonHTML(l, done = false) {
   return `<article class="lesson" data-id="${l.id}">
     <div class="note">${esc(l.area)} · ${l.minutes} min de lectura</div>
@@ -194,6 +210,7 @@ export function lessonHTML(l, done = false) {
     <p class="lead">${esc(l.why)}</p>
     <h3>Cómo hacerlo</h3>
     <ol>${l.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
+    ${LESSON_SOURCES[l.id] ? `<p class="note">📚 Base: ${esc(LESSON_SOURCES[l.id])}</p>` : ''}
     <div class="fb">
       <div><h3 style="color:var(--bad)">✗ Así no</h3>${esc(l.bad)}</div>
       <div><h3 style="color:var(--good)">✓ Así sí</h3>${esc(l.good)}</div>

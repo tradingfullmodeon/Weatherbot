@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VOXA Diagnóstico</title>
+<link rel="stylesheet" href="voxa.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#4f46e5">
+</head>
+<body>
+<header>
+  <h1>Tu diagnóstico</h1>
+  <p>Dónde estás hoy, en qué enfocarte y qué metas ponerte.</p>
+</header>
+
+<main>
+  <section class="card full">
+    <p class="lead">En unos 8 minutos sabrás dónde estás hoy en 8 dimensiones, cuáles son tus fortalezas y en qué conviene enfocarte. Con eso elegirás tus metas.</p>
+    <ol class="steps-line"><li>Cómo te ves (2 min)</li><li>Prueba de voz (2 min)</li><li>Prueba escrita (2 min)</li><li>Tu perfil y tus metas</li></ol>
+    <p class="note">Las pruebas son opcionales, pero sin ellas el diagnóstico sólo refleja cómo te ves. Todo queda en este dispositivo.</p>
+  </section>
+
+  <section class="card full" id="dgStep1">
+    <h2>1. ¿Qué tan de acuerdo estás?</h2>
+    <div id="selfItems"></div>
+  </section>
+
+  <section class="card full">
+    <h2>2. Prueba de voz: preséntate en 60 segundos</h2>
+    <div class="prompt"><strong>Preséntate en 60 segundos</strong>Quién eres, qué haces y qué te apasiona. Cierra con una frase memorable.</div>
+    <div class="btns">
+      <button id="btnRec" class="cta">🎙 Grabar ahora</button>
+      <label for="dgFile" class="btn-link file-btn">📁 Elegir una grabación</label>
+      <input type="file" id="dgFile" accept="audio/*,video/*" class="visually-hidden">
+    </div>
+    <p class="note" id="recState" aria-live="polite"></p>
+    <label for="dgSaid">¿Qué dijiste? (se completa solo si tu navegador transcribe; puedes corregirlo)</label>
+    <textarea id="dgSaid" placeholder="Si no puedes grabarte ahora, escribe aquí tu presentación como la dirías."></textarea>
+    <div class="progress hidden" id="dgProgress" aria-hidden="true"><div id="dgBar"></div></div>
+    <p class="note" id="dgVoiceStatus" aria-live="polite"></p>
+  </section>
+
+  <section class="card full">
+    <h2>3. Prueba escrita</h2>
+    <div class="prompt"><strong>Pide el viernes libre</strong>Escríbele a tu jefe o jefa un mensaje breve para pedir el viernes libre. Escríbelo como lo enviarías de verdad.</div>
+    <label for="dgWrite" class="visually-hidden">Tu mensaje</label>
+    <textarea id="dgWrite" placeholder="Hola Carolina: …"></textarea>
+  </section>
+
+  <section class="card full">
+    <div class="btns"><button id="dgRun" class="cta">Ver mi diagnóstico</button></div>
+    <p class="note" id="dgErr" aria-live="polite"></p>
+  </section>
+
+  <section class="card full hidden" id="dgResult">
+    <div id="dgOut"></div>
+    <div id="dgGoals"></div>
+    <div class="btns"><button id="dgSave" class="cta">Guardar mis metas</button></div>
+  </section>
+</main>
+
+<script type="module">
+import { $, renderNav, loadProfile, saveProfile, loadSessions, wordCount, countMatches, FILLER_RE, HEDGE_RE, userLocale } from './shared.js';
+import { requestMedia, explainError } from './devices.js';
+import { SCENARIOS } from './scenarios.js';
+import { KINDS, analyzeWriting } from './writing.js';
+import { analyzeAudio, analyzeByPlayback, voiceMetrics, scoreSpeech } from './audiofile.js';
+import { SELF_ITEMS, computeProfile, measuredFrom, suggestGoals, createGoal, selfAssessmentHTML, drawRadar, diagnosisHTML, goalPickerHTML } from './goals.js';
+
+renderNav();
+const profile = loadProfile();
+const intro = SCENARIOS.find(s => s.id === 'intro');
+const answers = {};
+if (profile.startNerves) answers.confianza = profile.startNerves;
+$('selfItems').innerHTML = selfAssessmentHTML(answers);
+$('selfItems').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-dim]'); if (!b) return;
+  answers[b.dataset.dim] = +b.dataset.v;
+  b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+});
+
+// ---------------------------------------------------------------- prueba de voz: grabar en vivo o subir
+let recording = null, recorder = null, stream = null, recognition = null, timer = 0;
+$('dgFile').addEventListener('change', (e) => {
+  recording = e.target.files[0] || null;
+  $('recState').textContent = recording ? `Grabación lista: ${recording.name}` : '';
+});
+function stopRec() {
+  clearInterval(timer);
+  try { recognition?.stop(); } catch {}
+  if (recorder?.state === 'recording') recorder.stop();
+}
+$('btnRec').addEventListener('click', async () => {
+  if (recorder?.state === 'recording') { stopRec(); return; }
+  try { ({ stream } = await requestMedia({ video: false })); }
+  catch (e) { $('recState').textContent = explainError(e) + ' También puedes elegir una grabación o escribir lo que dirías.'; return; }
+  const chunks = [];
+  recorder = new MediaRecorder(stream);
+  recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+  recorder.onstop = () => {
+    stream.getTracks().forEach(t => t.stop());
+    recording = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+    $('btnRec').textContent = '🎙 Grabar de nuevo';
+    $('recState').textContent = 'Grabación lista. Revisa la transcripción y sigue con la prueba escrita.';
+  };
+  // Transcripción en vivo cuando el navegador la ofrece (Chrome, Edge, Safari).
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SpeechRec) {
+    let text = '';
+    recognition = new SpeechRec();
+    Object.assign(recognition, { lang: userLocale(profile), continuous: true, interimResults: false });
+    recognition.onresult = (ev) => {
+      for (let i = ev.resultIndex; i < ev.results.length; i++) if (ev.results[i].isFinal) text += ev.results[i][0].transcript + ' ';
+      $('dgSaid').value = text.trim();
+    };
+    try { recognition.start(); } catch {}
+  }
+  recorder.start();
+  const t0 = Date.now();
+  $('btnRec').textContent = '■ Terminar';
+  timer = setInterval(() => {
+    const s = Math.round((Date.now() - t0) / 1000);
+    $('recState').textContent = `Grabando… ${s} s de 60`;
+    if (s >= 75) stopRec();
+  }, 500);
+});
+
+async function speechItems() {
+  const text = $('dgSaid').value;
+  const progress = p => { $('dgBar').style.width = Math.round(p * 100) + '%'; };
+  if (!recording) {
+    if (wordCount(text) < 5) return [];
+    return scoreSpeech({ words: wordCount(text), hasText: true, fillers: countMatches(text, FILLER_RE), hedges: countMatches(text, HEDGE_RE), dur: wordCount(text) / 140 * 60 }, false, intro.seconds).items;
+  }
+  $('dgProgress').classList.remove('hidden');
+  $('dgVoiceStatus').textContent = 'Analizando tu voz…';
+  try {
+    let a;
+    try { a = await analyzeAudio(recording, progress); }
+    catch (err) {
+      if (err.code !== 'needs-playback') throw err;
+      $('dgVoiceStatus').textContent = 'Escuchando tu grabación (tarda lo que dura; no se oirá nada)…';
+      a = await analyzeByPlayback(recording, progress);
+    }
+    $('dgVoiceStatus').textContent = 'Voz analizada.';
+    return scoreSpeech(voiceMetrics(a.samples, text, a.duration), true, intro.seconds).items;
+  } finally { $('dgProgress').classList.add('hidden'); }
+}
+
+// Presencia: la última evaluación con cámara (MediaPipe) aporta encuadre, mirada, estabilidad y sonrisa.
+function lastPresence() {
+  const s = [...loadSessions()].reverse().find(x => x.metrics?.gaze);
+  if (!s) return null;
+  return Object.fromEntries(['face', 'gaze', 'head', 'smile'].filter(k => s.metrics[k]).map(k => [k, s.metrics[k].s]));
+}
+
+let result = null;
+$('dgRun').addEventListener('click', async () => {
+  const answered = Object.keys(answers).length;
+  if (answered < SELF_ITEMS.length) { $('dgErr').textContent = `Responde las ${SELF_ITEMS.length} afirmaciones (llevas ${answered}).`; $('dgStep1').scrollIntoView({ behavior: 'smooth' }); return; }
+  if (recorder?.state === 'recording') stopRec();
+  $('dgErr').textContent = ''; $('dgRun').disabled = true;
+  let items = [];
+  try { items = await speechItems(); }
+  catch (e) { $('dgVoiceStatus').textContent = `No pudimos analizar la grabación (${e.message || e.name}). Seguimos con el resto.`; }
+  const w = $('dgWrite').value.trim();
+  const writingScore = wordCount(w) >= 5 ? analyzeWriting(w, KINDS.find(k => k.id === 'pedido')).score : null;
+  result = computeProfile(answers, measuredFrom({ speechItems: items, writingScore, presenceScores: lastPresence() }));
+  const prev = profile.diagnoses?.at(-1) || null;
+  $('dgOut').innerHTML = diagnosisHTML(result, prev);
+  drawRadar($('dgOut').querySelector('#radar'), result.profile, prev?.profile);
+  $('dgGoals').innerHTML = goalPickerHTML(suggestGoals(result));
+  $('dgResult').classList.remove('hidden');
+  $('dgRun').disabled = false;
+  $('dgResult').scrollIntoView({ behavior: 'smooth' });
+});
+$('dgGoals').addEventListener('change', (e) => {
+  if (e.target.matches('[data-goal]') && $('dgGoals').querySelectorAll('[data-goal]:checked').length > 3) e.target.checked = false;
+});
+$('dgSave').addEventListener('click', () => {
+  if (!result) return;
+  const dims = [...$('dgGoals').querySelectorAll('[data-goal]:checked')].map(x => x.dataset.goal);
+  const opts = { days: +$('goalDays').value || 30, why: $('goalWhy').value.trim() };
+  profile.diagnoses = [...(profile.diagnoses || []), { date: new Date().toISOString(), ...result }];
+  profile.goals = [...(profile.goals || []).filter(g => !dims.includes(g.dim)), ...dims.map(d => createGoal(d, opts))];
+  profile.onboarded = true;
+  saveProfile(profile);
+  location.href = 'index.html';
+});
+</script>
+</body>
+</html>

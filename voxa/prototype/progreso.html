@@ -33,6 +33,16 @@
     <p class="note" id="empty"></p>
   </section>
 
+  <section class="card full">
+    <h2>Tu diagnóstico: antes y ahora</h2>
+    <div id="pDiagOut"></div>
+  </section>
+
+  <section class="card full">
+    <h2>Tus metas</h2>
+    <div id="pGoals"></div>
+  </section>
+
   <section class="card">
     <h2>Plan de hoy · Sprint 30 días</h2>
     <div class="today" id="today"></div>
@@ -80,6 +90,7 @@
 <script type="module">
 import { $, esc, colorFor, mean, renderNav, loadSessions, loadProfile, saveProfile } from './shared.js';
 import { todayTask, streak } from './plan.js';
+import { diagnosisHTML, drawRadar, goalsHTML, goalHref } from './goals.js';
 
 renderNav();
 const sessions = loadSessions().sort((a, b) => a.date.localeCompare(b.date));
@@ -214,6 +225,22 @@ $('btnExport').addEventListener('click', () => {
   const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'voxa-datos.json' });
   a.click();
 });
+// ---------------------------------------------------------------- diagnóstico y metas
+const ds = profile.diagnoses || [];
+if (!ds.length) $('pDiagOut').innerHTML = '<p class="note">Todavía no haces tu diagnóstico.</p><div class="btns"><a class="btn-link cta" href="diagnostico.html">Hacer mi diagnóstico</a></div>';
+else {
+  const first = ds[0], latest = ds[ds.length - 1];
+  $('pDiagOut').innerHTML = diagnosisHTML(latest, ds.length > 1 ? first : null)
+    + `<p class="note">${ds.length > 1 ? `Comparado con tu primer diagnóstico (${new Date(first.date).toLocaleDateString('es')}). El área gris es tu punto de partida.` : 'Repite el diagnóstico en unas 4 semanas para ver tu avance.'}</p>
+    <div class="btns"><a class="btn-link" href="diagnostico.html">Repetir el diagnóstico</a></div>`;
+  drawRadar($('pDiagOut').querySelector('#radar'), latest.profile, ds.length > 1 ? first.profile : null);
+}
+$('pGoals').innerHTML = goalsHTML(profile.goals, sessions);
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-goal-next]'); if (!b) return;
+  const g = (profile.goals || []).find(x => x.id === b.dataset.goalNext); if (g) location.href = goalHref(g);
+});
+
 $('btnClear').addEventListener('click', () => {
   if (!confirm('¿Borrar todo tu historial de este navegador?')) return;
   try { localStorage.removeItem('voxa.sessions.v1'); } catch {}

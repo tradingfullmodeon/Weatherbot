@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { DIMENSIONS, SELF_ITEMS, computeProfile, measuredFrom, suggestGoals, createGoal, goalProgress, sessionMeets, GOAL_TEMPLATES, levelOf } from '../prototype/goals.js';
+import { goalOfTheDay, DIMENSIONS, SELF_ITEMS, computeProfile, measuredFrom, suggestGoals, createGoal, goalProgress, sessionMeets, GOAL_TEMPLATES, levelOf } from '../prototype/goals.js';
 import { SCENARIOS } from '../prototype/scenarios.js';
 import { LESSONS } from '../prototype/lessons.js';
 import { KINDS } from '../prototype/writing.js';
@@ -61,4 +61,20 @@ test('las metas avanzan solas con las prácticas que las cumplen', () => {
   assert.ok(sessionMeets(rp, { type: 'roleplay', date: '2026-10-02', dims: { escucha: 80 } }));
   const w = createGoal('escritura', {}, start);
   assert.ok(sessionMeets(w, { type: 'escritura', date: '2026-10-02', total: 88 }));
+});
+
+test('una meta de 30 días muestra 30 días restantes el día en que se crea', () => {
+  const now = new Date(2026, 9, 27, 21, 30);
+  const g = createGoal('voz', { days: 30 }, now);
+  assert.equal(goalProgress(g, [], now).daysLeft, 30);
+});
+
+test('la práctica del día rota entre las metas activas y omite las cumplidas', () => {
+  const now = new Date(2026, 9, 27, 12);
+  const a = createGoal('voz', {}, now), b = createGoal('escritura', {}, now);
+  const done = [1, 2, 3].map(i => ({ type: 'escritura', date: new Date(2026, 9, 27, 13 + i).toISOString(), total: 90 }));
+  assert.equal(goalOfTheDay([], [], now), null);
+  assert.equal(goalOfTheDay([a, b], done, new Date(2026, 9, 27, 18)).goal.dim, 'voz');
+  const days = new Set([0, 1, 2, 3].map(d => goalOfTheDay([a, b], [], new Date(2026, 9, 28 + d, 12)).goal.dim));
+  assert.deepEqual([...days].sort(), ['escritura', 'voz']);
 });

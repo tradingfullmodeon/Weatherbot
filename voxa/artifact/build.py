@@ -34,6 +34,9 @@ def main() -> None:
         as_script(ROOT / "prototype" / "writing.js"),
         as_script(ROOT / "prototype" / "events.js"),
         as_script(ROOT / "prototype" / "goals.js"),
+        as_script(ROOT / "prototype" / "audiofile.js"),
+        as_script(ROOT / "prototype" / "feedback.js"),
+        as_script(ROOT / "prototype" / "reminder.js"),
         app,
         "})();",
     ])

@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { SCENARIOS, GROUPS, methodHelp } from '../prototype/scenarios.js';
-import { LESSONS, LESSON_FOR_METRIC } from '../prototype/lessons.js';
+import { LESSONS, LESSON_FOR_METRIC, LESSON_SOURCES } from '../prototype/lessons.js';
 import { SPRINT } from '../prototype/plan.js';
 import { KINDS } from '../prototype/writing.js';
 
@@ -61,4 +61,8 @@ test('plan de 30 días: 4 semanas de 7 tareas y cada enlace apunta a algo que ex
       if (q.get('tipo')) assert.ok(KINDS.some(k => k.id === q.get('tipo')), href);
     }
   }
+});
+
+test('cada lección cita la base de su método', () => {
+  for (const l of LESSONS) assert.ok(LESSON_SOURCES[l.id], l.id);
 });

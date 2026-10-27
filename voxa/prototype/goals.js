@@ -88,12 +88,16 @@ export function suggestGoals(result) {
   return result.priorities.filter(d => GOAL_TEMPLATES[d]).map(d => ({ dim: d, ...GOAL_TEMPLATES[d] }));
 }
 
+const localDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 export function createGoal(dim, { days = 30, why = '' } = {}, today = new Date()) {
   const t = GOAL_TEMPLATES[dim];
   const due = new Date(today); due.setDate(due.getDate() + days);
   return { id: `${dim}-${today.getTime().toString(36)}`, dim, title: t.title, detail: t.detail, check: t.check, count: t.count,
-    next: t.next, lesson: t.lesson, why, start: today.toISOString(), due: due.toISOString().slice(0, 10) };
+    next: t.next, lesson: t.lesson, why, start: today.toISOString(), due: localDay(due) };
 }
+
+const PRESENCE_METRIC = { mirada: 'gaze', encuadre: 'face', postura: 'head' };
 
 // ¿Esta sesión cuenta como evidencia de la meta?
 export function sessionMeets(goal, s) {
@@ -101,7 +105,8 @@ export function sessionMeets(goal, s) {
   switch (c.type) {
     case 'score': return (s.type === 'ensayo' || s.type === 'evaluacion') && s.total >= c.min;
     case 'metric': return (s.type === 'ensayo' || s.type === 'evaluacion') && (s.metrics?.[c.key]?.s ?? -1) >= c.min;
-    case 'presence': return (s.presence?.[c.key] ?? -1) >= c.min;
+    // Publicada: análisis de fotogramas por IA (presence.mirada). Completa: MediaPipe en vivo (metrics.gaze).
+    case 'presence': return (s.presence?.[c.key] ?? s.metrics?.[PRESENCE_METRIC[c.key]]?.s ?? -1) >= c.min;
     case 'roleplay': return s.type === 'roleplay' && c.keys.some(k => (s.dims?.[k] ?? -1) >= c.min);
     case 'anxiety': return s.anxietyBefore != null && s.anxietyBefore <= c.max;
     case 'writing': return s.type === 'escritura' && s.total >= c.min;
@@ -109,10 +114,26 @@ export function sessionMeets(goal, s) {
   }
 }
 
+// Página de la versión completa que abre la práctica siguiente de una meta.
+export function goalHref(goal) {
+  const n = goal.next;
+  if (n.view === 'roleplay') return `roleplay.html${n.persona ? `?personaje=${n.persona}` : ''}`;
+  if (n.view === 'escritura') return `escritura.html${n.kind ? `?tipo=${n.kind}` : ''}`;
+  return `evaluar.html${n.scenario ? `?escenario=${n.scenario}` : ''}`;
+}
+
+// Práctica del día guiada por las metas: rota entre las metas activas (sin cumplir y con plazo vigente).
+export function goalOfTheDay(goals, sessions, today = new Date()) {
+  const active = (goals || []).filter(g => { const p = goalProgress(g, sessions, today); return !p.done && !p.expired; });
+  if (!active.length) return null;
+  const g = active[Math.floor(today.getTime() / 864e5) % active.length], p = goalProgress(g, sessions, today);
+  return { goal: g, text: `${g.title}: ${g.detail.charAt(0).toLowerCase() + g.detail.slice(1)} (llevas ${p.hits} de ${g.count}).` };
+}
+
 export function goalProgress(goal, sessions, today = new Date()) {
   const hits = sessions.filter(s => s.date >= goal.start && sessionMeets(goal, s)).length;
   const done = hits >= goal.count;
-  const daysLeft = Math.round((new Date(goal.due + 'T23:59:59') - today) / 864e5);
+  const daysLeft = Math.floor((new Date(goal.due + 'T23:59:59') - today) / 864e5);
   return { hits: Math.min(hits, goal.count), done, ratio: Math.min(1, hits / goal.count), daysLeft, expired: !done && daysLeft < 0 };
 }
 
