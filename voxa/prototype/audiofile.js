@@ -1,10 +1,13 @@
 // Análisis de grabaciones (archivo o micrófono): voz, tono, pausas y sonidos de duda, y puntaje del habla.
 // Lo usan la versión publicada (artifact/app.js) y diagnostico.html.
 import { detectPitch, rmsOf, findFilledPauses, wordCount, countMatches, FILLER_RE, HEDGE_RE, mean, std } from './shared.js';
+import { checkStructure } from './structure.js';
 
 export const band = (v, lo, hi, soft) => v >= lo && v <= hi ? 100 : Math.max(0, 100 - 100 * (v < lo ? lo - v : v - hi) / soft);
 // Decodifica la grabación a 16 kHz y la recorre en ventanas de ~64 ms cada ~33 ms: volumen, tono y pausas.
 export const SR = 16000, MAX_SECONDS = 300;
+// Techo de tono: 600 Hz para no partir por la mitad las voces agudas y los énfasis (con 400 Hz, 450 Hz se leía 225).
+export const PITCH_MAX_HZ = 600;
 // Lectura en tres intentos, porque cada navegador decodifica formatos distintos (el .MOV del iPhone suele
 // fallar en el primero): 1) decodificar a 16 kHz, 2) decodificar con el contexto de audio normal (incluida la
 // forma con callbacks del Safari antiguo) y bajar la frecuencia, 3) si nada funciona, reproducir el archivo en
@@ -38,7 +41,7 @@ export async function framesFrom(data, rate, onProgress) {
   for (let i = 0, k = 0; i + win <= data.length; i += hop, k++) {
     const frame = data.subarray(i, i + win);
     const rms = rmsOf(frame);
-    out.push({ t: i / rate, rms, pitch: rms > 0.01 ? detectPitch(frame, rate) : 0 });
+    out.push({ t: i / rate, rms, pitch: rms > 0.01 ? detectPitch(frame, rate, PITCH_MAX_HZ) : 0 });
     if (k % 300 === 0) { onProgress(i / data.length); await new Promise(r => setTimeout(r)); }
   }
   onProgress(1);
@@ -74,7 +77,7 @@ export async function analyzeByPlayback(f, onProgress) {
       const timer = setInterval(() => {
         an.getFloatTimeDomainData(buf);
         const rms = rmsOf(buf), t = el.currentTime;
-        out.push({ t, rms, pitch: rms > 0.01 ? detectPitch(buf, ctx.sampleRate) : 0 });
+        out.push({ t, rms, pitch: rms > 0.01 ? detectPitch(buf, ctx.sampleRate, PITCH_MAX_HZ) : 0 });
         onProgress(Math.min(1, t / total));
         if (el.ended || t >= total) { clearInterval(timer); ok(); }
       }, 33);
@@ -109,7 +112,7 @@ export function voiceMetrics(samples, text, dur) {
   const volCv = speechRms.length ? std(speechRms) / mean(speechRms) : 0;
   const humZones = findFilledPauses(samples);
   return {
-    dur, words, wpm: words / minutes, hasText: words > 0,
+    dur, words, text, wpm: words / minutes, hasText: words > 0,
     fillers: countMatches(text, FILLER_RE), hedges: countMatches(text, HEDGE_RE),
     speechRatio: samples.length ? speechFrames / samples.length : 0, longPauses, pauseZones,
     speechSeconds: samples.length ? dur * speechFrames / samples.length : 0, variety: guiraud(text),
@@ -126,7 +129,7 @@ export function guiraud(text) {
 export const MIN_SPEECH_SECONDS = 4;
 
 const level3 = (v, lo, hi) => v < lo ? 'poco' : v > hi ? 'mucho' : 'adecuado';
-export function scoreSpeech(m, isAudio, seconds) {
+export function scoreSpeech(m, isAudio, seconds, method = '') {
   const items = [], s = { seconds };
   if (isAudio && !(m.speechSeconds >= MIN_SPEECH_SECONDS)) return { items, dims: {}, total: null, noVoice: true };
   const add = (dim, key, label, display, target, sc) => items.push({ dim, key, label, display, target, s: Math.round(sc) });
@@ -142,6 +145,9 @@ export function scoreSpeech(m, isAudio, seconds) {
     // El largo sólo cuenta como desarrollo si hay ideas distintas: repetir relleno no desarrolla nada.
     const varietyFactor = m.words >= 25 ? Math.min(1, variety / 4) : 1;
     add('lenguaje', 'length', 'Contenido desarrollado', `${m.words} palabras`, `${Math.round(target)} o más`, band(m.words, target, 1e6, target) * varietyFactor);
+    // Estructura del método (PREP, STAR, BLUF, SBI): qué partes están y cuáles faltan.
+    const st = m.text ? checkStructure(m.text, method) : null;
+    if (st) { m.structure = st; add('lenguaje', 'structure', `Estructura ${st.method}`, `${st.parts.filter(p => p.ok).length} de ${st.parts.length} partes`, 'todas', st.score); }
     if (m.words >= 25) add('lenguaje', 'variety', 'Variedad de vocabulario', variety.toFixed(1), '4 o más', band(variety, 4, 1e6, 3));
   }
   if (isAudio) {

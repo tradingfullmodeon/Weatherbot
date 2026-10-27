@@ -28,17 +28,24 @@ export const SELF_ITEMS = [
 
 export const LEVELS = [[85, 'Referente'], [70, 'Hábil'], [55, 'Competente'], [40, 'Practicante'], [0, 'Explorador']];
 export const levelOf = (score) => LEVELS.find(([min]) => score >= min)[1];
-const selfScore = (item, v) => Math.round(((item.reverse ? 6 - v : v) - 1) / 4 * 100);
+// De 10 a 100: nadie empieza en «0» en algo; el punto de partida más bajo es «por trabajar».
+const selfScore = (item, v) => Math.round(10 + ((item.reverse ? 6 - v : v) - 1) / 4 * 90);
 
 // Mediciones de la prueba real a partir de las métricas del ensayo (items con key y s 0–100) y del texto.
-export function measuredFrom({ speechItems = [], writingScore = null, presenceScores = null } = {}) {
+// Con una muestra corta (menos de 30 s de voz o de 25 palabras) la medición es poco confiable: se limita
+// el puntaje para no dar una validación falsa («Voz 97» con 20 segundos).
+export const SHORT_SAMPLE_CAP = 75;
+export function measuredFrom({ speechItems = [], writingScore = null, writingAssertiveness = null, presenceScores = null, seconds = null, words = null } = {}) {
   const s = (k) => speechItems.find(i => i.key === k)?.s;
   const avg = (...xs) => { const v = xs.filter(x => x != null); return v.length ? Math.round(mean(v)) : null; };
+  const cap = (v, short) => v == null ? null : short ? Math.min(v, SHORT_SAMPLE_CAP) : v;
+  const shortAudio = seconds != null && seconds < 30, shortText = words != null && words < 25;
   return {
-    estructura: avg(s('length'), s('variety')),
-    voz: avg(s('pitch'), s('volume')),
-    fluidez: avg(s('hums'), s('pauses'), s('fillers')),
-    asertividad: avg(s('hedges')),
+    estructura: cap(avg(s('structure'), s('length'), s('variety')), shortText),
+    voz: cap(avg(s('pitch'), s('volume')), shortAudio),
+    fluidez: cap(avg(s('hums'), s('pauses'), s('fillers')), shortAudio),
+    // La asertividad del mensaje escrito (pedido directo, sin «perdón por molestar») pesa tanto como el habla.
+    asertividad: cap(avg(s('hedges'), writingAssertiveness), shortText && writingAssertiveness == null),
     presencia: presenceScores ? avg(...Object.values(presenceScores)) : null,
     escritura: writingScore,
     escucha: null, confianza: null,
@@ -63,7 +70,10 @@ export function computeProfile(selfAnswers, measured = {}) {
   // Ventana de Johari: diferencias grandes entre cómo te ves y cómo te medimos.
   const gaps = DIMENSIONS.filter(d => self[d.id] != null && measured[d.id] != null && Math.abs(self[d.id] - measured[d.id]) >= 25)
     .map(d => ({ dim: d.id, self: self[d.id], measured: measured[d.id], kind: self[d.id] > measured[d.id] ? 'sobre' : 'sub' }));
-  return { self, measured, profile, total, level: levelOf(total), strengths: ranked.slice(0, 2).map(r => r[0]), priorities: rankedLow.slice(0, 3).map(r => r[0]), gaps };
+  const priorities = rankedLow.slice(0, 3).map(r => r[0]);
+  // «Lo haces mejor de lo que crees» no se dice de algo que igual es prioridad: sería contradictorio.
+  return { self, measured, profile, total, level: levelOf(total), strengths: ranked.slice(0, 2).map(r => r[0]), priorities,
+    gaps: gaps.filter(g => g.kind === 'sobre' || !priorities.includes(g.dim)) };
 }
 
 // ---------------------------------------------------------------- metas
@@ -82,14 +92,23 @@ export const GOAL_TEMPLATES = {
     next: { view: 'roleplay', persona: 'cliente' }, lesson: 'escucha' },
   asertividad: { title: 'Hablar con seguridad', detail: '3 días con un ensayo (30 palabras o más) casi sin frases que restan seguridad', check: { type: 'metric', key: 'hedges', min: 90 }, count: 3,
     next: { view: 'ensayar', scenario: 'say-no' }, lesson: 'bluf' },
-  confianza: { title: 'Más calma al hablar', detail: '3 días empezando a practicar con nervios de 2/5 o menos', check: { type: 'anxiety', max: 2 }, count: 3,
+  // Exposición, no calma: cuenta practicar aunque haya nervios (esperar a «no tener nervios» mantiene el miedo).
+  confianza: { title: 'Practicar aunque haya nervios', detail: '3 días practicando aunque empieces con nervios de 3/5 o más', check: { type: 'exposure', min: 3 }, count: 3,
     next: { view: 'ensayar', scenario: 'passion' }, lesson: 'nervios' },
   escritura: { title: 'Escribir claro', detail: '3 días con un texto de 85 o más en la revisión', check: { type: 'writing', min: 85 }, count: 3,
     next: { view: 'escritura', kind: 'pedido' }, lesson: 'bluf' },
 };
 
-export function suggestGoals(result) {
-  return result.priorities.filter(d => GOAL_TEMPLATES[d]).map(d => ({ dim: d, ...GOAL_TEMPLATES[d] }));
+// caps.presence = false cuando esta versión no puede medir el lenguaje corporal (sin IA con imágenes ni cámara):
+// no se sugiere ni se propone como práctica del día una meta imposible de cumplir.
+export const goalAvailable = (g, caps = {}) => (GOAL_TEMPLATES[g.dim]?.check || g.check)?.type !== 'presence' || caps.presence !== false;
+export function suggestGoals(result, caps = {}) {
+  const all = result.priorities.filter(d => GOAL_TEMPLATES[d]).map(d => ({ dim: d, ...GOAL_TEMPLATES[d] }));
+  const ok = all.filter(g => goalAvailable(g, caps));
+  // Si se descartó alguna, se completa con la siguiente dimensión más baja que sí se pueda medir.
+  const extra = Object.entries(result.profile).sort((a, b) => a[1] - b[1]).map(([d]) => d)
+    .filter(d => GOAL_TEMPLATES[d] && !all.some(g => g.dim === d) && goalAvailable({ dim: d }, caps)).map(d => ({ dim: d, ...GOAL_TEMPLATES[d] }));
+  return [...ok, ...extra].slice(0, 3);
 }
 
 export function createGoal(dim, { days = 30, why = '' } = {}, today = new Date()) {
@@ -114,6 +133,7 @@ export function sessionMeets(goal, s) {
     case 'presence': return (s.presence?.[c.key] ?? s.metrics?.[PRESENCE_METRIC[c.key]]?.s ?? -1) >= c.min;
     case 'roleplay': return s.type === 'roleplay' && c.keys.some(k => (s.dims?.[k] ?? -1) >= c.min);
     case 'anxiety': return s.anxietyBefore != null && s.anxietyBefore <= c.max;
+    case 'exposure': return s.anxietyBefore != null && s.anxietyBefore >= c.min;
     case 'writing': return s.type === 'escritura' && !s.ai && s.total >= c.min;   // el texto que escribió la IA no cuenta
     default: return false;
   }
@@ -128,8 +148,8 @@ export function goalHref(goal) {
 }
 
 // Práctica del día guiada por las metas: rota entre las metas activas (sin cumplir y con plazo vigente).
-export function goalOfTheDay(goals, sessions, today = new Date()) {
-  const active = (goals || []).filter(g => { const p = goalProgress(g, sessions, today); return !p.done && !p.expired; });
+export function goalOfTheDay(goals, sessions, today = new Date(), caps = {}) {
+  const active = (goals || []).filter(g => { const p = goalProgress(g, sessions, today); return !p.done && !p.expired && goalAvailable(g, caps); });
   if (!active.length) return null;
   const g = active[Math.floor(today.getTime() / 864e5) % active.length], p = goalProgress(g, sessions, today);
   return { goal: g, text: `${g.title}: ${g.detail.charAt(0).toLowerCase() + g.detail.slice(1)} (llevas ${p.hits} de ${g.count}).` };
@@ -208,7 +228,7 @@ export function goalPickerHTML(suggestions) {
     ${suggestions.map((g, i) => `<label class="goal-pick"><input type="checkbox" data-goal="${g.dim}" ${i < 2 ? 'checked' : ''}>
       <span><strong>${esc(g.title)}</strong><small>${esc(g.detail)}</small></span></label>`).join('')}
     <div class="row" style="margin-top:10px">
-      <div><label for="goalDays">Plazo</label><select id="goalDays"><option value="14">2 semanas</option><option value="30" selected>30 días</option><option value="60">60 días</option></select></div>
+      <div><label for="goalDays">Plazo</label><select id="goalDays"><option value="7">1 semana</option><option value="14">2 semanas</option><option value="30" selected>30 días</option><option value="60">60 días</option></select></div>
       <div><label for="goalWhy">¿Por qué te importa? (opcional)</label><input id="goalWhy" class="field" placeholder="Ej.: quiero conseguir el ascenso este año"></div>
     </div>`;
 }

@@ -79,6 +79,7 @@
       <p id="aiState" class="note">Comprobando si Claude está disponible en esta página…</p>
       <p class="note">La primera vez que pidas un consejo, claude.ai te pedirá permiso. Las consultas usan tu propia cuenta de Claude.</p>
     </div>
+    <details class="card full help-card" id="helpHoy"><summary>💙 ¿Te sientes muy mal?</summary><div class="help-box"></div></details>
   </section>
 
   <!-- ============================ ENSAYAR ============================ -->
@@ -96,7 +97,7 @@
       <h2>3. Ensaya</h2>
       <div class="seg" role="tablist" aria-label="Modo de ensayo">
         <button role="tab" id="mText" aria-selected="true">✍️ Escribir mi respuesta</button>
-        <button role="tab" id="mAudio" aria-selected="false">🎧 Subir una grabación</button>
+        <button role="tab" id="mAudio" aria-selected="false">🎙 Grabarme o subir audio</button>
       </div>
 
       <div id="paneText">
@@ -366,6 +367,11 @@
       <canvas id="trend" width="1000" height="220" aria-label="Puntaje por práctica"></canvas>
     </div>
     <div class="card">
+      <h2>Preferencias</h2>
+      <label class="chk"><input type="checkbox" id="calmMode"> Modo calma: practicar sin ver puntajes</label>
+      <p class="note">Útil si los números te ponen más nervioso o nerviosa. Igual verás tu foco y tu ejercicio.</p>
+    </div>
+    <div class="card">
       <h2>Escalera de confianza</h2>
       <p class="note">Exposición gradual: sube un peldaño cuando el anterior te genere poca tensión.</p>
       <ul class="ladder" id="ladder"></ul>
@@ -378,8 +384,8 @@
         <button id="btnClearYes" class="primary">Sí, borrar</button> <button id="btnClearNo">Cancelar</button></p>
     </div>
     <div class="card full">
-      <h2>Versión completa con cámara y micrófono</h2>
-      <p>Esta página compartible no puede usar la cámara ni el micrófono en vivo. La versión completa, con evaluación en vivo, audiencia virtual y gimnasio de voz, está en el repositorio del proyecto (<code>voxa/</code>) y se abre en Chrome o Edge.</p>
+      <h2>¿Por qué grabo con la cámara del celular?</h2>
+      <p>Por privacidad, esta página no puede encender tu cámara ni tu micrófono en vivo: grabas con la app de tu celular y VOXA analiza el archivo aquí mismo, sin subirlo. Muy pronto: app instalable con evaluación en vivo, audiencia virtual y gimnasio de voz.</p>
     </div>
     <div class="card full" id="rateCard">
       <h2>Califica VOXA</h2>
@@ -387,6 +393,7 @@
       <div class="btns"><button class="cta" id="rateSend">Enviar mi calificación</button></div>
       <p class="note" id="rateMsg" aria-live="polite"></p>
     </div>
+    <details class="card full help-card" id="helpProg"><summary>💙 ¿Te sientes muy mal?</summary><div class="help-box"></div></details>
     <div class="card full hidden" id="ownerCard">
       <h2>Calificaciones de tus usuarios (sólo tú lo ves)</h2>
       <div id="ownerOut"></div>

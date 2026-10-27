@@ -176,7 +176,7 @@ export const LESSONS = [
 // Lección sugerida para la métrica que más falla (ver Progreso → foco recurrente).
 export const LESSON_FOR_METRIC = {
   fillers: 'pausa', hums: 'pausa', pauses: 'prep', wpm: 'voz', pitch: 'voz', volume: 'voz', speech: 'prep',
-  hedges: 'bluf', length: 'star', gaze: 'presencia', face: 'presencia', smile: 'presencia', head: 'presencia', duration: 'bluf', variety: 'prep',
+  hedges: 'bluf', length: 'star', gaze: 'presencia', face: 'presencia', smile: 'presencia', head: 'presencia', duration: 'bluf', variety: 'prep', structure: 'prep',
 };
 
 // ---------------------------------------------------------------- interfaz compartida

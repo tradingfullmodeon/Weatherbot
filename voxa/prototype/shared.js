@@ -8,7 +8,8 @@ export const FILLERS = ['eh+', 'em+', 'ehm+', 'mm+', 'este', 'o sea', 'bueno', '
 // Atenuadores que restan asertividad cuando se abusa de ellos.
 // Las disculpas sólo cuentan cuando piden perdón por existir («perdón por molestar»), no al disculparse de verdad.
 export const HEDGES = ['creo que', 'tal vez', 'quizás', 'quizá', 'un poquito', 'perdón por molestar', 'perdona que te moleste',
-  'disculpa que te moleste', 'disculpa la molestia', 'no sé si', 'más o menos', 'de alguna manera', 'supongo', 'solo quería', 'sólo quería'];
+  'disculpa que te moleste', 'disculpa la molestia', 'no sé si', 'más o menos', 'de alguna manera', 'supongo', 'solo quería', 'sólo quería',
+  'quería saber si', 'quería ver si', 'cuando puedas', 'cuando puedan', 'si no es mucha molestia', 'si no es molestia'];
 
 const escRe = (s) => s.replace(/[.*?^${}()|[\]\\]/g, '\\$&');
 const asPattern = (w) => w.endsWith('+') ? escRe(w.slice(0, -1)) + '+' : escRe(w);
@@ -19,15 +20,22 @@ const wordRe = (patterns) => new RegExp(`(^|[^\\p{L}])(${patterns.join('|')})(?=
 // inicio de la frase (bueno) o antes de una palabra funcional («este, la idea es…», «este eh…»).
 const PAUSE = String.raw`(?:\s*[,.;:…!?]|\s*$)`;
 const FUNCTION_WORD = String.raw`\s+(?:el|la|los|las|lo|un|una|unos|unas|yo|tú|me|te|se|le|les|nos|que|no|sí|es|era|hay|vamos|tenemos|quiero|eh+|em+|o sea|pues|bueno|este)(?!\p{L})`;
+// Para «este» y «tipo» no cuentan los verbos ni la negación: «Este es el plan», «Este no es el informe».
+const FUNCTION_WORD_NOUN = String.raw`\s+(?:el|la|los|las|lo|un|una|unos|unas|yo|tú|me|te|se|le|les|nos|que|vamos|tenemos|quiero|eh+|em+|o sea|pues|bueno|este)(?!\p{L})`;
 const CONTEXTUAL = {
   // Sonidos de duda alargados: «eh», «eeeh», «ehm», «emm», «mmm».
   'eh+': 'e+h+', 'em+': 'e+m+', 'ehm+': 'e+h+m+', 'mm+': 'm{2,}',
-  este: String.raw`este(?=${PAUSE}|${FUNCTION_WORD})`,
-  tipo: String.raw`tipo(?=${PAUSE}|${FUNCTION_WORD})`,
+  este: String.raw`este(?=${PAUSE}|${FUNCTION_WORD_NOUN})`,
+  // «un tipo que sabe», «ese tipo de cosas»: con determinante delante es sustantivo, no muletilla.
+  tipo: String.raw`(?<!(?:un|el|ese|este|qué|que|cualquier)\s)tipo(?=${PAUSE}|${FUNCTION_WORD_NOUN})`,
+  // «pues era necesario» (causal) no cuenta; sí «pues, mira» o «pues nada».
+  pues: String.raw`pues(?=${PAUSE}|\s+(?:eh+|em+|nada|bueno|mira|este|o sea)(?!\p{L}))`,
   onda: String.raw`onda(?=${PAUSE}|${FUNCTION_WORD})`,
-  bueno: String.raw`(?<=(?:^|[.!?¡¿]\s*))bueno|bueno(?=\s*[,.…])`,
+  // Al inicio de la frase, o seguido de coma («…y, bueno, …»); «El resultado es bueno.» no cuenta.
+  bueno: String.raw`(?<=(?:^|[.!?¡¿]\s*))bueno|bueno(?=\s*[,…])`,
   vale: String.raw`vale(?=\s*[?,.…!]|\s*$)`,
-  sabes: String.raw`sabes(?=\s*[?,]|\s*$)`,
+  // «¿sabes?» como muletilla; «¿Ya lo sabes?» es una pregunta real.
+  sabes: String.raw`(?<!(?:lo|la|me|te|le|nos|les|se|tú|ya|no|qué|que)\s)sabes(?=\s*[?,]|\s*$)`,
   viste: String.raw`viste(?=\s*[?,]|\s*$)`,
   po: String.raw`po(?=${PAUSE})`,
 };
@@ -41,7 +49,8 @@ export const wordCount = (t) => (t.trim().match(/\p{L}+/gu) || []).length;
 export const mean = (a) => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
 export const std = (a) => { const m = mean(a); return Math.sqrt(mean(a.map(x => (x - m) ** 2))); };
 export const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-export const colorFor = (s) => s >= 75 ? 'var(--good)' : s >= 50 ? 'var(--mid)' : 'var(--bad)';
+// Bajo 50 se usa el color de acento, no rojo: un primer puntaje bajo no debe leerse como «fracaso».
+export const colorFor = (s) => s >= 75 ? 'var(--good)' : s >= 50 ? 'var(--mid)' : 'var(--accent)';
 
 // ---------------------------------------------------------------- audio
 // Autocorrelación normalizada; suficiente para F0 de voz hablada (70–400 Hz, o más con maxHz).
@@ -88,7 +97,26 @@ export function findFilledPauses(samples, { minDur = 0.4, maxDur = 2.5, maxGap =
     run.end = s.t; run.last = st; run.rms.push(s.rms);
   }
   close();
-  return zones;
+  // Un «eeh» va entre palabras: tiene una pausa justo antes o justo después. Una vocal alargada con
+  // énfasis va pegada a la palabra siguiente, así que sin esa pausa no se cuenta.
+  const sorted = samples.map(x => x.rms).sort((a, b) => a - b);
+  const thr = Math.max(0.006, (sorted[Math.floor(sorted.length * 0.1)] || 0) * 1.3 + 0.004);
+  const silentSpan = (from, dir) => {
+    let i = samples.findIndex(x => x.t >= from); if (i < 0) i = samples.length - 1;
+    if (dir < 0) while (i > 0 && samples[i].t > from) i--; else while (i < samples.length - 1 && samples[i].t < from) i++;
+    // Se tolera un par de cuadros con voz entre la zona y el silencio.
+    let k = i, skipped = 0;
+    while (k >= 0 && k < samples.length && samples[k].rms > thr && skipped < 2) { k += dir; skipped++; }
+    const startT = samples[k]?.t;
+    while (k >= 0 && k < samples.length && samples[k].rms <= thr) k += dir;
+    const endT = samples[Math.min(Math.max(k - dir, 0), samples.length - 1)]?.t;
+    return startT == null || endT == null ? 0 : Math.abs(endT - startT);
+  };
+  const found = zones.filter(([a, b]) => silentSpan(a, -1) >= 0.06 || silentSpan(b, 1) >= 0.06);
+  // Si casi todo suena «plano y alargado» (lectura silabeada o cantada), la estimación no es confiable: no se reporta.
+  const dt = samples.length > 1 ? (samples[samples.length - 1].t - samples[0].t) / (samples.length - 1) : 0;
+  const voicedTime = samples.filter(x => x.pitch > 0).length * dt;
+  return found.reduce((s, [a, b]) => s + b - a, 0) > 0.3 * voicedTime ? [] : found;
 }
 
 export function highlight(text) {

@@ -23,7 +23,7 @@ test('cada dimensión tiene una afirmación y una meta que apunta a contenido re
 });
 
 test('la confianza se puntúa invertida: muchos nervios = puntaje bajo', () => {
-  assert.equal(computeProfile({ ...allThree, confianza: 5 }).profile.confianza, 0);
+  assert.equal(computeProfile({ ...allThree, confianza: 5 }).profile.confianza, 10);   // nunca 0: «por trabajar»
   assert.equal(computeProfile({ ...allThree, confianza: 1 }).profile.confianza, 100);
 });
 
@@ -31,7 +31,7 @@ test('el perfil combina lo medido (60%) con la autoevaluación (40%) y detecta p
   const measured = measuredFrom({ speechItems: [{ key: 'hums', s: 10 }, { key: 'pauses', s: 10 }, { key: 'fillers', s: 10 }], writingScore: 90 });
   const r = computeProfile({ ...allThree, fluidez: 5 }, measured);
   assert.equal(r.profile.fluidez, Math.round(0.6 * 10 + 0.4 * 100));
-  assert.equal(r.profile.escritura, Math.round(0.6 * 90 + 0.4 * 50));
+  assert.equal(r.profile.escritura, Math.round(0.6 * 90 + 0.4 * 55));
   assert.ok(r.gaps.some(g => g.dim === 'fluidez' && g.kind === 'sobre'));
   assert.ok(r.gaps.some(g => g.dim === 'escritura' && g.kind === 'sub'));
   assert.ok(r.priorities.includes('fluidez'));

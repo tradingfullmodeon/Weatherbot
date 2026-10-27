@@ -44,6 +44,8 @@ export function fernandezHuerta(words, sentences) {
 }
 export const ASK_RE = /\?|\b(podr[ií]as|puedes|pod[eé]s|necesito|necesitamos|te pido|les pido|solicito|agradecer[ií]a|por favor|me ayudas|me confirmas|confirm[aá]|env[ií]a|propongo)\b/iu;
 export const DEADLINE_RE = /\b(hoy|mañana|lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|esta semana|pr[oó]xima semana|antes del?|a m[aá]s tardar|fecha|plazo|\d{1,2}(:\d{2})?\s?(h|hrs|horas|am|pm)|\d{1,2} de (enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)|\d{1,2}\/\d{1,2})\b/iu;
+// Pedidos indirectos: cuentan como pedido, pero conviene hacerlos directos.
+export const INDIRECT_ASK_RE = /\b(podr[ií]an?|ser[ií]a posible|quer[ií]a (saber|ver|preguntar) si|me gustar[ií]a (saber|pedir))\b/iu;
 export const APOLOGY_RE = /\b(perd[oó]n por (molestar|la molestia)|disculpa (la molestia|que te moleste)|siento molestarte|no s[eé] si es posible)\b/giu;
 export const VAGUE_OPEN_RE = /^(hola[,!.]?\s*)?(¿tienes un minuto\??|¿tienes un momento\??|espero que est[eé]s bien[.!]?|ojal[aá] est[eé]s bien[.!]?)\s*$/iu;
 
@@ -58,7 +60,9 @@ export function analyzeWriting(text, k) {
   const hedges = countMatches(text.replace(APOLOGY_RE, ''), HEDGE_RE);   // las disculpas innecesarias se revisan aparte
   const apologies = (text.match(APOLOGY_RE) || []).length;
   const shouting = (text.match(/\b[A-ZÁÉÍÓÚÑ]{4,}\b/g) || []).length + (text.match(/!{2,}/g) || []).length;
-  const askIdx = sents.findIndex(s => ASK_RE.test(s));
+  const noOpening = /!/.test(text) && !/¡/.test(text);
+  const askIdx = sents.findIndex(s => ASK_RE.test(s) || INDIRECT_ASK_RE.test(s));
+  const indirect = askIdx >= 0 && !ASK_RE.test(sents[askIdx]);
   const checks = [];
   const add = (ok, msg) => checks.push({ ok, msg });
 
@@ -66,17 +70,26 @@ export function analyzeWriting(text, k) {
   add(words.length >= lo && words.length <= hi, words.length < lo ? `Es muy corto para este tipo de texto (${words.length} palabras; ideal ${lo}–${hi}).`
     : words.length > hi ? `Es largo (${words.length} palabras; ideal ${lo}–${hi}). Quita lo que no ayude a lograr tu objetivo.` : `Buena extensión (${words.length} palabras).`);
   if (k.ask) {
-    add(askIdx >= 0, askIdx >= 0 ? 'Hay un pedido explícito.' : 'No se ve un pedido claro: di exactamente qué necesitas («¿Puedes…?», «Necesito…»).');
+    if (!indirect) add(askIdx >= 0, askIdx >= 0 ? 'Hay un pedido explícito.' : 'No se ve un pedido claro: di exactamente qué necesitas («¿Puedes…?», «Necesito…»).');
+    if (indirect) add(false, 'Tu pedido es indirecto («quería ver si…», «podría…»): hazlo directo («¿Puedes revisar…?»).');
     if (askIdx >= 0) add(askIdx <= 1, askIdx <= 1 ? 'El pedido está al inicio: quien lee entiende enseguida qué necesitas.' : `El pedido aparece recién en la frase ${askIdx + 1}. Súbelo al inicio (lo importante primero).`);
   }
   if (k.deadline) add(DEADLINE_RE.test(text), DEADLINE_RE.test(text) ? 'Incluye un plazo o fecha.' : 'Falta un plazo: agrega para cuándo («antes del jueves a las 12»).');
   add(avg <= 22 && longest <= 35, avg <= 22 && longest <= 35 ? 'Frases de largo cómodo.' : `Hay frases largas (la más larga tiene ${longest} palabras). Divide las de más de 25.`);
   if (words.length >= 30) add(read >= 55, read >= 55 ? `Fácil de leer (índice de legibilidad ${read}).` : `Cuesta leerlo (índice de legibilidad ${read}; apunta a 60 o más): usa palabras y frases más simples.`);
-  add(hedges <= 1, hedges <= 1 ? 'Lenguaje seguro.' : `${hedges} frases restan seguridad («creo que», «un poco», «solo quería»).`);
+  add(hedges === 0, hedges === 0 ? 'Lenguaje seguro.' : `${hedges === 1 ? 'Una frase resta' : `${hedges} frases restan`} seguridad: ${[...new Set((text.replace(APOLOGY_RE, '').match(HEDGE_RE) || []).map(h => `«${h.trim().toLowerCase()}»`))].join(', ')}.`);
   if (apologies) add(false, 'Pides perdón por escribir: no hace falta. Agradece en lugar de disculparte.');
-  if (shouting) add(false, 'Hay mayúsculas sostenidas o varios signos de exclamación: pueden leerse como enojo.');
+  if (shouting) add(false, 'Hay mayúsculas sostenidas o varios signos de exclamación: pueden leerse como enojo. Usa uno solo.');
+  if (noOpening) add(false, 'En español la exclamación se abre con «¡»: «¡Gracias!».');
   if (sents.length && VAGUE_OPEN_RE.test(sents[0])) add(false, 'La primera frase no dice nada todavía: empieza por el motivo del mensaje.');
   const score = Math.round(100 * checks.filter(c => c.ok).length / (checks.length || 1));
   return { checks, score, words: words.length, sentences: sents.length, avg, read };
 }
 
+// Asertividad de un mensaje (0–100): pedido directo, sin atenuadores ni disculpas por escribir.
+export function assertivenessOf(text) {
+  const hedges = countMatches(text.replace(APOLOGY_RE, ''), HEDGE_RE), apologies = (text.match(APOLOGY_RE) || []).length;
+  const direct = ASK_RE.test(text), indirect = INDIRECT_ASK_RE.test(text);
+  const v = 100 - 20 * hedges - 30 * Math.min(apologies, 1) - (direct ? 0 : indirect ? 20 : 35);
+  return Math.max(0, Math.min(100, v));
+}

@@ -12,6 +12,9 @@ test('muletillas: cuenta el relleno y no las palabras normales', () => {
     ['Lo hacemos mañana, ¿vale?', 1], ['Este tipo de cliente es difícil.', 0], ['Es como, tipo, raro.', 1],
     ['¿Viste la película?', 0], ['Estaba nervioso, ¿viste?', 1], ['O sea, eeeh, no sé.', 2],
     ['Ya po, vamos.', 1], ['Él es Emma y estudia esto.', 0], ['En plan, literalmente lo hicimos.', 2],
+    ['Este es el plan para el trimestre.', 0], ['Este no es el informe correcto.', 0], ['Es un tipo que sabe mucho.', 0],
+    ['El resultado es bueno.', 0], ['¿Ya lo sabes?', 0], ['Lo hicimos, pues era necesario.', 0],
+    ['Y, bueno, seguimos.', 1], ['Me gustó, ¿sabes?', 1], ['Pues, mira, no sé.', 1],
   ];
   for (const [text, n] of cases) assert.equal(countMatches(text, FILLER_RE), n, text);
 });
@@ -55,15 +58,16 @@ function synthSamples() {
   const fps = 60, out = []; let t = 0;
   const push = (dur, f, rms = 0.05) => { for (let i = 0; i < dur * fps; i++, t += 1 / fps) out.push({ t, rms, pitch: f(i / fps) }); };
   const speech = (secs) => { for (let k = 0; k < Math.round(secs / 0.2); k++) { const b = 140 + 40 * Math.sin(k * 1.3); push(0.15, s => b * (1 + 0.15 * s)); push(0.05, () => 0, 0.01); } };
-  speech(4); push(0.8, () => 125);          // «eeeh» plano de 0,8 s
-  speech(3); push(0.6, () => 118, 0.04);    // «mmm» de 0,6 s
+  speech(4); push(0.8, () => 125); push(0.2, () => 0, 0.002);          // «eeeh» plano de 0,8 s y una pausa
+  speech(3); push(0.2, () => 0, 0.002); push(0.6, () => 118, 0.04);    // pausa y «mmm» de 0,6 s
+  speech(2); push(0.5, s => 150 * (1 - 0.02 * s)); speech(1);           // vocal alargada pegada a la palabra: no es duda
   speech(3); push(1.5, () => 0, 0.002);     // silencio
   push(0.6, s => 200 * (1 - 0.5 * s));      // vocal enfatizada con tono que cae: no es duda
   speech(1);
   return out;
 }
 
-test('findFilledPauses detecta los «eeeh» planos e ignora el habla y el énfasis', () => {
+test('findFilledPauses detecta los «eeeh» planos e ignora el habla, el énfasis y los alargamientos', () => {
   const zones = findFilledPauses(synthSamples());
   assert.equal(zones.length, 2);
   assert.ok(zones[0][1] - zones[0][0] >= 0.7);

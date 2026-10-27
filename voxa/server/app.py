@@ -11,7 +11,11 @@ from pathlib import Path
 from typing import Literal
 
 import anthropic
-from fastapi import FastAPI, HTTPException
+from collections import defaultdict, deque
+import time
+
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -25,6 +29,23 @@ FALLBACK_BETA = "server-side-fallback-2026-07-01"
 PROTOTYPE_DIR = Path(__file__).resolve().parent.parent / "prototype"
 
 app = FastAPI(title="VOXA API")
+
+# Límite simple de peticiones por IP a la API del coach (evita abusos y costos inesperados).
+RATE_LIMIT = int(os.environ.get("VOXA_RATE_LIMIT", "30"))   # por minuto
+_hits: dict[str, deque] = defaultdict(deque)
+
+
+@app.middleware("http")
+async def rate_limit(request: Request, call_next):
+    if request.url.path.startswith("/api/") and request.method == "POST":
+        ip = request.client.host if request.client else "?"
+        now, q = time.monotonic(), _hits[ip]
+        while q and now - q[0] > 60:
+            q.popleft()
+        if len(q) >= RATE_LIMIT:
+            return JSONResponse({"detail": "Demasiadas consultas seguidas. Espera un minuto."}, status_code=429)
+        q.append(now)
+    return await call_next(request)
 _client: anthropic.Anthropic | None = None
 
 
@@ -132,7 +153,7 @@ FEEDBACK_SCHEMA = obj({
 def feedback(req: FeedbackRequest) -> dict:
     system = f"""Eres el coach de comunicación de VOXA: experto en oratoria, comunicación interpersonal, voz y lenguaje corporal.
 {COACH_RULES}
-Devuelve la rúbrica con valores de 0 a 100. La reescritura debe tener una duración similar a la original y seguir el método indicado.
+Devuelve la rúbrica con valores de 0 a 100. Escala anclada para cada puntaje: 0–39 ausente o contraproducente; 40–69 parcial o genérico; 70–84 sólido, con evidencia en lo que dijo; 85–100 excelente y citable. Sin evidencia, 40 o menos. Usa todo el rango: no agrupes todo entre 70 y 85. La reescritura debe tener una duración similar a la original y seguir el método indicado.
 Si no hay transcripción, basa el feedback en las métricas y explica qué no pudiste evaluar."""
     metrics = "\n".join(f"- {m.label}: {m.display} (objetivo {m.target}, puntaje {m.score})" for m in req.metrics)
     user = f"""Escenario: {req.scenario}
@@ -259,7 +280,7 @@ def roleplay_evaluate(req: EvaluateRequest) -> dict:
     transcript = "\n".join(f"{'USUARIO' if t.role == 'user' else p['name'].upper()}: {t.text}" for t in req.history)
     system = f"""Eres el coach de comunicación de VOXA y evalúas una simulación ya terminada.
 {COACH_RULES}
-Puntajes de 0 a 100. Objetivo del usuario en la simulación: {p["goal"]}. Técnicas esperables: {", ".join(p["skills"])}.{context_block(req.context)}"""
+Puntajes de 0 a 100. Escala anclada para cada puntaje: 0–39 ausente o contraproducente; 40–69 parcial o genérico; 70–84 sólido, con evidencia en lo que dijo; 85–100 excelente y citable. Sin evidencia, 40 o menos. Usa todo el rango: no agrupes todo entre 70 y 85. Objetivo del usuario en la simulación: {p["goal"]}. Técnicas esperables: {", ".join(p["skills"])}.{context_block(req.context)}"""
     user = f"""Personaje: {p["name"]} ({p["role"]}). Dificultad {req.difficulty}/3.
 Métricas: ratio de habla del usuario {req.talk_ratio}, preguntas formuladas {req.questions_asked}, muletillas/min {req.fillers_per_min}.
 

@@ -24,7 +24,7 @@ export const EVENT_TYPES = {
       ['Cuéntame sobre ti.', 'Es la apertura: define el tono de toda la entrevista.', 'Presente, pasado y por qué este puesto en 60 segundos.'],
       ['¿Por qué quieres trabajar aquí?', 'Mide si investigaste y si te interesa este puesto, no cualquiera.', 'Nombra algo concreto de la empresa y conéctalo con tu experiencia.'],
       ['Cuéntame de un error que cometiste.', 'Evalúa honestidad y aprendizaje.', 'Un error real, qué hiciste para corregirlo y qué cambiaste desde entonces.'],
-      ['¿Por qué dejas tu trabajo actual?', 'Buscan señales de conflicto.', 'Habla de lo que buscas, no de lo que te molesta.'],
+      ['¿Por qué buscas este cambio? (o, si es tu primer trabajo, ¿por qué este y no otro?)', 'Buscan señales de conflicto o de que postulas a todo.', 'Habla de lo que buscas y de por qué encaja con este puesto, no de lo que te molesta.'],
       ['¿Cuáles son tus expectativas de sueldo?', 'Prueba tu preparación y tu seguridad.', 'Da un rango investigado y pregunta por el paquete completo.'],
       ['¿Qué harías en tus primeros 90 días?', 'Mide si entiendes el rol.', 'Escuchar y aprender, un logro rápido y una mejora concreta.'],
     ],
@@ -174,6 +174,19 @@ export function nextEventPractice(event, today = new Date()) {
   const done = event.done || {};
   const i = (event.plan || []).findIndex((p, k) => !done[k] && p.date <= isoDay(today));
   return i >= 0 ? { ...event.plan[i], index: i } : null;
+}
+
+// Al practicar, se marca sola la tarea del plan que corresponde (la primera pendiente hasta hoy con el mismo
+// escenario, personaje o tipo de texto). Devuelve true si marcó alguna.
+export function markEventPractice(event, session, today = new Date()) {
+  if (!validEvent(event)) return false;
+  const done = event.done ||= {};
+  const matches = (p) => (p.scenario && p.scenario === session.scenario)
+    || (p.persona && session.scenario === 'roleplay:' + p.persona) || (p.kind && session.scenario === 'escritura:' + p.kind);
+  const i = (event.plan || []).findIndex((p, k) => !done[k] && p.date <= isoDay(today) && matches(p));
+  if (i < 0) return false;
+  done[i] = true;
+  return true;
 }
 
 export function validEvent(event) {

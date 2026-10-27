@@ -27,6 +27,12 @@ def fake_client(monkeypatch, payload, stop_reason="end_turn"):
 
 api = TestClient(voxa.app)
 
+
+@pytest.fixture(autouse=True)
+def _reset_rate_limit():
+    voxa._hits.clear()
+    yield
+
 FEEDBACK = {
     "strength": {"text": "Apertura clara", "quote": "Soy Ana"},
     "focus": {"area": "Resultados", "why": "Faltó un número"},
@@ -162,3 +168,12 @@ def test_empty_model_text_is_a_clean_error(monkeypatch):
     monkeypatch.setattr(voxa, "_client", SimpleNamespace(beta=SimpleNamespace(messages=messages)))
     r = api.post("/api/feedback", json={"scenario": "E", "method": "STAR", "prompt": "P"})
     assert r.status_code == 502
+
+
+def test_rate_limit(monkeypatch):
+    fake_client(monkeypatch, FEEDBACK)
+    monkeypatch.setattr(voxa, "RATE_LIMIT", 3)
+    voxa._hits.clear()
+    codes = [api.post("/api/feedback", json={"scenario": "E", "method": "STAR", "prompt": "P"}).status_code for _ in range(4)]
+    assert codes == [200, 200, 200, 429]
+    voxa._hits.clear()

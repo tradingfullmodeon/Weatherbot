@@ -26,8 +26,8 @@ test('los métodos principales tienen explicación en lenguaje simple', () => {
   for (const m of ['STAR', 'PREP', 'BLUF / Pirámide de Minto', 'SBI + CNV', 'Monroe / SCQA']) assert.ok(methodHelp(m).length > 20, m);
 });
 
-test('personajes: se leyeron los 6 del servidor', () => {
-  assert.deepEqual([...personaIds].sort(), ['cliente', 'colega', 'inversionista', 'jefe', 'networking', 'reclutadora']);
+test('personajes: se leyeron los 9 del servidor', () => {
+  assert.deepEqual([...personaIds].sort(), ['cliente', 'colaborador', 'colega', 'finanzas', 'inversionista', 'jefe', 'malanoticia', 'networking', 'reclutadora']);
 });
 
 test('lecciones: completas, con repaso válido y práctica que existe', () => {

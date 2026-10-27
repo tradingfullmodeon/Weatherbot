@@ -21,3 +21,14 @@ test('se pide calificar después de 3 prácticas y como mucho una vez al mes', (
   assert.ok(!shouldAskRating({ ratingDismissed: '2026-10-20' }, three, now));
   assert.ok(shouldAskRating({ rating: { date: '2026-09-01' } }, three, now));
 });
+
+test('cuidado: detecta mensajes de crisis en el dispositivo y nervios máximos sostenidos', async () => {
+  const { isCrisis, persistentHighAnxiety, HELP_LINES } = await import('../prototype/help.js');
+  assert.ok(isCrisis('A veces siento que no quiero vivir más'));
+  assert.ok(isCrisis('Pienso en hacerme daño'));
+  assert.ok(!isCrisis('Me muero de nervios antes de la entrevista'));
+  assert.ok(!isCrisis('Quiero vivir en otro país'));
+  assert.ok(persistentHighAnxiety([{ anxietyBefore: 5 }, { anxietyBefore: 5 }, { anxietyBefore: 5 }]));
+  assert.ok(!persistentHighAnxiety([{ anxietyBefore: 5 }, { anxietyBefore: 3 }, { anxietyBefore: 5 }]));
+  assert.ok(HELP_LINES.length >= 6);
+});

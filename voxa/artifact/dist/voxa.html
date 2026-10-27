@@ -201,6 +201,12 @@
   .warn-banner { background: #fff7ed; color: #7c2d12; border: 1px solid #fdba74; border-radius: 10px; padding: 10px 12px; margin: 8px 0; font-size: .9rem; }
   /* Cada etiqueta va antes de su campo de archivo oculto: el anillo de foco se pinta en la etiqueta. */
   label:has(+ input[type="file"]:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+  body.first-run nav.bottom-nav, body.first-run nav.tabs { display: none; }
+  .help-card summary { font-weight: 700; cursor: pointer; }
+  .chk { display: inline-flex; gap: 8px; align-items: center; color: var(--text); }
+  .week { display: inline-flex; gap: 4px; vertical-align: middle; margin-right: 6px; }
+  .week .wk { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; font-size: .7rem; border: 1px solid currentColor; opacity: .55; }
+  .week .wk.on { background: var(--good); border-color: var(--good); color: #fff; opacity: 1; }
   /* Versión publicable: complementa prototype/voxa.css. Una sola página con vistas. */
   :root[data-theme="dark"] {
     --bg: #0f1117; --card: #181b24; --text: #e8eaf0; --muted: #9aa1b2;
@@ -354,6 +360,7 @@
       <p id="aiState" class="note">Comprobando si Claude está disponible en esta página…</p>
       <p class="note">La primera vez que pidas un consejo, claude.ai te pedirá permiso. Las consultas usan tu propia cuenta de Claude.</p>
     </div>
+    <details class="card full help-card" id="helpHoy"><summary>💙 ¿Te sientes muy mal?</summary><div class="help-box"></div></details>
   </section>
 
   <!-- ============================ ENSAYAR ============================ -->
@@ -371,7 +378,7 @@
       <h2>3. Ensaya</h2>
       <div class="seg" role="tablist" aria-label="Modo de ensayo">
         <button role="tab" id="mText" aria-selected="true">✍️ Escribir mi respuesta</button>
-        <button role="tab" id="mAudio" aria-selected="false">🎧 Subir una grabación</button>
+        <button role="tab" id="mAudio" aria-selected="false">🎙 Grabarme o subir audio</button>
       </div>
 
       <div id="paneText">
@@ -641,6 +648,11 @@
       <canvas id="trend" width="1000" height="220" aria-label="Puntaje por práctica"></canvas>
     </div>
     <div class="card">
+      <h2>Preferencias</h2>
+      <label class="chk"><input type="checkbox" id="calmMode"> Modo calma: practicar sin ver puntajes</label>
+      <p class="note">Útil si los números te ponen más nervioso o nerviosa. Igual verás tu foco y tu ejercicio.</p>
+    </div>
+    <div class="card">
       <h2>Escalera de confianza</h2>
       <p class="note">Exposición gradual: sube un peldaño cuando el anterior te genere poca tensión.</p>
       <ul class="ladder" id="ladder"></ul>
@@ -653,8 +665,8 @@
         <button id="btnClearYes" class="primary">Sí, borrar</button> <button id="btnClearNo">Cancelar</button></p>
     </div>
     <div class="card full">
-      <h2>Versión completa con cámara y micrófono</h2>
-      <p>Esta página compartible no puede usar la cámara ni el micrófono en vivo. La versión completa, con evaluación en vivo, audiencia virtual y gimnasio de voz, está en el repositorio del proyecto (<code>voxa/</code>) y se abre en Chrome o Edge.</p>
+      <h2>¿Por qué grabo con la cámara del celular?</h2>
+      <p>Por privacidad, esta página no puede encender tu cámara ni tu micrófono en vivo: grabas con la app de tu celular y VOXA analiza el archivo aquí mismo, sin subirlo. Muy pronto: app instalable con evaluación en vivo, audiencia virtual y gimnasio de voz.</p>
     </div>
     <div class="card full" id="rateCard">
       <h2>Califica VOXA</h2>
@@ -662,6 +674,7 @@
       <div class="btns"><button class="cta" id="rateSend">Enviar mi calificación</button></div>
       <p class="note" id="rateMsg" aria-live="polite"></p>
     </div>
+    <details class="card full help-card" id="helpProg"><summary>💙 ¿Te sientes muy mal?</summary><div class="help-box"></div></details>
     <div class="card full hidden" id="ownerCard">
       <h2>Calificaciones de tus usuarios (sólo tú lo ves)</h2>
       <div id="ownerOut"></div>
@@ -683,7 +696,8 @@ const FILLERS = ['eh+', 'em+', 'ehm+', 'mm+', 'este', 'o sea', 'bueno', 'pues', 
 // Atenuadores que restan asertividad cuando se abusa de ellos.
 // Las disculpas sólo cuentan cuando piden perdón por existir («perdón por molestar»), no al disculparse de verdad.
 const HEDGES = ['creo que', 'tal vez', 'quizás', 'quizá', 'un poquito', 'perdón por molestar', 'perdona que te moleste',
-  'disculpa que te moleste', 'disculpa la molestia', 'no sé si', 'más o menos', 'de alguna manera', 'supongo', 'solo quería', 'sólo quería'];
+  'disculpa que te moleste', 'disculpa la molestia', 'no sé si', 'más o menos', 'de alguna manera', 'supongo', 'solo quería', 'sólo quería',
+  'quería saber si', 'quería ver si', 'cuando puedas', 'cuando puedan', 'si no es mucha molestia', 'si no es molestia'];
 
 const escRe = (s) => s.replace(/[.*?^${}()|[\]\\]/g, '\\$&');
 const asPattern = (w) => w.endsWith('+') ? escRe(w.slice(0, -1)) + '+' : escRe(w);
@@ -694,15 +708,22 @@ const wordRe = (patterns) => new RegExp(`(^|[^\\p{L}])(${patterns.join('|')})(?=
 // inicio de la frase (bueno) o antes de una palabra funcional («este, la idea es…», «este eh…»).
 const PAUSE = String.raw`(?:\s*[,.;:…!?]|\s*$)`;
 const FUNCTION_WORD = String.raw`\s+(?:el|la|los|las|lo|un|una|unos|unas|yo|tú|me|te|se|le|les|nos|que|no|sí|es|era|hay|vamos|tenemos|quiero|eh+|em+|o sea|pues|bueno|este)(?!\p{L})`;
+// Para «este» y «tipo» no cuentan los verbos ni la negación: «Este es el plan», «Este no es el informe».
+const FUNCTION_WORD_NOUN = String.raw`\s+(?:el|la|los|las|lo|un|una|unos|unas|yo|tú|me|te|se|le|les|nos|que|vamos|tenemos|quiero|eh+|em+|o sea|pues|bueno|este)(?!\p{L})`;
 const CONTEXTUAL = {
   // Sonidos de duda alargados: «eh», «eeeh», «ehm», «emm», «mmm».
   'eh+': 'e+h+', 'em+': 'e+m+', 'ehm+': 'e+h+m+', 'mm+': 'm{2,}',
-  este: String.raw`este(?=${PAUSE}|${FUNCTION_WORD})`,
-  tipo: String.raw`tipo(?=${PAUSE}|${FUNCTION_WORD})`,
+  este: String.raw`este(?=${PAUSE}|${FUNCTION_WORD_NOUN})`,
+  // «un tipo que sabe», «ese tipo de cosas»: con determinante delante es sustantivo, no muletilla.
+  tipo: String.raw`(?<!(?:un|el|ese|este|qué|que|cualquier)\s)tipo(?=${PAUSE}|${FUNCTION_WORD_NOUN})`,
+  // «pues era necesario» (causal) no cuenta; sí «pues, mira» o «pues nada».
+  pues: String.raw`pues(?=${PAUSE}|\s+(?:eh+|em+|nada|bueno|mira|este|o sea)(?!\p{L}))`,
   onda: String.raw`onda(?=${PAUSE}|${FUNCTION_WORD})`,
-  bueno: String.raw`(?<=(?:^|[.!?¡¿]\s*))bueno|bueno(?=\s*[,.…])`,
+  // Al inicio de la frase, o seguido de coma («…y, bueno, …»); «El resultado es bueno.» no cuenta.
+  bueno: String.raw`(?<=(?:^|[.!?¡¿]\s*))bueno|bueno(?=\s*[,…])`,
   vale: String.raw`vale(?=\s*[?,.…!]|\s*$)`,
-  sabes: String.raw`sabes(?=\s*[?,]|\s*$)`,
+  // «¿sabes?» como muletilla; «¿Ya lo sabes?» es una pregunta real.
+  sabes: String.raw`(?<!(?:lo|la|me|te|le|nos|les|se|tú|ya|no|qué|que)\s)sabes(?=\s*[?,]|\s*$)`,
   viste: String.raw`viste(?=\s*[?,]|\s*$)`,
   po: String.raw`po(?=${PAUSE})`,
 };
@@ -716,7 +737,8 @@ const wordCount = (t) => (t.trim().match(/\p{L}+/gu) || []).length;
 const mean = (a) => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
 const std = (a) => { const m = mean(a); return Math.sqrt(mean(a.map(x => (x - m) ** 2))); };
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const colorFor = (s) => s >= 75 ? 'var(--good)' : s >= 50 ? 'var(--mid)' : 'var(--bad)';
+// Bajo 50 se usa el color de acento, no rojo: un primer puntaje bajo no debe leerse como «fracaso».
+const colorFor = (s) => s >= 75 ? 'var(--good)' : s >= 50 ? 'var(--mid)' : 'var(--accent)';
 
 // ---------------------------------------------------------------- audio
 // Autocorrelación normalizada; suficiente para F0 de voz hablada (70–400 Hz, o más con maxHz).
@@ -763,7 +785,26 @@ function findFilledPauses(samples, { minDur = 0.4, maxDur = 2.5, maxGap = 0.08, 
     run.end = s.t; run.last = st; run.rms.push(s.rms);
   }
   close();
-  return zones;
+  // Un «eeh» va entre palabras: tiene una pausa justo antes o justo después. Una vocal alargada con
+  // énfasis va pegada a la palabra siguiente, así que sin esa pausa no se cuenta.
+  const sorted = samples.map(x => x.rms).sort((a, b) => a - b);
+  const thr = Math.max(0.006, (sorted[Math.floor(sorted.length * 0.1)] || 0) * 1.3 + 0.004);
+  const silentSpan = (from, dir) => {
+    let i = samples.findIndex(x => x.t >= from); if (i < 0) i = samples.length - 1;
+    if (dir < 0) while (i > 0 && samples[i].t > from) i--; else while (i < samples.length - 1 && samples[i].t < from) i++;
+    // Se tolera un par de cuadros con voz entre la zona y el silencio.
+    let k = i, skipped = 0;
+    while (k >= 0 && k < samples.length && samples[k].rms > thr && skipped < 2) { k += dir; skipped++; }
+    const startT = samples[k]?.t;
+    while (k >= 0 && k < samples.length && samples[k].rms <= thr) k += dir;
+    const endT = samples[Math.min(Math.max(k - dir, 0), samples.length - 1)]?.t;
+    return startT == null || endT == null ? 0 : Math.abs(endT - startT);
+  };
+  const found = zones.filter(([a, b]) => silentSpan(a, -1) >= 0.06 || silentSpan(b, 1) >= 0.06);
+  // Si casi todo suena «plano y alargado» (lectura silabeada o cantada), la estimación no es confiable: no se reporta.
+  const dt = samples.length > 1 ? (samples[samples.length - 1].t - samples[0].t) / (samples.length - 1) : 0;
+  const voicedTime = samples.filter(x => x.pitch > 0).length * dt;
+  return found.reduce((s, [a, b]) => s + b - a, 0) > 0.3 * voicedTime ? [] : found;
 }
 
 function highlight(text) {
@@ -1143,7 +1184,7 @@ const LESSONS = [
 // Lección sugerida para la métrica que más falla (ver Progreso → foco recurrente).
 const LESSON_FOR_METRIC = {
   fillers: 'pausa', hums: 'pausa', pauses: 'prep', wpm: 'voz', pitch: 'voz', volume: 'voz', speech: 'prep',
-  hedges: 'bluf', length: 'star', gaze: 'presencia', face: 'presencia', smile: 'presencia', head: 'presencia', duration: 'bluf', variety: 'prep',
+  hedges: 'bluf', length: 'star', gaze: 'presencia', face: 'presencia', smile: 'presencia', head: 'presencia', duration: 'bluf', variety: 'prep', structure: 'prep',
 };
 
 // ---------------------------------------------------------------- interfaz compartida
@@ -1250,6 +1291,8 @@ function fernandezHuerta(words, sentences) {
 }
 const ASK_RE = /\?|\b(podr[ií]as|puedes|pod[eé]s|necesito|necesitamos|te pido|les pido|solicito|agradecer[ií]a|por favor|me ayudas|me confirmas|confirm[aá]|env[ií]a|propongo)\b/iu;
 const DEADLINE_RE = /\b(hoy|mañana|lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|esta semana|pr[oó]xima semana|antes del?|a m[aá]s tardar|fecha|plazo|\d{1,2}(:\d{2})?\s?(h|hrs|horas|am|pm)|\d{1,2} de (enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)|\d{1,2}\/\d{1,2})\b/iu;
+// Pedidos indirectos: cuentan como pedido, pero conviene hacerlos directos.
+const INDIRECT_ASK_RE = /\b(podr[ií]an?|ser[ií]a posible|quer[ií]a (saber|ver|preguntar) si|me gustar[ií]a (saber|pedir))\b/iu;
 const APOLOGY_RE = /\b(perd[oó]n por (molestar|la molestia)|disculpa (la molestia|que te moleste)|siento molestarte|no s[eé] si es posible)\b/giu;
 const VAGUE_OPEN_RE = /^(hola[,!.]?\s*)?(¿tienes un minuto\??|¿tienes un momento\??|espero que est[eé]s bien[.!]?|ojal[aá] est[eé]s bien[.!]?)\s*$/iu;
 
@@ -1264,7 +1307,9 @@ function analyzeWriting(text, k) {
   const hedges = countMatches(text.replace(APOLOGY_RE, ''), HEDGE_RE);   // las disculpas innecesarias se revisan aparte
   const apologies = (text.match(APOLOGY_RE) || []).length;
   const shouting = (text.match(/\b[A-ZÁÉÍÓÚÑ]{4,}\b/g) || []).length + (text.match(/!{2,}/g) || []).length;
-  const askIdx = sents.findIndex(s => ASK_RE.test(s));
+  const noOpening = /!/.test(text) && !/¡/.test(text);
+  const askIdx = sents.findIndex(s => ASK_RE.test(s) || INDIRECT_ASK_RE.test(s));
+  const indirect = askIdx >= 0 && !ASK_RE.test(sents[askIdx]);
   const checks = [];
   const add = (ok, msg) => checks.push({ ok, msg });
 
@@ -1272,20 +1317,29 @@ function analyzeWriting(text, k) {
   add(words.length >= lo && words.length <= hi, words.length < lo ? `Es muy corto para este tipo de texto (${words.length} palabras; ideal ${lo}–${hi}).`
     : words.length > hi ? `Es largo (${words.length} palabras; ideal ${lo}–${hi}). Quita lo que no ayude a lograr tu objetivo.` : `Buena extensión (${words.length} palabras).`);
   if (k.ask) {
-    add(askIdx >= 0, askIdx >= 0 ? 'Hay un pedido explícito.' : 'No se ve un pedido claro: di exactamente qué necesitas («¿Puedes…?», «Necesito…»).');
+    if (!indirect) add(askIdx >= 0, askIdx >= 0 ? 'Hay un pedido explícito.' : 'No se ve un pedido claro: di exactamente qué necesitas («¿Puedes…?», «Necesito…»).');
+    if (indirect) add(false, 'Tu pedido es indirecto («quería ver si…», «podría…»): hazlo directo («¿Puedes revisar…?»).');
     if (askIdx >= 0) add(askIdx <= 1, askIdx <= 1 ? 'El pedido está al inicio: quien lee entiende enseguida qué necesitas.' : `El pedido aparece recién en la frase ${askIdx + 1}. Súbelo al inicio (lo importante primero).`);
   }
   if (k.deadline) add(DEADLINE_RE.test(text), DEADLINE_RE.test(text) ? 'Incluye un plazo o fecha.' : 'Falta un plazo: agrega para cuándo («antes del jueves a las 12»).');
   add(avg <= 22 && longest <= 35, avg <= 22 && longest <= 35 ? 'Frases de largo cómodo.' : `Hay frases largas (la más larga tiene ${longest} palabras). Divide las de más de 25.`);
   if (words.length >= 30) add(read >= 55, read >= 55 ? `Fácil de leer (índice de legibilidad ${read}).` : `Cuesta leerlo (índice de legibilidad ${read}; apunta a 60 o más): usa palabras y frases más simples.`);
-  add(hedges <= 1, hedges <= 1 ? 'Lenguaje seguro.' : `${hedges} frases restan seguridad («creo que», «un poco», «solo quería»).`);
+  add(hedges === 0, hedges === 0 ? 'Lenguaje seguro.' : `${hedges === 1 ? 'Una frase resta' : `${hedges} frases restan`} seguridad: ${[...new Set((text.replace(APOLOGY_RE, '').match(HEDGE_RE) || []).map(h => `«${h.trim().toLowerCase()}»`))].join(', ')}.`);
   if (apologies) add(false, 'Pides perdón por escribir: no hace falta. Agradece en lugar de disculparte.');
-  if (shouting) add(false, 'Hay mayúsculas sostenidas o varios signos de exclamación: pueden leerse como enojo.');
+  if (shouting) add(false, 'Hay mayúsculas sostenidas o varios signos de exclamación: pueden leerse como enojo. Usa uno solo.');
+  if (noOpening) add(false, 'En español la exclamación se abre con «¡»: «¡Gracias!».');
   if (sents.length && VAGUE_OPEN_RE.test(sents[0])) add(false, 'La primera frase no dice nada todavía: empieza por el motivo del mensaje.');
   const score = Math.round(100 * checks.filter(c => c.ok).length / (checks.length || 1));
   return { checks, score, words: words.length, sentences: sents.length, avg, read };
 }
 
+// Asertividad de un mensaje (0–100): pedido directo, sin atenuadores ni disculpas por escribir.
+function assertivenessOf(text) {
+  const hedges = countMatches(text.replace(APOLOGY_RE, ''), HEDGE_RE), apologies = (text.match(APOLOGY_RE) || []).length;
+  const direct = ASK_RE.test(text), indirect = INDIRECT_ASK_RE.test(text);
+  const v = 100 - 20 * hedges - 30 * Math.min(apologies, 1) - (direct ? 0 : indirect ? 20 : 35);
+  return Math.max(0, Math.min(100, v));
+}
 
 
 // Modo «evento real»: la persona carga una entrevista, charla o reunión con fecha y VOXA arma un plan de
@@ -1312,7 +1366,7 @@ const EVENT_TYPES = {
       ['Cuéntame sobre ti.', 'Es la apertura: define el tono de toda la entrevista.', 'Presente, pasado y por qué este puesto en 60 segundos.'],
       ['¿Por qué quieres trabajar aquí?', 'Mide si investigaste y si te interesa este puesto, no cualquiera.', 'Nombra algo concreto de la empresa y conéctalo con tu experiencia.'],
       ['Cuéntame de un error que cometiste.', 'Evalúa honestidad y aprendizaje.', 'Un error real, qué hiciste para corregirlo y qué cambiaste desde entonces.'],
-      ['¿Por qué dejas tu trabajo actual?', 'Buscan señales de conflicto.', 'Habla de lo que buscas, no de lo que te molesta.'],
+      ['¿Por qué buscas este cambio? (o, si es tu primer trabajo, ¿por qué este y no otro?)', 'Buscan señales de conflicto o de que postulas a todo.', 'Habla de lo que buscas y de por qué encaja con este puesto, no de lo que te molesta.'],
       ['¿Cuáles son tus expectativas de sueldo?', 'Prueba tu preparación y tu seguridad.', 'Da un rango investigado y pregunta por el paquete completo.'],
       ['¿Qué harías en tus primeros 90 días?', 'Mide si entiendes el rol.', 'Escuchar y aprender, un logro rápido y una mejora concreta.'],
     ],
@@ -1464,6 +1518,19 @@ function nextEventPractice(event, today = new Date()) {
   return i >= 0 ? { ...event.plan[i], index: i } : null;
 }
 
+// Al practicar, se marca sola la tarea del plan que corresponde (la primera pendiente hasta hoy con el mismo
+// escenario, personaje o tipo de texto). Devuelve true si marcó alguna.
+function markEventPractice(event, session, today = new Date()) {
+  if (!validEvent(event)) return false;
+  const done = event.done ||= {};
+  const matches = (p) => (p.scenario && p.scenario === session.scenario)
+    || (p.persona && session.scenario === 'roleplay:' + p.persona) || (p.kind && session.scenario === 'escritura:' + p.kind);
+  const i = (event.plan || []).findIndex((p, k) => !done[k] && p.date <= isoDay(today) && matches(p));
+  if (i < 0) return false;
+  done[i] = true;
+  return true;
+}
+
 function validEvent(event) {
   return !!(event && EVENT_TYPES[event.type] && /^\d{4}-\d{2}-\d{2}$/.test(event.date || ''));
 }
@@ -1560,17 +1627,24 @@ const SELF_ITEMS = [
 
 const LEVELS = [[85, 'Referente'], [70, 'Hábil'], [55, 'Competente'], [40, 'Practicante'], [0, 'Explorador']];
 const levelOf = (score) => LEVELS.find(([min]) => score >= min)[1];
-const selfScore = (item, v) => Math.round(((item.reverse ? 6 - v : v) - 1) / 4 * 100);
+// De 10 a 100: nadie empieza en «0» en algo; el punto de partida más bajo es «por trabajar».
+const selfScore = (item, v) => Math.round(10 + ((item.reverse ? 6 - v : v) - 1) / 4 * 90);
 
 // Mediciones de la prueba real a partir de las métricas del ensayo (items con key y s 0–100) y del texto.
-function measuredFrom({ speechItems = [], writingScore = null, presenceScores = null } = {}) {
+// Con una muestra corta (menos de 30 s de voz o de 25 palabras) la medición es poco confiable: se limita
+// el puntaje para no dar una validación falsa («Voz 97» con 20 segundos).
+const SHORT_SAMPLE_CAP = 75;
+function measuredFrom({ speechItems = [], writingScore = null, writingAssertiveness = null, presenceScores = null, seconds = null, words = null } = {}) {
   const s = (k) => speechItems.find(i => i.key === k)?.s;
   const avg = (...xs) => { const v = xs.filter(x => x != null); return v.length ? Math.round(mean(v)) : null; };
+  const cap = (v, short) => v == null ? null : short ? Math.min(v, SHORT_SAMPLE_CAP) : v;
+  const shortAudio = seconds != null && seconds < 30, shortText = words != null && words < 25;
   return {
-    estructura: avg(s('length'), s('variety')),
-    voz: avg(s('pitch'), s('volume')),
-    fluidez: avg(s('hums'), s('pauses'), s('fillers')),
-    asertividad: avg(s('hedges')),
+    estructura: cap(avg(s('structure'), s('length'), s('variety')), shortText),
+    voz: cap(avg(s('pitch'), s('volume')), shortAudio),
+    fluidez: cap(avg(s('hums'), s('pauses'), s('fillers')), shortAudio),
+    // La asertividad del mensaje escrito (pedido directo, sin «perdón por molestar») pesa tanto como el habla.
+    asertividad: cap(avg(s('hedges'), writingAssertiveness), shortText && writingAssertiveness == null),
     presencia: presenceScores ? avg(...Object.values(presenceScores)) : null,
     escritura: writingScore,
     escucha: null, confianza: null,
@@ -1595,7 +1669,10 @@ function computeProfile(selfAnswers, measured = {}) {
   // Ventana de Johari: diferencias grandes entre cómo te ves y cómo te medimos.
   const gaps = DIMENSIONS.filter(d => self[d.id] != null && measured[d.id] != null && Math.abs(self[d.id] - measured[d.id]) >= 25)
     .map(d => ({ dim: d.id, self: self[d.id], measured: measured[d.id], kind: self[d.id] > measured[d.id] ? 'sobre' : 'sub' }));
-  return { self, measured, profile, total, level: levelOf(total), strengths: ranked.slice(0, 2).map(r => r[0]), priorities: rankedLow.slice(0, 3).map(r => r[0]), gaps };
+  const priorities = rankedLow.slice(0, 3).map(r => r[0]);
+  // «Lo haces mejor de lo que crees» no se dice de algo que igual es prioridad: sería contradictorio.
+  return { self, measured, profile, total, level: levelOf(total), strengths: ranked.slice(0, 2).map(r => r[0]), priorities,
+    gaps: gaps.filter(g => g.kind === 'sobre' || !priorities.includes(g.dim)) };
 }
 
 // ---------------------------------------------------------------- metas
@@ -1614,14 +1691,23 @@ const GOAL_TEMPLATES = {
     next: { view: 'roleplay', persona: 'cliente' }, lesson: 'escucha' },
   asertividad: { title: 'Hablar con seguridad', detail: '3 días con un ensayo (30 palabras o más) casi sin frases que restan seguridad', check: { type: 'metric', key: 'hedges', min: 90 }, count: 3,
     next: { view: 'ensayar', scenario: 'say-no' }, lesson: 'bluf' },
-  confianza: { title: 'Más calma al hablar', detail: '3 días empezando a practicar con nervios de 2/5 o menos', check: { type: 'anxiety', max: 2 }, count: 3,
+  // Exposición, no calma: cuenta practicar aunque haya nervios (esperar a «no tener nervios» mantiene el miedo).
+  confianza: { title: 'Practicar aunque haya nervios', detail: '3 días practicando aunque empieces con nervios de 3/5 o más', check: { type: 'exposure', min: 3 }, count: 3,
     next: { view: 'ensayar', scenario: 'passion' }, lesson: 'nervios' },
   escritura: { title: 'Escribir claro', detail: '3 días con un texto de 85 o más en la revisión', check: { type: 'writing', min: 85 }, count: 3,
     next: { view: 'escritura', kind: 'pedido' }, lesson: 'bluf' },
 };
 
-function suggestGoals(result) {
-  return result.priorities.filter(d => GOAL_TEMPLATES[d]).map(d => ({ dim: d, ...GOAL_TEMPLATES[d] }));
+// caps.presence = false cuando esta versión no puede medir el lenguaje corporal (sin IA con imágenes ni cámara):
+// no se sugiere ni se propone como práctica del día una meta imposible de cumplir.
+const goalAvailable = (g, caps = {}) => (GOAL_TEMPLATES[g.dim]?.check || g.check)?.type !== 'presence' || caps.presence !== false;
+function suggestGoals(result, caps = {}) {
+  const all = result.priorities.filter(d => GOAL_TEMPLATES[d]).map(d => ({ dim: d, ...GOAL_TEMPLATES[d] }));
+  const ok = all.filter(g => goalAvailable(g, caps));
+  // Si se descartó alguna, se completa con la siguiente dimensión más baja que sí se pueda medir.
+  const extra = Object.entries(result.profile).sort((a, b) => a[1] - b[1]).map(([d]) => d)
+    .filter(d => GOAL_TEMPLATES[d] && !all.some(g => g.dim === d) && goalAvailable({ dim: d }, caps)).map(d => ({ dim: d, ...GOAL_TEMPLATES[d] }));
+  return [...ok, ...extra].slice(0, 3);
 }
 
 function createGoal(dim, { days = 30, why = '' } = {}, today = new Date()) {
@@ -1646,6 +1732,7 @@ function sessionMeets(goal, s) {
     case 'presence': return (s.presence?.[c.key] ?? s.metrics?.[PRESENCE_METRIC[c.key]]?.s ?? -1) >= c.min;
     case 'roleplay': return s.type === 'roleplay' && c.keys.some(k => (s.dims?.[k] ?? -1) >= c.min);
     case 'anxiety': return s.anxietyBefore != null && s.anxietyBefore <= c.max;
+    case 'exposure': return s.anxietyBefore != null && s.anxietyBefore >= c.min;
     case 'writing': return s.type === 'escritura' && !s.ai && s.total >= c.min;   // el texto que escribió la IA no cuenta
     default: return false;
   }
@@ -1660,8 +1747,8 @@ function goalHref(goal) {
 }
 
 // Práctica del día guiada por las metas: rota entre las metas activas (sin cumplir y con plazo vigente).
-function goalOfTheDay(goals, sessions, today = new Date()) {
-  const active = (goals || []).filter(g => { const p = goalProgress(g, sessions, today); return !p.done && !p.expired; });
+function goalOfTheDay(goals, sessions, today = new Date(), caps = {}) {
+  const active = (goals || []).filter(g => { const p = goalProgress(g, sessions, today); return !p.done && !p.expired && goalAvailable(g, caps); });
   if (!active.length) return null;
   const g = active[Math.floor(today.getTime() / 864e5) % active.length], p = goalProgress(g, sessions, today);
   return { goal: g, text: `${g.title}: ${g.detail.charAt(0).toLowerCase() + g.detail.slice(1)} (llevas ${p.hits} de ${g.count}).` };
@@ -1740,7 +1827,7 @@ function goalPickerHTML(suggestions) {
     ${suggestions.map((g, i) => `<label class="goal-pick"><input type="checkbox" data-goal="${g.dim}" ${i < 2 ? 'checked' : ''}>
       <span><strong>${esc(g.title)}</strong><small>${esc(g.detail)}</small></span></label>`).join('')}
     <div class="row" style="margin-top:10px">
-      <div><label for="goalDays">Plazo</label><select id="goalDays"><option value="14">2 semanas</option><option value="30" selected>30 días</option><option value="60">60 días</option></select></div>
+      <div><label for="goalDays">Plazo</label><select id="goalDays"><option value="7">1 semana</option><option value="14">2 semanas</option><option value="30" selected>30 días</option><option value="60">60 días</option></select></div>
       <div><label for="goalWhy">¿Por qué te importa? (opcional)</label><input id="goalWhy" class="field" placeholder="Ej.: quiero conseguir el ascenso este año"></div>
     </div>`;
 }
@@ -1758,12 +1845,87 @@ function goalsHTML(goals, sessions, today = new Date()) {
   }).join('');
 }
 
+// Revisión local de la estructura según el método (sin IA): ¿están las partes de PREP, STAR, BLUF o SBI?
+// Son marcadores de lenguaje simples; no reemplazan al coach, pero dan feedback concreto siempre.
+
+const stSentences = (t) => t.split(/(?<=[.!?¿¡])\s+|\n+/).map(s => s.trim()).filter(Boolean);
+const stHas = (re, t) => re.test(t);
+// Límites de palabra que entienden tildes (\b de JavaScript no reconoce «é» como letra).
+const stRe = (src, flags = 'iu') => new RegExp(`(?<!\\p{L})(?:${src})(?!\\p{L})`, flags);
+const ST_FILLER_START = /^(bueno|este|eh+|em+|o sea|pues|mm+)(?!\p{L})/iu;
+const ST_NUMBER = /\d+([.,]\d+)?\s?(%|por ciento)?/u;
+const ST_RESULT = stRe(String.raw`(logr(é|amos)|consegu(í|imos)|result(ado|ó)|aument(é|amos|ó)|baj(é|amos|ó)|reduj(e|imos|o)|subi(ó|mos)|crec(ió|imos)|ahorr(é|amos|ó)|gan(é|amos))`);
+const ST_ACTION = stRe(String.raw`\p{L}{3,}(é|í)`, 'giu');   // lideré, armé, decidí, hablé…
+// Pretéritos irregulares en primera persona (no terminan en «é»/«í») y el «nosotros» del equipo.
+const ST_ACTION_IRREG = stRe(String.raw`(propuse|hice|dije|tuve|puse|traje|conduje|supe|quise|pude|vine|fui|di|estuve|reduje|produje|introduje|deshice|rehice|compuse|dispuse|expuse|mantuve|obtuve|contuve)`, 'giu');
+const ST_ACTION_WE = stRe(String.raw`\p{L}{3,}(amos|imos)`, 'giu');
+const ST_SITUATION = stRe(String.raw`(cuando|en mi (trabajo|empresa|equipo|último|anterior)|el año pasado|hace \w+|en \d{4}|en la empresa|una vez)`);
+const ST_TASK = stRe(String.raw`(tenía que|ten(í|i)amos que|mi (objetivo|tarea|rol|responsabilidad)|me pidieron|deb(í|ía)a?|el reto era|el problema era)`);
+const ST_REASON = stRe(String.raw`(porque|ya que|la razón|por eso|debido a|dado que)`);
+const ST_EXAMPLE = stRe(String.raw`(por ejemplo|una vez|cuando|el año pasado|en mi (trabajo|vida|caso)|me pasó)`);
+const ST_CLOSE = stRe(String.raw`(en resumen|por eso|así que|en conclusión|para cerrar|en definitiva)`);
+const ST_ASK = /\b(propongo|necesito|te pido|les pido|recomiendo|sugiero|decidimos|la conclusión|mi propuesta|¿(puedes|podemos|podrías|me))/i;
+const ST_IMPACT = stRe(String.raw`(impact(o|ó)|afect(a|ó)|hizo que|provoc(a|ó)|gener(a|ó)|el resultado fue|eso hace que)`);
+const ST_BEHAVIOR = stRe(String.raw`(dijiste|hiciste|enviaste|llegaste|presentaste|interrumpiste|entregaste|vi que|noté que)`);
+
+// Palabras de contenido (5+ letras) de una frase, para ver si el cierre vuelve a la idea del inicio.
+const stContent = (s) => new Set((s.toLowerCase().match(/\p{L}{5,}/gu) || []).filter(w => !['porque', 'cuando', 'también', 'quiero', 'tengo', 'puedo', 'estoy', 'gracias'].includes(w)));
+
+function stPrep(text) {
+  const ss = stSentences(text), first = ss[0] || '', last = ss[ss.length - 1] || '';
+  const overlap = [...stContent(first)].some(w => stContent(last).has(w));
+  return [
+    { part: 'Punto', ok: wordCount(first) > 0 && wordCount(first) <= 30 && !ST_FILLER_START.test(first), tip: 'Empieza con tu idea principal en una frase corta, sin «bueno» ni «este».' },
+    { part: 'Razón', ok: stHas(ST_REASON, text), tip: 'Di por qué: «porque…», «la razón es…».' },
+    { part: 'Ejemplo', ok: stHas(ST_EXAMPLE, text) || ST_NUMBER.test(text), tip: 'Agrega un ejemplo concreto o un dato.' },
+    { part: 'Punto (cierre)', ok: ss.length > 1 && (overlap || stHas(ST_CLOSE, last)), tip: 'Cierra volviendo a tu idea principal («por eso…»).' },
+  ];
+}
+function stStar(text) {
+  const actions = (text.match(ST_ACTION) || []).length + (text.match(ST_ACTION_IRREG) || []).length;
+  const we = (text.match(ST_ACTION_WE) || []).length;
+  return [
+    { part: 'Situación', ok: stHas(ST_SITUATION, text), tip: 'Ubica el contexto: «En mi trabajo anterior, cuando…».' },
+    { part: 'Tarea', ok: stHas(ST_TASK, text), tip: 'Di cuál era tu reto: «Tenía que…», «Mi objetivo era…».' },
+    { part: 'Acción', ok: actions >= 2 || (actions >= 1 && we >= 1) || /\byo\b/i.test(text), tip: 'Cuenta qué hiciste TÚ, en primera persona: «Armé», «Propuse», «Hablé con…».' },
+    { part: 'Resultado', ok: stHas(ST_RESULT, text) || ST_NUMBER.test(text), tip: 'Cierra con un resultado medible: «Las ventas subieron un 30%».' },
+  ];
+}
+function stBluf(text) {
+  const ss = stSentences(text), opening = ss.slice(0, 2).join(' ');
+  return [
+    { part: 'Conclusión o pedido al inicio', ok: stHas(ST_ASK, opening), tip: 'Di en la primera frase qué propones o qué necesitas.' },
+    { part: 'Evidencia', ok: ST_NUMBER.test(text) || stHas(ST_REASON, text), tip: 'Respalda con un dato o una razón.' },
+    { part: 'Breve', ok: ss.length <= 8, tip: 'Recorta: lo esencial en pocas frases.' },
+  ];
+}
+function stSbi(text) {
+  return [
+    { part: 'Situación', ok: stHas(ST_SITUATION, text) || /\b(ayer|hoy|en la reunión|el lunes|el martes|el miércoles|el jueves|el viernes)\b/i.test(text), tip: 'Ubica cuándo y dónde: «En la reunión del lunes…».' },
+    { part: 'Conducta observable', ok: stHas(ST_BEHAVIOR, text), tip: 'Describe lo que hizo, no cómo es: «Interrumpiste dos veces», no «eres irrespetuoso».' },
+    { part: 'Impacto', ok: stHas(ST_IMPACT, text), tip: 'Explica el efecto: «Eso hizo que el cliente no pudiera terminar».' },
+  ];
+}
+
+const ST_CHECKERS = [[/^PREP/, stPrep], [/^STAR/, stStar], [/^BLUF/, stBluf], [/^SBI/, stSbi]];
+
+// Devuelve { method, parts: [{part, ok, tip}], score } o null si el método no tiene revisión local.
+function checkStructure(text, method = '') {
+  if (wordCount(text) < 15) return null;
+  const fn = ST_CHECKERS.find(([re]) => re.test(method))?.[1];
+  if (!fn) return null;
+  const parts = fn(text);
+  return { method: method.split(/[ /(]/)[0], parts, score: Math.round(100 * parts.filter(p => p.ok).length / parts.length) };
+}
+
 // Análisis de grabaciones (archivo o micrófono): voz, tono, pausas y sonidos de duda, y puntaje del habla.
 // Lo usan la versión publicada (artifact/app.js) y diagnostico.html.
 
 const band = (v, lo, hi, soft) => v >= lo && v <= hi ? 100 : Math.max(0, 100 - 100 * (v < lo ? lo - v : v - hi) / soft);
 // Decodifica la grabación a 16 kHz y la recorre en ventanas de ~64 ms cada ~33 ms: volumen, tono y pausas.
 const SR = 16000, MAX_SECONDS = 300;
+// Techo de tono: 600 Hz para no partir por la mitad las voces agudas y los énfasis (con 400 Hz, 450 Hz se leía 225).
+const PITCH_MAX_HZ = 600;
 // Lectura en tres intentos, porque cada navegador decodifica formatos distintos (el .MOV del iPhone suele
 // fallar en el primero): 1) decodificar a 16 kHz, 2) decodificar con el contexto de audio normal (incluida la
 // forma con callbacks del Safari antiguo) y bajar la frecuencia, 3) si nada funciona, reproducir el archivo en
@@ -1797,7 +1959,7 @@ async function framesFrom(data, rate, onProgress) {
   for (let i = 0, k = 0; i + win <= data.length; i += hop, k++) {
     const frame = data.subarray(i, i + win);
     const rms = rmsOf(frame);
-    out.push({ t: i / rate, rms, pitch: rms > 0.01 ? detectPitch(frame, rate) : 0 });
+    out.push({ t: i / rate, rms, pitch: rms > 0.01 ? detectPitch(frame, rate, PITCH_MAX_HZ) : 0 });
     if (k % 300 === 0) { onProgress(i / data.length); await new Promise(r => setTimeout(r)); }
   }
   onProgress(1);
@@ -1833,7 +1995,7 @@ async function analyzeByPlayback(f, onProgress) {
       const timer = setInterval(() => {
         an.getFloatTimeDomainData(buf);
         const rms = rmsOf(buf), t = el.currentTime;
-        out.push({ t, rms, pitch: rms > 0.01 ? detectPitch(buf, ctx.sampleRate) : 0 });
+        out.push({ t, rms, pitch: rms > 0.01 ? detectPitch(buf, ctx.sampleRate, PITCH_MAX_HZ) : 0 });
         onProgress(Math.min(1, t / total));
         if (el.ended || t >= total) { clearInterval(timer); ok(); }
       }, 33);
@@ -1868,7 +2030,7 @@ function voiceMetrics(samples, text, dur) {
   const volCv = speechRms.length ? std(speechRms) / mean(speechRms) : 0;
   const humZones = findFilledPauses(samples);
   return {
-    dur, words, wpm: words / minutes, hasText: words > 0,
+    dur, words, text, wpm: words / minutes, hasText: words > 0,
     fillers: countMatches(text, FILLER_RE), hedges: countMatches(text, HEDGE_RE),
     speechRatio: samples.length ? speechFrames / samples.length : 0, longPauses, pauseZones,
     speechSeconds: samples.length ? dur * speechFrames / samples.length : 0, variety: guiraud(text),
@@ -1885,7 +2047,7 @@ function guiraud(text) {
 const MIN_SPEECH_SECONDS = 4;
 
 const level3 = (v, lo, hi) => v < lo ? 'poco' : v > hi ? 'mucho' : 'adecuado';
-function scoreSpeech(m, isAudio, seconds) {
+function scoreSpeech(m, isAudio, seconds, method = '') {
   const items = [], s = { seconds };
   if (isAudio && !(m.speechSeconds >= MIN_SPEECH_SECONDS)) return { items, dims: {}, total: null, noVoice: true };
   const add = (dim, key, label, display, target, sc) => items.push({ dim, key, label, display, target, s: Math.round(sc) });
@@ -1901,6 +2063,9 @@ function scoreSpeech(m, isAudio, seconds) {
     // El largo sólo cuenta como desarrollo si hay ideas distintas: repetir relleno no desarrolla nada.
     const varietyFactor = m.words >= 25 ? Math.min(1, variety / 4) : 1;
     add('lenguaje', 'length', 'Contenido desarrollado', `${m.words} palabras`, `${Math.round(target)} o más`, band(m.words, target, 1e6, target) * varietyFactor);
+    // Estructura del método (PREP, STAR, BLUF, SBI): qué partes están y cuáles faltan.
+    const st = m.text ? checkStructure(m.text, method) : null;
+    if (st) { m.structure = st; add('lenguaje', 'structure', `Estructura ${st.method}`, `${st.parts.filter(p => p.ok).length} de ${st.parts.length} partes`, 'todas', st.score); }
     if (m.words >= 25) add('lenguaje', 'variety', 'Variedad de vocabulario', variety.toFixed(1), '4 o más', band(variety, 4, 1e6, 3));
   }
   if (isAudio) {
@@ -1915,6 +2080,36 @@ function scoreSpeech(m, isAudio, seconds) {
   for (const d of ['voz', 'lenguaje']) { const xs = items.filter(i => i.dim === d); if (xs.length) dims[d] = Math.round(mean(xs.map(i => i.s))); }
   const total = Math.round(mean(items.map(i => i.s)));
   return { items, dims, total };
+}
+
+// Cuidado de la persona: recursos de ayuda por país y detección local de mensajes de crisis (funciona sin IA).
+
+// Líneas gratuitas de prevención del suicidio y apoyo emocional (revisar cada año).
+const HELP_LINES = [
+  ['Argentina', '135 (CABA y GBA) o (011) 5275-1135 · Centro de Asistencia al Suicida'],
+  ['Chile', '*4141 · Línea de Prevención del Suicidio, 24 h'],
+  ['Colombia', '106 (Bogotá) o 192 opción 4 (todo el país)'],
+  ['España', '024 · Línea de atención a la conducta suicida'],
+  ['México', '800 911 2000 · Línea de la Vida'],
+  ['Perú', '113 opción 5'],
+  ['Estados Unidos', '988 (opción en español)'],
+];
+
+function helpHTML() {
+  return `<p><strong>Si estás en peligro ahora, llama a emergencias (911; en España, 112).</strong></p>
+    <p>Hablar con alguien ayuda. Estas líneas son gratuitas y confidenciales:</p>
+    <ul>${HELP_LINES.map(([c, l]) => `<li><strong>${esc(c)}:</strong> ${esc(l)}</li>`).join('')}</ul>
+    <p class="note">VOXA es un entrenamiento de comunicación, no un tratamiento. Si el miedo a hablar te hace evitar el trabajo, los estudios o encuentros importantes, una terapia cognitivo-conductual ayuda mucho; VOXA la complementa.</p>`;
+}
+
+// Frases que indican riesgo. Se revisan en el dispositivo: no se envían a ningún lado.
+const CRISIS_RE = /\b(me quiero morir|quiero morirme|no quiero vivir|no quiero seguir viviendo|quitarme la vida|matarme|suicid(arme|io)|hacerme daño|lastimarme|no vale la pena vivir|desaparecer para siempre)\b/iu;
+const isCrisis = (text) => CRISIS_RE.test(text || '');
+
+// Nervios en el máximo en las últimas 3 prácticas: sugerir apoyo profesional, sin alarmar.
+function persistentHighAnxiety(sessions) {
+  const last = sessions.filter(s => s.anxietyBefore != null).slice(-3);
+  return last.length === 3 && last.every(s => s.anxietyBefore >= 5);
 }
 
 // Calificación de usuarios: estrellas (1–5, la misma escala de App Store y Google Play), NPS (0–10),
@@ -2055,6 +2250,17 @@ function aiErrorText(e) {
   if (['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'].includes(e?.code)) disableAI();
   return AI_ERRORS[e?.code] || 'Hubo un problema de conexión con Claude. Vuelve a intentarlo.';
 }
+// Qué puede medir esta vista: el lenguaje corporal necesita a Claude (fotogramas del video).
+const caps = () => ({ presence: !!sample });
+
+// Recursos de ayuda (prototype/help.js) en Hoy y Progreso, y aviso si un texto sugiere una crisis.
+document.querySelectorAll('.help-card .help-box').forEach(b => { b.innerHTML = helpHTML(); });
+const CRISIS_MSG = 'Lo que escribiste suena a un momento muy difícil. No tienes que pasarlo sola ni solo: <button type="button" class="linkish" data-help>ver líneas de ayuda gratuitas</button>. Cuando quieras, seguimos practicando.';
+const crisisCheck = (text) => isCrisis(text);
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('[data-help]')) return;
+  go('hoy'); $('helpHoy').open = true; $('helpHoy').scrollIntoView({ behavior: 'smooth' });
+});
 function disableAI() { sample = null; document.body.classList.remove('has-ai'); renderAIState(); }
 function renderAIState() {
   $('aiState').textContent = sample
@@ -2066,7 +2272,7 @@ renderAIState();
   sample = s || null;
   document.body.classList.toggle('has-ai', !!sample);
   renderAIState();
-  setupRoleplayPersonas();   // con IA: 6 personajes; sin IA: entrevistador de preguntas fijas
+  setupRoleplayPersonas();   // con IA: 9 personajes; sin IA: entrevistador de preguntas fijas
 }).catch(() => {});
 
 const COACH_RULES = `Reglas de VOXA (no negociables):
@@ -2086,7 +2292,8 @@ function streak(sessions) {
   while (days.has(localDay(d))) { n++; d.setDate(d.getDate() - 1); }
   return n;
 }
-const FEEL = [['😌', 'Tranquilo'], ['🙂', 'Bien'], ['😐', 'Algo'], ['😟', 'Nervioso'], ['😰', 'Mucho']];
+// Escala de nervios tipo SUDS: siempre dice nervios de qué intensidad, sin términos ambiguos como «Algo».
+const FEEL = [['😌', 'Sin nervios'], ['🙂', 'Pocos'], ['😐', 'Algunos'], ['😟', 'Bastantes'], ['😰', 'Muchísimos']];
 function feelScale(id, initial, onChange) {
   const box = $(id); let value = initial;
   const paint = () => box.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.v === value)));
@@ -2178,6 +2385,7 @@ pickOne($('wGoal'), 'id', v => wGoal = v);
 pickOne($('wNerves'), 'v', v => wNerves = +v);
 $('wDone').addEventListener('click', () => {
   Object.assign(profile, { goal: wGoal, onboarded: true, startNerves: wNerves });
+  document.body.classList.remove('first-run');
   saveProfile(profile);
   // Estado inicial primero: el diagnóstico define las metas (como la prueba de nivel de ELSA o el assessment de BetterUp).
   go('diagnostico');
@@ -2187,6 +2395,8 @@ onShow.hoy = () => {
   const sessions = loadSessions();
   const firstRun = !profile.onboarded && !sessions.length;
   $('welcome').classList.toggle('hidden', !firstRun);
+  // En la bienvenida, una sola tarea por pantalla: sin barras de navegación que inviten a salir.
+  document.body.classList.toggle('first-run', firstRun);
   for (const id of ['today', 'goalsCard', 'quickCard', 'tipCard', 'remindCard', 'aiCard']) $(id).classList.toggle('hidden', firstRun);
   const task = todayTask(sessions);
   $('tWeek').textContent = task.week + (task.day ? ` · día ${task.day} de 28` : '');
@@ -2194,7 +2404,7 @@ onShow.hoy = () => {
   $('tGo').onclick = () => openTask(task);
   $('tAlt').innerHTML = '';
   // Con metas activas, la práctica del día avanza una meta; el plan de 30 días queda como alternativa.
-  const gd = goalOfTheDay(profile.goals, sessions);
+  const gd = goalOfTheDay(profile.goals, sessions, new Date(), caps());
   if (gd) {
     $('tWeek').textContent = '🎯 Tu meta de hoy';
     $('tText').textContent = gd.text;
@@ -2214,7 +2424,11 @@ onShow.hoy = () => {
   $('tWhy').textContent = today ? '¡Ya practicaste hoy! Otra ronda refuerza el hábito.' : 'Toma unos 7 minutos. Una práctica bien hecha vale más que muchas a medias.';
   const s = streak(sessions);
   const last = [...sessions].reverse().find(x => x.type === 'ensayo');
-  $('tStreak').textContent = (s ? `🔥 ${s} ${s === 1 ? 'día seguido' : 'días seguidos'}` : 'Empieza tu racha hoy') + (last ? ` · Último puntaje: ${last.total} en «${last.scenarioName}»` : '');
+  // La semana a la vista: un punto por día practicado (lo que más sostiene el hábito en las apps líderes).
+  const days = new Set(sessions.map(x => dayKey(x.date)));
+  const week = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - 6 + i); return d; });
+  const strip = week.map(d => `<span class="wk${days.has(localDay(d)) ? ' on' : ''}" title="${d.toLocaleDateString('es', { weekday: 'long' })}">${'DLMXJVS'[d.getDay()]}</span>`).join('');
+  $('tStreak').innerHTML = `<span class="week" aria-label="Días practicados esta semana">${strip}</span> ` + esc((s ? `🔥 ${s} ${s === 1 ? 'día seguido' : 'días seguidos'}` : 'Empieza tu racha hoy') + (last ? ` · Último puntaje: ${last.total} en «${last.scenarioName}»` : ''));
   $('tip').textContent = TIPS[Math.floor(Date.now() / 864e5) % TIPS.length];
   const next = LESSONS.find(l => !profile.lessons?.[l.id]);
   renderGoalsBox();
@@ -2240,8 +2454,9 @@ function renderPrompt() {
   updateAnswerStats();
 }
 $('scenario').addEventListener('change', renderPrompt);
-const feelBefore = feelScale('feelBefore', 3);
-const feelAfter = feelScale('feelAfter', 3, () => persist());
+// Sin valor precargado: si la persona no responde se guarda «sin dato», no un 3 que nadie eligió.
+const feelBefore = feelScale('feelBefore', null);
+const feelAfter = feelScale('feelAfter', null, () => persist());
 
 function setMode(m) {
   mode = m;
@@ -2286,7 +2501,7 @@ onShow.ensayar = (o = {}) => {
 };
 
 // Puntaje del habla (prototype/audiofile.js) con la duración objetivo del escenario.
-const scoreItems = (m, isAudio, s = scenario()) => scoreSpeech(m, isAudio, s.seconds);
+const scoreItems = (m, isAudio, s = scenario()) => scoreSpeech(m, isAudio, s.seconds, s.method);
 
 const TIPS_BY = {
   wpm: (m) => m.wpm > 165 ? ['Hablas rápido y el público puede perder ideas clave.', 'Lee un párrafo haciendo una pausa de 1 segundo en cada punto y repite la grabación apuntando a 140 palabras por minuto.']
@@ -2294,6 +2509,7 @@ const TIPS_BY = {
   hums: () => ['Rellenas los silencios con «eeh» o «mmm» (marcas amarillas en la línea de tiempo).', 'Al terminar cada idea, cierra los labios y respira por la nariz: con la boca cerrada no sale el «eeh». Graba de nuevo.'],
   fillers: () => ['Las muletillas le quitan fuerza a tu mensaje.', 'Cada vez que sientas venir un «este» u «o sea», cierra la boca y respira. El silencio suena seguro.'],
   hedges: () => ['Frases como «creo que» o «un poquito» debilitan tus ideas.', 'Reformula tres frases sin ellas: «Creo que deberíamos…» pasa a ser «Propongo…».'],
+  structure: (m) => { const miss = m.structure.parts.filter(p => !p.ok); return [`A tu respuesta le falta: ${miss.map(p => p.part).join(', ')}.`, miss.map(p => p.tip).join(' ')]; },
   variety: () => ['Repites mucho las mismas palabras.', 'Antes de grabar, anota tres ideas distintas con un ejemplo cada una, y usa una palabra nueva para cada idea.'],
   length: () => ['El mensaje quedó corto o poco desarrollado.', `Escribe una línea por cada parte del método (${scenario().method}) y vuelve a intentarlo.`],
   pitch: () => ['Tu voz suena plana y cuesta sostener la atención.', 'Lee la misma frase tres veces enfatizando una palabra distinta cada vez. Sube el tono en las preguntas y bájalo al cerrar.'],
@@ -2304,7 +2520,7 @@ const TIPS_BY = {
 };
 const STRENGTH = {
   hums: 'Silencios limpios, sin «eeh» de relleno.', wpm: 'Tu ritmo es cómodo de seguir.', fillers: 'Casi sin muletillas.', hedges: 'Tu lenguaje es seguro y directo.',
-  length: 'Desarrollaste bien tus ideas.', variety: 'Usas un vocabulario variado.', pitch: 'Tu voz es expresiva y varía bien el tono.', speech: 'Buen equilibrio entre hablar y hacer pausas.',
+  length: 'Desarrollaste bien tus ideas.', structure: 'Tu respuesta tiene todas las partes del método.', variety: 'Usas un vocabulario variado.', pitch: 'Tu voz es expresiva y varía bien el tono.', speech: 'Buen equilibrio entre hablar y hacer pausas.',
   pauses: 'Fluidez, sin bloqueos largos.', volume: 'Usas el volumen para marcar lo importante.', duration: 'Respetaste el tiempo.',
 };
 function levelFor(s) { return s >= 85 ? 'Nivel Referente' : s >= 70 ? 'Nivel Hábil' : s >= 55 ? 'Nivel Competente' : s >= 40 ? 'Nivel Practicante' : 'Nivel Explorador'; }
@@ -2321,6 +2537,7 @@ $('btnEval').addEventListener('click', async () => {
   const text = isAudio ? $('said').value : $('answer').value;
   if (!isAudio && wordCount(text) < 5) { $('evalStatus').textContent = 'Escribe al menos un par de frases para poder evaluarlas.'; return; }
   if (isAudio && !file) { $('evalStatus').textContent = 'Primero elige una grabación.'; return; }
+  if (crisisCheck(text)) { $('evalStatus').innerHTML = CRISIS_MSG; return; }
   $('btnEval').disabled = true;
   let m;
   try {
@@ -2354,7 +2571,7 @@ $('btnEval').addEventListener('click', async () => {
       m.samples = a.samples;
       $('evalStatus').textContent = a.truncated ? `Analizamos los primeros ${MAX_SECONDS / 60} minutos.` : '';
     } else {
-      m = { words: wordCount(text), hasText: true, fillers: countMatches(text, FILLER_RE), hedges: countMatches(text, HEDGE_RE), variety: guiraud(text), dur: wordCount(text) / 140 * 60 };
+      m = { words: wordCount(text), text, hasText: true, fillers: countMatches(text, FILLER_RE), hedges: countMatches(text, HEDGE_RE), variety: guiraud(text), dur: wordCount(text) / 140 * 60 };
       $('evalStatus').textContent = '';
     }
   } catch (e) {
@@ -2374,15 +2591,27 @@ function showReport(m, isAudio, text) {
   // Volver a analizar la misma grabación o el mismo texto actualiza la práctica en vez de sumar otra.
   const key = isAudio ? `${file?.name}|${file?.size}|${text.trim()}` : text.trim();
   const sameAsLast = last?.key === key && last.session.scenario === scenario().id;
-  const prev = [...loadSessions()].reverse().find(s => s.type === 'ensayo' && s.scenario === scenario().id)?.total;
+  // Sólo se compara lo comparable: misma situación y mismo formato (escrito con escrito, grabación con grabación).
+  const fmt = isAudio ? 'audio' : 'texto', partial = isAudio && !m.hasText;
+  const prev = [...loadSessions()].reverse().find(s => s.type === 'ensayo' && s.scenario === scenario().id && s.mode === fmt
+    && !!s.partial === partial && s.id !== (sameAsLast ? last.session.id : ''))?.total;
+  const ensayos = loadSessions().filter(s => s.type === 'ensayo').length;
+  // Modo calma: sin números (a pedido, o en las primeras 3 prácticas de quien dijo que le cuesta mucho).
+  const calm = profile.calmMode || (profile.startNerves >= 5 && ensayos < 3);
   $('report').classList.remove('hidden');
-  $('ring').textContent = r.total;
-  $('ring').style.border = `8px solid ${colorFor(r.total)}`;
-  $('levelTxt').textContent = levelFor(r.total);
-  $('encourage').textContent = encouragement(r.total, prev);
+  $('ring').textContent = calm ? '✓' : r.total;
+  $('ring').style.border = `8px solid ${calm ? 'var(--good)' : colorFor(r.total)}`;
+  $('levelTxt').textContent = calm ? 'Práctica completada' : partial ? 'Puntaje parcial (sólo voz)' : levelFor(r.total);
+  const st = streak(loadSessions()) || 1;
+  $('encourage').textContent = (calm ? 'Lo hiciste. Cada práctica baja un poco los nervios: así funciona la exposición.'
+    : partial ? 'Sin tu texto medimos sólo la voz, así que este puntaje no se compara con otros.' : encouragement(r.total, prev))
+    + ` 🔥 Racha: ${st} ${st === 1 ? 'día' : 'días'}.`;
+  if (persistentHighAnxiety([...loadSessions(), { anxietyBefore: feelBefore.get() }])) $('encourage').textContent += ' Llevas varias prácticas con nervios al máximo: si el miedo te limita en tu día a día, conversarlo con un profesional ayuda mucho (más abajo, en «¿Te sientes muy mal?», hay líneas de ayuda).';
   $('scoreSub').textContent = `${scenario().name} · ${isAudio ? `grabación de ${Math.round(m.dur)} s` : 'respuesta escrita'}`;
   const sorted = [...r.items].sort((a, b) => b.s - a.s);
-  const best = sorted[0], worst = sorted[sorted.length - 1];
+  // El foco no se elige con una métrica poco confiable: los «eeh» acústicos con menos de 3 zonas son una estimación.
+  const focusable = sorted.filter(i => i.key !== 'hums' || (m.humZones?.length || 0) >= 3);
+  const best = sorted[0], worst = (focusable.length ? focusable : sorted)[(focusable.length ? focusable : sorted).length - 1];
   const allGood = worst.s >= 100;
   const [why, ex] = allGood ? ['Todas tus métricas están en rango.', 'Sube la dificultad: prueba una situación nueva o una improvisación.'] : TIPS_BY[worst.key](m);
   $('fb').innerHTML = `
@@ -2391,7 +2620,7 @@ function showReport(m, isAudio, text) {
     <div><h3 style="color:var(--accent)">⏱ Ejercicio de 2 minutos</h3>${ex}${allGood ? '' : lessonLink(worst.key)}</div>`;
   if (m.partialText) $('fb').insertAdjacentHTML('beforeend', '<div style="grid-column:1/-1"><h3>📝 Texto parcial</h3>Lo que escribiste parece sólo una parte de lo que dijiste, así que no medimos tu ritmo. Para medirlo, escribe todo lo que dijiste.</div>');
   // Sin transcripción (esta página no puede usar el reconocimiento de voz) faltan ritmo, muletillas y contenido.
-  if (isAudio && !m.hasText) $('fb').insertAdjacentHTML('beforeend', `<div style="grid-column:1/-1"><h3>📝 Completa tu evaluación</h3>Sin lo que dijiste no podemos medir el ritmo, las muletillas, las frases que restan seguridad ni el contenido. Escríbelo en «¿Qué dijiste?» y vuelve a evaluar. La versión completa lo transcribe sola.</div>`);
+  if (isAudio && !m.hasText) $('fb').insertAdjacentHTML('beforeend', `<div style="grid-column:1/-1"><h3>📝 Completa tu evaluación</h3>Esta página no puede escuchar tu voz para transcribirla, así que sin lo que dijiste no medimos el ritmo, las muletillas, la estructura ni el contenido. Escríbelo en «¿Qué dijiste?» y vuelve a evaluar: no se compara con tu intento sin texto.</div>`);
   // Análisis de lenguaje corporal: sólo para videos y si este visor puede enviar imágenes a Claude.
   $('presenceOut').innerHTML = '';
   $('presenceBox').classList.add('hidden');
@@ -2404,11 +2633,11 @@ function showReport(m, isAudio, text) {
   $('detChart').classList.toggle('hidden', !isAudio);
   if (isAudio) drawVoiceChart(m);
   $('aiResult').innerHTML = '';
-  feelAfter.set(feelBefore.get());
+  feelAfter.set(null);
   last = { m, r, isAudio, text, key, sc: scenario(), prompt: currentPrompt, session: {
     id: sameAsLast ? last.session.id : Date.now().toString(36), date: sameAsLast ? last.session.date : new Date().toISOString(), words: m.words || 0, type: 'ensayo', mode: isAudio ? 'audio' : 'texto',
     scenario: scenario().id, scenarioName: scenario().name, total: r.total, dims: r.dims,
-    anxietyBefore: feelBefore.get(), anxietyAfter: null, metrics: Object.fromEntries(r.items.map(i => [i.key, { s: i.s }])),
+    partial, anxietyBefore: feelBefore.get(), anxietyAfter: null, metrics: Object.fromEntries(r.items.map(i => [i.key, { s: i.s }])),
   } };
   persist();
   $('report').scrollIntoView({ behavior: 'smooth' });
@@ -2423,6 +2652,7 @@ function persist() {
   if (!last) return;
   last.session.anxietyAfter = feelAfter.get();
   $('savedNote').textContent = saveSession(last.session) ? 'Guardado en tu progreso (en este navegador).' : 'Este navegador no permite guardar el historial.';
+  if (markEventPractice(profile.event, last.session)) { saveProfile(profile); $('savedNote').textContent += ' ✓ Marcamos la práctica en el plan de tu evento.'; }
 }
 $('btnRetry').addEventListener('click', () => {
   $('report').classList.add('hidden');
@@ -2483,7 +2713,7 @@ ${text.trim() || '(no disponible: sólo hay métricas de voz)'}
 
 Responde SÓLO con un objeto JSON con esta forma exacta:
 {"strength":{"text":"...","quote":"frase textual del usuario o cadena vacía"},"focus":{"area":"...","why":"..."},"structure":{"method":"...","present":["..."],"missing":["..."],"comment":"..."},"rewrite":"cómo podría decirlo, misma duración aproximada","exercise":{"title":"...","steps":["..."],"minutes":2},"rubric":{"claridad":0,"estructura":0,"persuasion":0,"asertividad":0,"conexion":0},"next_challenge":"...","safety_note":""}
-Rúbrica de 0 a 100. ${hasText ? '' : 'NO hay texto: deja "quote" y "rewrite" vacíos, no inventes lo que dijo, pon 0 en la rúbrica salvo lo que muestren las métricas y explica qué no pudiste evaluar.'}`;
+Rúbrica de 0 a 100. Escala anclada para cada puntaje: 0–39 ausente o contraproducente; 40–69 parcial o genérico; 70–84 sólido, con evidencia en lo que dijo; 85–100 excelente y citable. Sin evidencia, 40 o menos. Usa todo el rango: no agrupes todo entre 70 y 85. ${hasText ? '' : 'NO hay texto: deja "quote" y "rewrite" vacíos, no inventes lo que dijo, pon 0 en la rúbrica salvo lo que muestren las métricas y explica qué no pudiste evaluar.'}`;
   coachCtl = new AbortController();
   $('btnCoach').disabled = true; $('btnCoachStop').classList.remove('hidden');
   $('aiResult').innerHTML = '<p class="note">Pensando… (la primera vez claude.ai te pedirá permiso)</p>';
@@ -2492,6 +2722,11 @@ Rúbrica de 0 a 100. ${hasText ? '' : 'NO hay texto: deja "quote" y "rewrite" va
     if (!fb?.strength || !fb?.focus) throw { code: 'invalid_json' };
     last.session.ai = { rubric: fb.rubric, focus: fb.focus.area };
     persist();
+    // La IA no puede inventar lo que dijiste: una cita que no aparece en tu texto se descarta, y sin texto no hay
+    // cita, reescritura ni rúbrica.
+    const norm = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\p{L}\p{N} ]/gu, ' ').replace(/\s+/g, ' ').trim();
+    if (fb.strength.quote && !norm(text).includes(norm(fb.strength.quote))) fb.strength.quote = '';
+    if (!text.trim()) { fb.rewrite = ''; fb.rubric = null; fb.strength.quote = ''; }
     $('aiResult').innerHTML = renderCoach(fb);
   } catch (e) {
     $('aiResult').innerHTML = e?.code === 'cancelled' ? '' : `<p class="note">${esc(aiErrorText(e))}</p>`;
@@ -2597,20 +2832,83 @@ const PERSONAS = {
    "cierre con siguiente paso"
   ],
   "opening": "¡Hola! Creo que no nos conocemos. ¿Qué te trae por aquí?"
+ },
+ "colaborador": {
+  "name": "Tomás Vega",
+  "role": "colaborador directo tuyo, con buen historial pero que lleva dos meses entregando tarde",
+  "scenario": "Conversación de feedback 1 a 1: tres entregas atrasadas afectaron al cliente y necesitas que cambie sin perder su motivación.",
+  "behavior": "Defensivo al principio: culpa a otras áreas y a la carga de trabajo. Se abre si recibe hechos concretos (SBI) sin juicios y si lo invitan a proponer. Se cierra ante generalizaciones («siempre», «nunca») o amenazas.",
+  "goal": "Dar feedback con SBI, escuchar su versión y acordar un compromiso concreto con fecha de seguimiento.",
+  "skills": [
+   "SBI",
+   "escucha activa",
+   "preguntas abiertas",
+   "acuerdo con seguimiento"
+  ],
+  "opening": "Me dijiste que querías hablar conmigo. ¿Pasó algo?"
+ },
+ "finanzas": {
+  "name": "Gabriela Ortiz",
+  "role": "gerenta de finanzas escéptica en el comité de presupuesto",
+  "scenario": "Presentas al comité una propuesta de inversión para tu área. Tienes cinco minutos y ella decide si pasa a aprobación.",
+  "behavior": "Analítica e impaciente. Interrumpe si no hay un número en la primera frase. Pregunta por retorno, riesgos y alternativas más baratas. Respeta a quien reconoce los riesgos y tiene un plan B.",
+  "goal": "Presentar con BLUF (pedido y retorno al inicio), responder objeciones con datos y conseguir la aprobación o un siguiente paso concreto.",
+  "skills": [
+   "BLUF",
+   "datos y retorno",
+   "manejo de objeciones",
+   "plan B"
+  ],
+  "opening": "Tenemos poco tiempo. ¿Cuánto pides, para qué y en cuánto tiempo lo recuperamos?"
+ },
+ "malanoticia": {
+  "name": "Lucía Paredes",
+  "role": "integrante de tu equipo que esperaba un ascenso",
+  "scenario": "Debes comunicarle que este año no habrá ascenso ni aumento para su puesto por un congelamiento de presupuesto.",
+  "behavior": "Ilusionada al empezar; se decepciona y pregunta por qué y qué puede hacer. Se calma con honestidad, empatía y un plan; se enoja con rodeos, promesas vagas o excusas.",
+  "goal": "Dar la noticia en los primeros 30 segundos, con claridad y empatía, sin prometer lo que no puedes cumplir, y acordar un plan de desarrollo concreto.",
+  "skills": [
+   "noticia al inicio",
+   "empatía",
+   "honestidad",
+   "plan de desarrollo"
+  ],
+  "opening": "¡Hola! Me alegra que me hayas citado, justo quería preguntarte por lo del ascenso."
  }
 };
 const OFFLINE_PERSONA = {
-  id: 'offline', name: 'Entrevistador VOXA', role: 'entrevista por competencias (preguntas fijas)',
+  id: 'offline', name: 'Simulacro de entrevista', role: 'preguntas fijas por competencias, sin IA',
   scenario: 'Entrevista de trabajo con preguntas fijas.', goal: 'Responder cada pregunta con STAR y resultados concretos.',
   skills: ['STAR', 'resultados medibles'], opening: 'Hola, gracias por tu tiempo. Cuéntame brevemente sobre ti.',
 };
+// Simulacro sin IA: preguntas fijas, pero escucha lo básico. Si a una respuesta STAR le falta el resultado,
+// repregunta una vez; si ya contaste un logro con resultado, no te lo vuelve a pedir.
+const MOTIVE_RE = /(?<!\p{L})(me interesa|me gusta|me motiva|quiero|porque|aprender|crecer|aportar|empresa|puesto|rol|equipo|propósito)(?!\p{L})/iu;
 const OFFLINE_QUESTIONS = [
-  'Gracias. ¿Por qué te interesa este puesto?',
-  'Cuéntame de un logro del que estés orgulloso u orgullosa. ¿Qué hiciste tú, concretamente?',
-  'Háblame de un conflicto con un compañero o compañera y cómo lo resolviste.',
-  '¿Cuál es un error que cometiste y qué aprendiste?',
-  'Para terminar, ¿tienes alguna pregunta para mí?',
+  { id: 'motivo', text: 'Gracias. ¿Por qué te interesa este puesto?', expect: MOTIVE_RE, miss: 'No contaste por qué te interesa: conecta lo que buscas con lo que ofrece el puesto.' },
+  { id: 'logro', text: 'Cuéntame de un logro del que estés orgulloso u orgullosa. ¿Qué hiciste tú, concretamente?', star: true },
+  { id: 'conflicto', text: 'Háblame de un conflicto con un compañero o compañera y cómo lo resolviste.', star: true },
+  { id: 'error', text: '¿Cuál es un error que cometiste y qué aprendiste?', star: true },
+  { id: 'cierre', text: 'Para terminar, ¿tienes alguna pregunta para mí?', expect: /\?|(?<!\p{L})(qué|cómo|cuál|cuándo)(?!\p{L})/iu, miss: 'Lleva preparada una pregunta para el final: muestra interés real.' },
 ];
+let offline = { at: -1, answers: {}, followed: {} };
+const starOf = (text) => checkStructure(text, 'STAR');
+function offlineNext(text) {
+  const q = OFFLINE_QUESTIONS[offline.at];
+  if (q) offline.answers[q.id] = ((offline.answers[q.id] || '') + ' ' + text).trim();
+  // Repregunta una vez si a la respuesta STAR le falta el resultado.
+  if (q?.star && !offline.followed[q.id] && !starOf(offline.answers[q.id])?.parts.find(p => p.part === 'Resultado')?.ok) {
+    offline.followed[q.id] = true;
+    return '¿Y cuál fue el resultado? Si puedes, dilo con un número o un cambio concreto.';
+  }
+  let next = OFFLINE_QUESTIONS[++offline.at], prefix = '';
+  // Si ya contó un logro con resultado (en la presentación o en el «por qué»), no se lo vuelve a pedir.
+  const hasAchievement = (a) => { const p = starOf(a)?.parts || []; return ['Acción', 'Resultado'].every(n => p.find(x => x.part === n)?.ok); };
+  if (next?.id === 'logro' && chatHistory.filter(t => t.role === 'user').some(t => hasAchievement(t.text))) {
+    prefix = 'Ya me contaste un logro con resultado, gracias. '; next = OFFLINE_QUESTIONS[++offline.at];
+  }
+  return next ? prefix + next.text : null;
+}
 const DIFFICULTY = {
   1: 'Dificultad baja: eres colaborativo y das espacio; objeciones suaves.',
   2: 'Dificultad media: planteas objeciones realistas y pides precisión, sin hostilidad.',
@@ -2637,7 +2935,7 @@ onShow.roleplay = (o = {}) => {
 $('ctx').addEventListener('input', () => { $('ctxCount').textContent = $('ctx').value.length; });
 
 $('btnBegin').addEventListener('click', () => {
-  chatHistory = [];
+  chatHistory = []; offline = { at: -1, answers: {}, followed: {} };
   $('rpStage').classList.remove('hidden'); $('rpReport').classList.add('hidden');
   $('hint').textContent = ''; $('rpStatus').textContent = '';
   addTurn('persona', persona.opening);
@@ -2692,6 +2990,8 @@ $('talkForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const text = $('txt').value.trim();
   if (!text || busy) return;
+  // Sin IA no hay quien salga del personaje: la detección local muestra la ayuda.
+  if (!sample && crisisCheck(text)) { $('rpStatus').innerHTML = CRISIS_MSG; return; }
   $('txt').value = '';
   addTurn('user', text);
   busy = true; $('btnSend').disabled = true;
@@ -2709,11 +3009,11 @@ $('talkForm').addEventListener('submit', async (e) => {
       if (out.safety_note) $('hint').textContent = '💙 ' + String(out.safety_note);
       $('rpStatus').textContent = out.end ? 'La conversación llegó a un cierre. Pulsa «Terminar y evaluar».' : '';
     } else {
-      const n = chatHistory.filter(t => t.role === 'user').length;
-      const next = OFFLINE_QUESTIONS[n - 1];
+      const asked = OFFLINE_QUESTIONS[offline.at];
+      const next = offlineNext(text);
       if (next) addTurn('persona', next);
-      $('hint').textContent = $('showHints').checked ? '💡 ' + offlineHint(text) : '';
-      $('rpStatus').textContent = next ? '' : 'Fin de la entrevista. Pulsa «Terminar y evaluar».';
+      $('hint').textContent = $('showHints').checked ? '💡 ' + offlineHint(text, asked) : '';
+      $('rpStatus').textContent = next ? '' : 'Fin del simulacro. Pulsa «Terminar y evaluar».';
     }
   } catch (err) {
     if (err?.code !== 'cancelled') $('rpStatus').textContent = aiErrorText(err);
@@ -2721,9 +3021,30 @@ $('talkForm').addEventListener('submit', async (e) => {
   } finally { busy = false; $('btnSend').disabled = false; $('txt').focus(); }
 });
 $('txt').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('talkForm').requestSubmit(); } });
-function offlineHint(text) {
+// Reporte del simulacro: qué faltó en cada respuesta (STAR o lo que pedía la pregunta) y un solo paso siguiente.
+function offlineReport() {
+  const rows = OFFLINE_QUESTIONS.filter(q => offline.answers[q.id]).map(q => {
+    const a = offline.answers[q.id];
+    const miss = q.star ? (starOf(a)?.parts.filter(p => !p.ok).map(p => p.part) || ['respuesta muy corta']) : q.expect && !q.expect.test(a) ? [q.miss] : [];
+    return `<li><strong>${esc(q.text.replace(/^Gracias\. /, ''))}</strong><br>${!miss.length ? '✓ Completa' : q.star ? `Faltó: ${esc(miss.join(', '))}` : esc(miss[0])}</li>`;
+  });
+  const counts = {};
+  OFFLINE_QUESTIONS.filter(q => q.star && offline.answers[q.id]).forEach(q => (starOf(offline.answers[q.id])?.parts || []).filter(p => !p.ok).forEach(p => { counts[p.part] = (counts[p.part] || 0) + 1; }));
+  const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
+  const tip = top ? starOf('x '.repeat(20) + '.').parts.find(p => p.part === top)?.tip : null;
+  const done = offline.at >= OFFLINE_QUESTIONS.length;
+  return `<h3>Respuesta por respuesta</h3><ul>${rows.join('') || '<li>Responde al menos una pregunta.</li>'}</ul>
+    <div class="fb"><div><h3>Siguiente paso</h3>${done ? '' : 'Termina el simulacro: el puntaje se limita a 70 hasta responder todas las preguntas. '}${tip ? `Lo que más te faltó fue «${esc(top)}». ${esc(tip)}` : 'Tus respuestas tienen la estructura STAR. Prueba ahora con una pregunta nueva o en voz alta.'}</div></div>`;
+}
+function offlineHint(text, q) {
+  if (q?.expect && !q.expect.test(text)) return q.miss;
+  if (q?.star) {
+    const miss = starOf(text)?.parts.filter(p => !p.ok) || [];
+    if (miss.length) return `Falta: ${miss.map(p => p.part).join(', ')}. ${miss[0].tip}`;
+    return 'Respuesta STAR completa. Así se responde.';
+  }
   const w = wordCount(text);
-  if (w < 25) return 'Desarrolla más: da un ejemplo concreto (Situación y Acción).';
+  if (w < 25 && !/\d/.test(text)) return 'Desarrolla más: da un ejemplo concreto (Situación y Acción).';
   if (!/\d/.test(text)) return 'Añade un resultado medible: un número, porcentaje o plazo.';
   if (countMatches(text, FILLER_RE) > 2) return 'Cambia las muletillas por una pausa breve.';
   return 'Buen desarrollo. Cierra cada respuesta con el resultado.';
@@ -2774,14 +3095,26 @@ Métricas: el usuario aportó el ${Math.round(c.talkRatio * 100)}% de las palabr
 ${transcript.slice(-20000)}
 </material_usuario>
 
-Responde SÓLO con JSON: {"summary":"...","scores":{"escucha":0,"empatia":0,"claridad":0,"asertividad":0,"manejo_objeciones":0,"logro_objetivo":0},"best_moment":{"quote":"...","why":"..."},"missed_moment":{"quote":"...","better":"..."},"techniques_used":["..."],"next_step":"...","safety_note":""} con puntajes de 0 a 100.`);
+Responde SÓLO con JSON: {"summary":"...","scores":{"escucha":0,"empatia":0,"claridad":0,"asertividad":0,"manejo_objeciones":0,"logro_objetivo":0},"best_moment":{"quote":"...","why":"..."},"missed_moment":{"quote":"...","better":"..."},"techniques_used":["..."],"next_step":"...","safety_note":""} con puntajes de 0 a 100. Escala anclada para cada puntaje: 0–39 ausente o contraproducente; 40–69 parcial o genérico; 70–84 sólido, con evidencia en lo que dijo; 85–100 excelente y citable. Sin evidencia, 40 o menos. Usa todo el rango: no agrupes todo entre 70 y 85. logro_objetivo mide si consiguió el objetivo de la conversación y es el más importante.`);
       if (!ev?.scores) ev = null;
     } catch (e) { if (e?.code !== 'cancelled') $('rpStatus').textContent = aiErrorText(e); }
   }
   const scores = ev ? Object.fromEntries(Object.entries(ev.scores).map(([k, v]) => [k, Math.max(0, Math.min(100, Number(v) || 0))])) : local;
-  const total = Math.round(mean(Object.values(scores)));
-  saveSession({ id: Date.now().toString(36), date: new Date().toISOString(), type: 'roleplay', scenario: 'roleplay:' + persona.id,
-    scenarioName: 'Roleplay: ' + persona.name, total, dims: scores });
+  // Con IA, lograr el objetivo de la conversación pesa 40%. Sin IA, la estructura STAR de las respuestas pesa
+  // la mitad, y un simulacro sin terminar no supera 70.
+  let total;
+  if (ev) { const { logro_objetivo: g = 0, ...rest } = scores; total = Math.round(0.4 * g + 0.6 * mean(Object.values(rest))); }
+  else if (persona.id === 'offline') {
+    const stars = OFFLINE_QUESTIONS.filter(q => q.star && offline.answers[q.id]).map(q => starOf(offline.answers[q.id])?.score ?? 0);
+    if (stars.length) scores.estructura_star = Math.round(mean(stars));
+    const { estructura_star: st, ...rest } = scores;
+    total = Math.round(st != null ? 0.5 * st + 0.5 * mean(Object.values(rest)) : mean(Object.values(rest)));
+    if (offline.at < OFFLINE_QUESTIONS.length) total = Math.min(total, 70);
+  } else total = Math.round(mean(Object.values(scores)));
+  const rpSession = { id: Date.now().toString(36), date: new Date().toISOString(), type: 'roleplay', scenario: 'roleplay:' + persona.id,
+    scenarioName: 'Roleplay: ' + persona.name, total, dims: scores };
+  saveSession(rpSession);
+  if (markEventPractice(profile.event, rpSession)) saveProfile(profile);
   const head = `<div class="score-big"><div class="ring" style="border:8px solid ${colorFor(total)}">${total}</div>
     <div><div style="font-weight:700">${esc(persona.name)} · dificultad ${$('difficulty').value}/3</div>
     <div class="note">Aportaste el ${Math.round(c.talkRatio * 100)}% de las palabras · ${c.questions} ${c.questions === 1 ? 'intervención' : 'intervenciones'} con preguntas · ${c.fillers} muletillas</div></div></div>
@@ -2791,6 +3124,7 @@ Responde SÓLO con JSON: {"summary":"...","scores":{"escucha":0,"empatia":0,"cla
     ${ev.missed_moment ? `<h3 style="color:var(--mid)">Oportunidad perdida</h3><blockquote>«${esc(ev.missed_moment.quote)}»</blockquote><p><strong>Mejor:</strong> ${esc(ev.missed_moment.better)}</p>` : ''}
     <h3>Técnicas que usaste</h3><div class="chips">${(ev.techniques_used || []).map(t => `<span class="chip">${esc(t)}</span>`).join('') || '<span class="note">Ninguna identificada</span>'}</div>
     <h3 style="color:var(--accent)">Siguiente paso</h3><p>${esc(ev.next_step)}</p>${ev.safety_note ? `<p class="note">${esc(ev.safety_note)}</p>` : ''}</div>`
+    : persona.id === 'offline' ? offlineReport()
     : `<div class="fb"><div><h3>Siguiente paso</h3>${c.talkRatio > 0.7 ? 'Hablaste mucho más que tu interlocutor: haz una pregunta abierta y escucha.'
       : c.questions === 0 ? 'No hiciste preguntas: en tu próxima práctica incluye al menos dos preguntas abiertas.'
       : 'Repite la conversación apuntando a respuestas con resultados concretos.'}</div></div>`);
@@ -2807,6 +3141,7 @@ const newDraft = (byAI = false) => { draftId = Date.now().toString(36); draftByA
 function updateWriting() {
   const text = $('text').value;
   if (!text.trim()) { newDraft(); $('checks').innerHTML = '<li class="warn"><span class="i">·</span><span>Escribe tu borrador y la revisión aparecerá aquí.</span></li>'; $('wStats').textContent = ''; $('wScore').textContent = '–'; $('btnWAI').disabled = true; return; }
+  if (crisisCheck(text)) { $('checks').innerHTML = `<li class="warn"><span class="i">💙</span><span>${CRISIS_MSG}</span></li>`; return; }
   wLast = analyzeWriting(text, kind());
   $('checks').innerHTML = wLast.checks.map(c => `<li class="${c.ok ? 'ok' : 'warn'}"><span class="i">${c.ok ? '✓' : '!'}</span><span>${esc(c.msg)}</span></li>`).join('');
   $('wStats').innerHTML = `<span>${wLast.words} palabras</span><span>${wLast.sentences} frases</span><span>~${Math.max(1, Math.round(wLast.words / 200 * 60))} s de lectura</span>`;
@@ -2876,10 +3211,13 @@ $('ladder').addEventListener('change', (e) => {
 });
 onShow.progreso = () => {
   const sessions = loadSessions().sort((a, b) => a.date.localeCompare(b.date));
-  const evals = sessions.filter(s => s.type === 'ensayo');
+  // Punto de partida y último ensayo en el mismo formato (y sin puntajes parciales), para que la diferencia sea real.
+  const evals = sessions.filter(s => s.type === 'ensayo' && !s.partial);
+  const lastFmt = evals[evals.length - 1]?.mode;
+  const sameFmt = evals.filter(s => s.mode === lastFmt);
   const count = (t) => sessions.filter(s => s.type === t).length;
   const kpi = (k, v, d = '') => `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d}</div></div>`;
-  const base = evals[0], lastE = evals[evals.length - 1], s = streak(sessions);
+  const base = sameFmt[0], lastE = sameFmt[sameFmt.length - 1], s = streak(sessions);
   const calm = sessions.filter(x => x.anxietyAfter != null && x.anxietyBefore != null).map(x => x.anxietyBefore - x.anxietyAfter);
   const delta = base && lastE ? lastE.total - base.total : 0;
   $('kpis').innerHTML = [
@@ -2895,7 +3233,9 @@ onShow.progreso = () => {
     || '<tr><td colspan="3" class="note">Sin prácticas todavía.</td></tr>';
   profile.ladder ||= {};
   $('ladder').innerHTML = LADDER.map((t, i) => `<li><label><input type="checkbox" data-i="${i}" ${profile.ladder[i] ? 'checked' : ''}> <span>${i + 1}. ${t}</span></label></li>`).join('');
-  drawTrend(sessions.filter(x => x.type !== 'escritura'));
+  drawTrend(sessions.filter(x => x.type !== 'escritura' && !x.partial));
+  $('rateCard').classList.toggle('hidden', sessions.length < 3 && !profile.rating);
+  $('calmMode').checked = !!profile.calmMode;
   renderProgressDiagnosis(sessions);
   renderRating();
 };
@@ -2911,6 +3251,7 @@ function drawTrend(list) {
   list.forEach((s, i) => i ? ctx.lineTo(x(i), y(s.total)) : ctx.moveTo(x(i), y(s.total))); ctx.stroke();
   list.forEach((s, i) => { ctx.beginPath(); ctx.arc(x(i), y(s.total), 4, 0, 7); ctx.fill(); });
 }
+$('calmMode').addEventListener('change', () => { profile.calmMode = $('calmMode').checked; saveProfile(profile); });
 $('btnClear').addEventListener('click', () => $('clearConfirm').classList.remove('hidden'));
 $('btnClearNo').addEventListener('click', () => $('clearConfirm').classList.add('hidden'));
 $('btnClearYes').addEventListener('click', () => {
@@ -3061,7 +3402,7 @@ Responde SÓLO con JSON: {"scores":{"encuadre":0,"iluminacion":0,"mirada":0,"pos
 
 // ================================================================= DIAGNÓSTICO Y METAS
 // Estado inicial → diagnóstico (autoevaluación + prueba de voz + prueba escrita) → metas con plazo que avanzan solas.
-let dgAnswers = {}, dgFile = null, dgResult = null;
+let dgAnswers = {}, dgFile = null, dgResult = null, dgSeconds = null;
 function renderSelfItems() { $('selfItems').innerHTML = selfAssessmentHTML(dgAnswers); }
 $('selfItems').addEventListener('click', (e) => {
   const b = e.target.closest('button[data-dim]'); if (!b) return;
@@ -3088,7 +3429,7 @@ async function diagnosisSpeech() {
   const progress = p => { $('dgBar').style.width = Math.round(p * 100) + '%'; };
   if (!dgFile) {
     if (wordCount(text) < 5) return [];
-    return scoreItems({ words: wordCount(text), hasText: true, fillers: countMatches(text, FILLER_RE), hedges: countMatches(text, HEDGE_RE), variety: guiraud(text), dur: wordCount(text) / 140 * 60 }, false, intro).items;
+    return scoreItems({ words: wordCount(text), text, hasText: true, fillers: countMatches(text, FILLER_RE), hedges: countMatches(text, HEDGE_RE), variety: guiraud(text), dur: wordCount(text) / 140 * 60 }, false, intro).items;
   }
   $('dgProgress').classList.remove('hidden');
   $('dgVoiceStatus').textContent = 'Analizando tu voz…';
@@ -3106,7 +3447,9 @@ async function diagnosisSpeech() {
       a = await analyzeByPlayback(dgFile, progress);
     }
     $('dgVoiceStatus').textContent = 'Voz analizada.';
-    return scoreItems(voiceMetrics(a.samples, text, a.duration), true, intro).items;
+    const vm = voiceMetrics(a.samples, text, a.duration);
+    dgSeconds = vm.speechSeconds;
+    return scoreItems(vm, true, intro).items;
   } finally { $('dgProgress').classList.add('hidden'); }
 }
 
@@ -3115,16 +3458,21 @@ $('dgRun').addEventListener('click', async () => {
   if (answered < SELF_ITEMS.length) { $('dgErr').textContent = `Responde las ${SELF_ITEMS.length} afirmaciones (llevas ${answered}).`; $('dgStep1').scrollIntoView({ behavior: 'smooth' }); return; }
   $('dgErr').textContent = ''; $('dgRun').disabled = true;
   let speechItems = [];
+  dgSeconds = null;
   try { speechItems = await diagnosisSpeech(); }
   catch (e) { $('dgVoiceStatus').textContent = `No pudimos analizar la grabación (${e.message || e.name}). Seguimos con el resto; puedes escribir lo que dijiste.`; }
   const w = $('dgWrite').value.trim();
   const writingScore = wordCount(w) >= 5 ? analyzeWriting(w, KINDS.find(k => k.id === 'pedido')).score : null;
   const presence = [...loadSessions()].reverse().find(s => s.presence)?.presence || null;
-  dgResult = computeProfile(dgAnswers, measuredFrom({ speechItems, writingScore, presenceScores: presence }));
+  const said = $('dgSaid').value;
+  dgResult = computeProfile(dgAnswers, measuredFrom({ speechItems, writingScore, presenceScores: presence, seconds: dgSeconds,
+    words: wordCount(said) || null, writingAssertiveness: wordCount(w) >= 5 ? assertivenessOf(w) : null }));
   const prev = profile.diagnoses?.at(-1) || null;
   $('dgOut').innerHTML = diagnosisHTML(dgResult, prev);
   drawRadar($('dgOut').querySelector('#radar'), dgResult.profile, prev?.profile);
-  $('dgGoals').innerHTML = goalPickerHTML(suggestGoals(dgResult));
+  $('dgGoals').innerHTML = goalPickerHTML(suggestGoals(dgResult, caps()))
+    + (validEvent(profile.event) ? `<p class="note">Además, tu plan para «${esc(profile.event.title || EVENT_TYPES[profile.event.type].name)}» sigue en Hoy: es tu prioridad hasta esa fecha.</p>`
+      : ['entrevista', 'presentaciones', 'conversaciones', 'ventas'].includes(profile.goal) ? '<p class="note">¿Tu situación ya tiene fecha? Después de guardar, prepárala en «📅 Evento real» desde Hoy.</p>' : '');
   $('dgResult').classList.remove('hidden');
   $('dgRun').disabled = false;
   $('dgResult').scrollIntoView({ behavior: 'smooth' });
@@ -3154,7 +3502,10 @@ function renderGoalsBox() {
     return;
   }
   const age = Math.floor((Date.now() - new Date(d.date)) / 864e5);
-  $('goalsBox').innerHTML = `<p class="note">Nivel ${esc(d.level)} · ${d.total} puntos · diagnóstico del ${new Date(d.date).toLocaleDateString('es')}</p>
+  // Quien viene por una situación con fecha (entrevista, charla, conversación) ve primero cómo prepararla.
+  const eventCta = !validEvent(profile.event) && ['entrevista', 'presentaciones', 'conversaciones', 'ventas'].includes(profile.goal)
+    ? `<div class="prompt" style="margin-bottom:10px"><strong>¿Tienes una fecha?</strong>Si tu entrevista, charla o reunión ya tiene día, arma tu plan hasta ese día con preguntas difíciles probables. <button class="linkish" data-go="evento">📅 Preparar mi evento</button></div>` : '';
+  $('goalsBox').innerHTML = eventCta + `<p class="note">Nivel ${esc(d.level)} · ${d.total} puntos · diagnóstico del ${new Date(d.date).toLocaleDateString('es')}</p>
     ${goalsHTML(profile.goals, loadSessions())}
     ${age >= 28 ? '<p style="margin-top:10px"><button class="linkish" data-go="diagnostico">🔁 Pasaron 4 semanas: repite el diagnóstico y compara</button></p>' : ''}`;
 }

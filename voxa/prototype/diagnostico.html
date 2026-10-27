@@ -64,7 +64,7 @@
 import { $, renderNav, loadProfile, saveProfile, loadSessions, wordCount, countMatches, FILLER_RE, HEDGE_RE, userLocale } from './shared.js';
 import { requestMedia, explainError } from './devices.js';
 import { SCENARIOS } from './scenarios.js';
-import { KINDS, analyzeWriting } from './writing.js';
+import { KINDS, analyzeWriting, assertivenessOf } from './writing.js';
 import { analyzeAudio, analyzeByPlayback, voiceMetrics, scoreSpeech, guiraud } from './audiofile.js';
 import { SELF_ITEMS, computeProfile, measuredFrom, suggestGoals, createGoal, selfAssessmentHTML, drawRadar, diagnosisHTML, goalPickerHTML } from './goals.js';
 
@@ -126,12 +126,13 @@ $('btnRec').addEventListener('click', async () => {
   }, 500);
 });
 
+let seconds = null;
 async function speechItems() {
   const text = $('dgSaid').value;
   const progress = p => { $('dgBar').style.width = Math.round(p * 100) + '%'; };
   if (!recording) {
     if (wordCount(text) < 5) return [];
-    return scoreSpeech({ words: wordCount(text), hasText: true, fillers: countMatches(text, FILLER_RE), hedges: countMatches(text, HEDGE_RE), variety: guiraud(text), dur: wordCount(text) / 140 * 60 }, false, intro.seconds).items;
+    return scoreSpeech({ words: wordCount(text), text, hasText: true, fillers: countMatches(text, FILLER_RE), hedges: countMatches(text, HEDGE_RE), variety: guiraud(text), dur: wordCount(text) / 140 * 60 }, false, intro.seconds, intro.method).items;
   }
   $('dgProgress').classList.remove('hidden');
   $('dgVoiceStatus').textContent = 'Analizando tu voz…';
@@ -149,7 +150,9 @@ async function speechItems() {
       a = await analyzeByPlayback(recording, progress);
     }
     $('dgVoiceStatus').textContent = 'Voz analizada.';
-    return scoreSpeech(voiceMetrics(a.samples, text, a.duration), true, intro.seconds).items;
+    const vm = voiceMetrics(a.samples, text, a.duration);
+    seconds = vm.speechSeconds;
+    return scoreSpeech(vm, true, intro.seconds, intro.method).items;
   } finally { $('dgProgress').classList.add('hidden'); }
 }
 
@@ -167,11 +170,13 @@ $('dgRun').addEventListener('click', async () => {
   if (recorder?.state === 'recording') stopRec();
   $('dgErr').textContent = ''; $('dgRun').disabled = true;
   let items = [];
+  seconds = null;
   try { items = await speechItems(); }
   catch (e) { $('dgVoiceStatus').textContent = `No pudimos analizar la grabación (${e.message || e.name}). Seguimos con el resto.`; }
   const w = $('dgWrite').value.trim();
   const writingScore = wordCount(w) >= 5 ? analyzeWriting(w, KINDS.find(k => k.id === 'pedido')).score : null;
-  result = computeProfile(answers, measuredFrom({ speechItems: items, writingScore, presenceScores: lastPresence() }));
+  result = computeProfile(answers, measuredFrom({ speechItems: items, writingScore, presenceScores: lastPresence(), seconds,
+    words: wordCount($('dgSaid').value) || null, writingAssertiveness: wordCount(w) >= 5 ? assertivenessOf(w) : null }));
   const prev = profile.diagnoses?.at(-1) || null;
   $('dgOut').innerHTML = diagnosisHTML(result, prev);
   drawRadar($('dgOut').querySelector('#radar'), result.profile, prev?.profile);

@@ -306,7 +306,9 @@ async function endRoleplay() {
     } catch (e) { $('status').textContent = 'Evaluación IA no disponible: ' + e.message; }
   }
   const scores = ev ? ev.scores : local;
-  const total = Math.round(mean(Object.values(scores)));
+  // Con IA, lograr el objetivo de la conversación pesa 40%.
+  const { logro_objetivo: goalScore, ...rest } = scores;
+  const total = Math.round(goalScore != null ? 0.4 * goalScore + 0.6 * mean(Object.values(rest)) : mean(Object.values(scores)));
   saveSession({
     id: Date.now().toString(36), date: new Date().toISOString(), type: 'roleplay',
     scenario: 'roleplay:' + persona.id, scenarioName: 'Roleplay: ' + persona.name, total, dims: scores,
