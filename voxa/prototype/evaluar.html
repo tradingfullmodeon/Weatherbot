@@ -130,7 +130,7 @@
 <script type="module">
 import {
   $, FILLER_RE, HEDGE_RE, countMatches, wordCount, mean, std, esc, colorFor, highlight,
-  renderNav, saveSession, loadSessions, loadProfile, aiStatus, postJSON, GOALS, detectPitch, findFilledPauses, userLocale, LOCALES,
+  renderNav, saveSession, loadSessions, loadProfile, aiStatus, postJSON, AI_MIN_WORDS, GOALS, detectPitch, findFilledPauses, userLocale, LOCALES,
 } from './shared.js';
 import { SCENARIOS, GROUPS, IMPRO_TOPICS, methodHelp } from './scenarios.js';
 import { requestMedia, explainError } from './devices.js';
@@ -613,6 +613,10 @@ function persistSession() {
 $('btnCoach').addEventListener('click', async () => {
   if (!lastReport) return;
   const { m, r } = lastReport;
+  if (wordCount(finalText + ' ' + interimText) < AI_MIN_WORDS.feedback) {
+    $('aiResult').innerHTML = '<p class="note">El coach IA comenta lo que dijiste, y no hay suficiente texto transcrito. Tu reporte de voz, ritmo y presencia de arriba ya es el análisis completo de esta práctica.</p>';
+    return;
+  }
   $('btnCoach').disabled = true;
   $('aiResult').innerHTML = '<p class="note">El coach está analizando tu práctica…</p>';
   try {

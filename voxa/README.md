@@ -12,6 +12,7 @@ Plataforma para mejorar cómo se comunica una persona (confianza, desarrollo pro
 | [`docs/CALIFICACIONES.md`](docs/CALIFICACIONES.md) | Calificaciones de usuarios de 25 apps de la competencia (App Store, Google Play, G2, Trustpilot), qué hace que una app tenga 4,7 o más y qué la hunde, cómo sale VOXA en esos criterios y plan de acción por brecha. |
 | [`docs/PANEL.md`](docs/PANEL.md) | Panel experto simulado (profesora de oratoria, coach ejecutivo, psicóloga, diseñadora de producto, investigador en voz e IA y una usuaria principiante): método, puntajes por ronda y qué se corrigió. |
 | [`docs/PLAN_ACCION.md`](docs/PLAN_ACCION.md) | Plan para subir la calificación y llegar a las primeras 30 personas: a quiénes invitar, mensaje de invitación listo, guía de prueba de 7 días, indicadores y reglas de decisión. |
+| [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) | Arquitectura operativa: qué hacen las reglas y qué hace la IA en cada función, pruebas con distintos modelos y nubes, plataformas elegidas con su costo mensual, seguridad y pasos para operar. |
 | [`docs/APP_NATIVA.md`](docs/APP_NATIVA.md) | Qué se necesita para tener VOXA en iOS, Android y web con todas las funcionalidades: arquitectura (Capacitor y el servidor actual), componentes, requisitos de tiendas, plan de 8–11 semanas y costos. |
 | [`docs/CASO_NEGOCIO.md`](docs/CASO_NEGOCIO.md) | Mini caso de negocio: costo por usuario, precios frente a la competencia, margen, valor de vida, punto de equilibrio y proyección a 18 meses. El modelo reproducible está en `docs/negocio/modelo.py`. |
 | [`docs/AUDITORIA.md`](docs/AUDITORIA.md) | Auditoría técnica y pedagógica: hallazgos, cómo se reproducían, correcciones y temas abiertos. |
@@ -19,7 +20,8 @@ Plataforma para mejorar cómo se comunica una persona (confianza, desarrollo pro
 | [`docs/ESTRATEGIA.md`](docs/ESTRATEGIA.md) | Metodologías de comunicación y aprendizaje, lenguaje no verbal basado en evidencia, competencias y niveles, canales, motor de evaluación, arquitectura, privacidad y regulación, sprint de 30 días, modelo de negocio, plan de desarrollo e indicadores. |
 | [`prototype/`](prototype/) | Web app instalable (PWA): **Hoy** (`index.html`), **Evaluar** (`evaluar.html`), **Roleplay** (`roleplay.html`), **Gimnasio de voz** (`gimnasio.html`), **Escritura** (`escritura.html`) y **Aprender** (`aprender.html`), **Evento real** (`evento.html`), **Diagnóstico** (`diagnostico.html`) y **Progreso** (`progreso.html`). Escenarios en `scenarios.js`, lecciones en `lessons.js`, eventos en `events.js`, diagnóstico y metas en `goals.js`, análisis de grabaciones en `audiofile.js`, calificaciones en `feedback.js`, recordatorios en `reminder.js`, revisión de textos en `writing.js`, plan de 30 días en `plan.js` y acceso a cámara y micrófono en `devices.js`. |
 | [`artifact/`](artifact/) | Versión publicable como página de claude.ai (una sola página, coach IA vía la capacidad `sample`), generada con `build.py`. |
-| [`server/`](server/) | API FastAPI: coach IA (`/api/feedback`), roleplay con personajes (`/api/roleplay`, `/api/roleplay/evaluate`) escritura (`/api/writing`) y preguntas para un evento real (`/api/event-questions`). También sirve el prototipo. |
+| [`server/`](server/) | API FastAPI: coach IA (`/api/feedback`), roleplay con personajes (`/api/roleplay`, `/api/roleplay/evaluate`) escritura (`/api/writing`) y preguntas para un evento real (`/api/event-questions`). Planes y cupos en `quotas.py`, nubes en `providers.py`, banco de pruebas por modelo en `evals/`, pagos en `/api/webhooks/revenuecat`. También sirve el prototipo. |
+| [`app/`](app/) | App para iOS y Android con Capacitor: la misma app web empaquetada (`npm run sync`), proyectos `android/` e `ios/` con permisos de micrófono, cámara, voz y notificaciones, y transcripción nativa del teléfono (`native-speech.js`). |
 
 ## Usarla ahora
 
@@ -52,7 +54,23 @@ Para publicarla en Render:
 1. New → Blueprint → este repositorio (usa `voxa/render.yaml` y `voxa/Dockerfile`).
 2. Carga `ANTHROPIC_API_KEY` en el panel.
 
-Se obtiene un link https con micrófono y cámara en vivo, coach IA incluido y app instalable desde el navegador. `/api/me` muestra el plan y los cupos que le quedan a cada persona; `/api/status` muestra el gasto del mes.
+Alternativa más económica: Fly.io con `voxa/fly.toml` (los pasos están al inicio del archivo).
+
+Se obtiene un link https con micrófono y cámara en vivo, coach IA incluido y app instalable desde el navegador.
+- `/api/me` muestra el plan y los cupos que le quedan a cada persona.
+- `/api/admin/usage`, con `Authorization: Bearer <VOXA_ADMIN_TOKEN>`, muestra el gasto del mes y el costo por llamada.
+
+| Variable | Para qué |
+|---|---|
+| `VOXA_PROVIDER` | Nube de la IA: `anthropic` (por defecto), `aws`, `bedrock`, `vertex` o `foundry` (ver `server/providers.py`) |
+| `VOXA_MODEL`, `VOXA_MODEL_<FUNCIÓN>` | Modelo general y por función (`FEEDBACK`, `ROLEPLAY`, `EVALUATE`, `WRITING`, `EVENT`) |
+| `VOXA_DEFAULT_PLAN`, `VOXA_MONTHLY_BUDGET_USD`, `VOXA_RATE_LIMIT` | Plan inicial, tope de gasto del mes y consultas por minuto por IP |
+| `VOXA_ADMIN_TOKEN` | Acceso a `/api/admin/usage` |
+| `VOXA_REVENUECAT_AUTH` | Secreto del webhook de pagos |
+| `VOXA_JWT_SECRET` o `VOXA_JWKS_URL` (+ `VOXA_JWT_AUD`) | Cuentas verificadas (Supabase Auth u otro emisor); sin ellas se usa el id del dispositivo |
+| `VOXA_CORS_ORIGINS` | Orígenes que pueden llamar a la API (por defecto, la app instalable) |
+
+App instalable: `cd voxa/app && npm install && VOXA_API_BASE=https://tu-servidor/ npm run android` (o `npm run ios` en una Mac).
 
 ## Ejecutar la versión completa
 
@@ -66,7 +84,9 @@ uvicorn app:app --port 8000
 
 Sólo el prototipo, sin servidor: `cd voxa/prototype && python3 -m http.server 8000`. Todo funciona igual menos el coach IA (el roleplay usa un entrevistador con preguntas fijas y la escritura sólo hace la revisión instantánea).
 
-El modelo se configura con `VOXA_MODEL` (por defecto `claude-opus-5-5`) y se puede elegir por uso con `VOXA_MODEL_FEEDBACK`, `VOXA_MODEL_ROLEPLAY`, `VOXA_MODEL_EVALUATE`, `VOXA_MODEL_WRITING` y `VOXA_MODEL_EVENT`. `/api/status` muestra los tokens y el costo estimado por uso. Las llamadas usan salida JSON con esquema estricto y `fallbacks: "default"` ante rechazos del modelo.
+El modelo se configura con `VOXA_MODEL` (por defecto `claude-opus-5-5`) y se puede elegir por uso con `VOXA_MODEL_FEEDBACK`, `VOXA_MODEL_ROLEPLAY`, `VOXA_MODEL_EVALUATE`, `VOXA_MODEL_WRITING` y `VOXA_MODEL_EVENT`. `/api/admin/usage` muestra los tokens y el costo estimado por uso. Las llamadas usan salida JSON con esquema estricto y, donde la plataforma y el modelo lo admiten, `fallbacks: "default"` ante rechazos del modelo.
+
+Comparar modelos y nubes en cada función: `cd voxa/server && python -m evals.run --out ../docs/evals/RESULTADOS.md` (necesita la clave; cuesta menos de US$1; ver [ARQUITECTURA.md](docs/ARQUITECTURA.md) §4).
 
 Pruebas:
 - Servidor, con un cliente de Anthropic simulado y sin consumir la API: `cd voxa/server && python3 -m pytest -q`.

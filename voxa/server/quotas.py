@@ -10,10 +10,13 @@ Guarda todo en SQLite (un archivo; sin servicios extra). Para producción con va
 interfaz se implementa sobre Postgres.
 """
 
+import json
 import os
 import re
 import sqlite3
+import threading
 import time
+from contextlib import contextmanager
 from datetime import datetime, timezone
 
 from fastapi import HTTPException, Request
@@ -37,20 +40,78 @@ def db_path() -> str:
     return os.environ.get("VOXA_DB", os.path.join(os.path.dirname(__file__), "voxa.db"))
 
 
-def _db() -> sqlite3.Connection:
-    con = sqlite3.connect(db_path())
-    con.execute("CREATE TABLE IF NOT EXISTS plans (user TEXT PRIMARY KEY, plan TEXT, until REAL)")
-    con.execute("CREATE TABLE IF NOT EXISTS usage (user TEXT, period TEXT, route TEXT, n INTEGER, PRIMARY KEY (user, period, route))")
-    con.execute("CREATE TABLE IF NOT EXISTS spend (month TEXT PRIMARY KEY, usd REAL)")
-    return con
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS plans (user TEXT PRIMARY KEY, plan TEXT, until REAL);
+CREATE TABLE IF NOT EXISTS usage (user TEXT, period TEXT, route TEXT, n INTEGER, PRIMARY KEY (user, period, route));
+CREATE TABLE IF NOT EXISTS spend (month TEXT PRIMARY KEY, usd REAL);
+CREATE TABLE IF NOT EXISTS answers (key TEXT PRIMARY KEY, at REAL, body TEXT);
+"""
+_ready: set[str] = set()
+_lock = threading.Lock()
+
+
+@contextmanager
+def _db():
+    """Una conexión corta por operación (los endpoints corren en hilos): confirma y se cierra siempre.
+
+    WAL permite leer mientras otro hilo escribe; el esquema se crea una sola vez por archivo.
+    """
+    path = db_path()
+    con = sqlite3.connect(path, timeout=10)
+    try:
+        if path not in _ready:
+            with _lock:
+                con.execute("PRAGMA journal_mode=WAL")
+                con.executescript(SCHEMA)
+                _ready.add(path)
+        with con:
+            yield con
+    finally:
+        con.close()
 
 
 def month() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m")
 
 
+def account_id(request: Request) -> str | None:
+    """Cuenta verificada (Supabase Auth u otro emisor de JWT): «Authorization: Bearer <token>».
+
+    VOXA_JWT_SECRET valida tokens HS256 (secreto del proyecto); VOXA_JWKS_URL, tokens firmados con clave
+    pública (RS256/ES256). Sin ninguna de las dos, las cuentas están apagadas y se usa el id del dispositivo.
+    """
+    auth = request.headers.get("authorization", "")
+    secret, jwks = os.environ.get("VOXA_JWT_SECRET"), os.environ.get("VOXA_JWKS_URL")
+    if not auth.startswith("Bearer ") or not (secret or jwks):
+        return None
+    import jwt  # sólo se carga si hay cuentas
+    token = auth[7:]
+    try:
+        if jwks:
+            key, algs = _jwks_client(jwks).get_signing_key_from_jwt(token).key, ["RS256", "ES256"]
+        else:
+            key, algs = secret, ["HS256"]
+        claims = jwt.decode(token, key, algorithms=algs, audience=os.environ.get("VOXA_JWT_AUD", "authenticated"))
+    except jwt.PyJWTError as e:
+        raise HTTPException(401, "Sesión vencida: vuelve a iniciar sesión.") from e
+    sub = re.sub(r"[^A-Za-z0-9_-]", "", str(claims.get("sub", "")))
+    return f"u_{sub}"[:64] if sub else None
+
+
+_jwks: dict = {}
+
+
+def _jwks_client(url: str):
+    import jwt
+    if url not in _jwks:
+        _jwks[url] = jwt.PyJWKClient(url, cache_keys=True)
+    return _jwks[url]
+
+
 def user_id(request: Request) -> str:
-    """Identificador anónimo del dispositivo (la app lo genera); con cuentas, será el id de la cuenta."""
+    """Cuenta verificada si la hay; si no, el identificador anónimo del dispositivo (la app lo genera)."""
+    if acc := account_id(request):
+        return acc
     uid = request.headers.get("x-voxa-user", "")
     if USER_RE.match(uid):
         return uid
@@ -120,3 +181,22 @@ def summary(user: str) -> dict:
     plan, until = plan_of(user)
     return {"plan": plan, "until": until,
             "remaining": {r: max(0, PLANS[plan][r] - used(user, plan, r)) for r in ROUTES}}
+
+
+# --------------------------------------------------------------------------- respuestas ya calculadas
+ANSWER_DAYS = 7
+
+
+def cached_answer(key: str) -> dict | None:
+    """La misma consulta (mismo texto, mismo modelo y prompt) no se paga dos veces: doble toque, reintento, volver atrás."""
+    with _db() as con:
+        row = con.execute("SELECT at, body FROM answers WHERE key = ?", (key,)).fetchone()
+    if row and time.time() - row[0] < ANSWER_DAYS * 86400:
+        return json.loads(row[1])
+    return None
+
+
+def save_answer(key: str, body: dict) -> None:
+    with _db() as con:
+        con.execute("INSERT OR REPLACE INTO answers VALUES (?, ?, ?)", (key, time.time(), json.dumps(body, ensure_ascii=False)))
+        con.execute("DELETE FROM answers WHERE at < ?", (time.time() - ANSWER_DAYS * 86400,))

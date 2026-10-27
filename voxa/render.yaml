@@ -7,7 +7,7 @@ services:
     rootDir: voxa
     dockerfilePath: ./Dockerfile
     plan: starter
-    healthCheckPath: /api/status
+    healthCheckPath: /api/health
     disk:
       name: voxa-data
       mountPath: /data
@@ -15,8 +15,14 @@ services:
     envVars:
       - key: ANTHROPIC_API_KEY
         sync: false
+      - key: VOXA_PROVIDER          # anthropic | aws | bedrock | vertex | foundry
+        value: anthropic
       - key: VOXA_MODEL
         value: claude-opus-5-5
+      - key: VOXA_ADMIN_TOKEN       # para ver el gasto en /api/admin/usage
+        generateValue: true
+      - key: VOXA_REVENUECAT_AUTH   # el mismo valor que se configura en el webhook de RevenueCat
+        sync: false
       - key: VOXA_DEFAULT_PLAN
         value: prueba
       - key: VOXA_MONTHLY_BUDGET_USD

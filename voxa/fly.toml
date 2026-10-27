@@ -1,0 +1,37 @@
+# Alternativa más económica a Render (~US$4 al mes con 512 MB y 1 GB de disco): https://fly.io
+#   fly launch --no-deploy --copy-config && fly volumes create voxa_data --size 1
+#   fly secrets set ANTHROPIC_API_KEY=... VOXA_ADMIN_TOKEN=... VOXA_REVENUECAT_AUTH=...
+#   fly deploy
+app = "voxa"
+primary_region = "gru"   # São Paulo: la región más cercana a Latinoamérica
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  VOXA_PROVIDER = "anthropic"
+  VOXA_MODEL = "claude-opus-5-5"
+  VOXA_DEFAULT_PLAN = "prueba"
+  VOXA_MONTHLY_BUDGET_USD = "50"
+  VOXA_RATE_LIMIT = "30"
+
+[[mounts]]
+  source = "voxa_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"    # se apaga sin tráfico y despierta con la primera visita
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    path = "/api/health"
+    interval = "30s"
+    timeout = "5s"
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

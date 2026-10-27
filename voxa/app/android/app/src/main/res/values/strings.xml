@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">VOXA</string>
+    <string name="title_activity_main">VOXA</string>
+    <string name="package_name">app.voxa.coach</string>
+    <string name="custom_url_scheme">app.voxa.coach</string>
+</resources>

@@ -1,0 +1,9 @@
+{
+  "appId": "app.voxa.coach",
+  "appName": "VOXA",
+  "webDir": "www",
+  "server": { "androidScheme": "https" },
+  "plugins": {
+    "LocalNotifications": { "iconColor": "#5b4bdb" }
+  }
+}

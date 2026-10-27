@@ -89,7 +89,7 @@
 
 <script type="module">
 import {
-  $, FILLER_RE, countMatches, wordCount, mean, esc, colorFor, highlight, renderNav, saveSession, aiStatus, postJSON, userLocale,
+  $, FILLER_RE, countMatches, wordCount, mean, esc, colorFor, highlight, renderNav, saveSession, aiStatus, postJSON, AI_MIN_WORDS, userLocale,
 } from './shared.js';
 import { unblockHelp } from './devices.js';
 import { INTERVIEW_PERSONA, createInterview, currentQuestion, interviewNext, interviewHint, interviewProgress, interviewScore, interviewReportHTML, quoteSaid } from './interview.js';
@@ -285,7 +285,8 @@ async function endRoleplay() {
   $('report').scrollIntoView({ behavior: 'smooth' });
   const local = localScores(c);
   let ev = null;
-  if (ai) {
+  // Con una sola respuesta, las métricas de la conversación bastan: no se gasta una evaluación IA.
+  if (ai && c.userTurns >= AI_MIN_WORDS.evaluateTurns) {
     try {
       ev = await postJSON('api/roleplay/evaluate', {
         persona_id: persona.id, difficulty: +$('difficulty').value, history: history.map(({ role, text }) => ({ role, text })),

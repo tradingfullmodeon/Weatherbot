@@ -49,7 +49,7 @@
 </main>
 
 <script type="module">
-import { $, esc, renderNav, saveSession, aiStatus, postJSON, userLocale } from './shared.js';
+import { $, esc, renderNav, saveSession, aiStatus, postJSON, userLocale, wordCount, AI_MIN_WORDS } from './shared.js';
 import { KINDS, analyzeWriting } from './writing.js';
 
 renderNav();
@@ -86,6 +86,10 @@ $('kind').addEventListener('change', () => { newDraft(); renderGuide(); update()
 aiStatus().then(s => { $('aiBadge').textContent = s.ai ? 'conectado' : 'sin conexión'; $(s.ai ? 'aiOnline' : 'aiOffline').classList.remove('hidden'); });
 $('btnAI').addEventListener('click', async () => {
   if (!last) return;
+  if (wordCount($('text').value) < AI_MIN_WORDS.writing) {
+    $('aiOut').innerHTML = '<p class="note">Para un texto tan corto alcanza la revisión automática de arriba. El coach IA reescribe a partir de 8 palabras.</p>';
+    return;
+  }
   $('btnAI').disabled = true;
   $('aiOut').innerHTML = '<p class="note">Mejorando tu texto…</p>';
   try {

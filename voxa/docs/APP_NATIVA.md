@@ -2,6 +2,8 @@
 
 Octubre de 2026.
 
+> **Estado:** la base ya está construida en [`app/`](../app/): proyectos Android e iOS de Capacitor con permisos, empaquetado de la web apuntando al servidor (`npm run sync`), transcripción nativa y, en el servidor, cuentas con JWT y webhook de pagos. La arquitectura completa y los costos por plataforma están en [ARQUITECTURA.md](ARQUITECTURA.md).
+
 ## 1. Por qué hace falta una app instalable
 
 Hoy existen dos versiones:
@@ -110,7 +112,8 @@ Teléfono / navegador ──(texto, métricas; nunca la clave)──► Servidor
   Al superar el cupo, la app muestra un mensaje claro y nunca se corta a mitad de una práctica.
 - **Tope de gasto total** con `VOXA_MONTHLY_BUDGET_USD`. Si se alcanza, el coach se pausa con un aviso y el análisis local sigue funcionando. Conviene fijar además un límite de gasto en la consola de Anthropic.
 - **Quién es quién:** hoy, un identificador anónimo del dispositivo (`X-VOXA-User`). Con cuentas, el id de la cuenta. Los pagos (RevenueCat o la web) llaman a `set_plan` al confirmar una compra o una baja.
-- **`/api/me`** le dice a la app el plan y los cupos que quedan, y **`/api/status`** muestra el gasto del mes y por uso.
+- **`/api/me`** le dice a la app el plan y los cupos que quedan, y **`/api/admin/usage`** (con `VOXA_ADMIN_TOKEN`) muestra el gasto del mes y por uso.
+- **Pagos:** `/api/webhooks/revenuecat` traduce compras, renovaciones y vencimientos a `set_plan`.
 - **Lenguaje corporal en la app:** se mide en vivo en el teléfono (MediaPipe), sin costo de IA. El análisis de fotogramas con IA queda sólo para videos subidos.
 
 ## 4. Plan de trabajo y costo de construcción

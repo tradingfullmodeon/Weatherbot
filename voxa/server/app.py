@@ -1,12 +1,17 @@
 """VOXA API: coach IA (feedback estructurado) y roleplay conversacional con personajes.
 
 Sirve también el prototipo web (../prototype) para que cámara/micrófono funcionen en localhost.
-Sin credenciales de Anthropic la API responde 503 y el frontend usa su modo local.
+Sin credenciales la API responde 503 y el frontend usa su modo local.
+Regla de costo: lo que se puede calcular con reglas se calcula en el teléfono; la IA sólo se llama cuando
+aporta algo que las reglas no pueden (ver guard_*), y la misma consulta nunca se paga dos veces.
 """
 
+import hashlib
+import hmac
 import json
 import logging
 import os
+import re
 from pathlib import Path
 from typing import Literal
 
@@ -14,11 +19,13 @@ import anthropic
 from collections import defaultdict, deque
 import time
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+import providers
 import quotas
 from personas import PERSONAS
 
@@ -53,7 +60,8 @@ def record_usage(route: str, model: str, usage) -> float:
     usd = (inp * pin + out * pout + cached * pcache) / 1e6
     u["usd"] += usd
     return usd
-FALLBACK_BETA = "server-side-fallback-2026-07-01"
+
+
 PROTOTYPE_DIR = Path(__file__).resolve().parent.parent / "prototype"
 
 app = FastAPI(title="VOXA API")
@@ -70,21 +78,36 @@ async def rate_limit(request: Request, call_next):
         now, q = time.monotonic(), _hits[ip]
         while q and now - q[0] > 60:
             q.popleft()
+        if not q:
+            _hits.pop(ip, None); q = _hits[ip]   # no acumula IPs que ya no consultan
         if len(q) >= RATE_LIMIT:
             return JSONResponse({"detail": "Demasiadas consultas seguidas. Espera un minuto."}, status_code=429)
         q.append(now)
     return await call_next(request)
-_client: anthropic.Anthropic | None = None
+
+# La app instalable (Capacitor) y la web en otro dominio llaman a esta API: se permiten sólo esos orígenes.
+# Se agrega después del límite por IP para envolverlo: también el aviso 429 lleva los encabezados CORS.
+CORS_ORIGINS = [o.strip() for o in os.environ.get(
+    "VOXA_CORS_ORIGINS", "capacitor://localhost,https://localhost,http://localhost").split(",") if o.strip()]
+app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_methods=["GET", "POST"],
+                   allow_headers=["Content-Type", "Authorization", "X-VOXA-User"])
+_clients: dict = {}
 
 
-def client() -> anthropic.Anthropic:
-    global _client
-    if _client is None:
+def client():
+    """Cliente de la nube elegida en VOXA_PROVIDER (Anthropic, AWS, Bedrock, Vertex o Foundry); se crea una vez."""
+    p = providers.provider()
+    if p not in _clients:
         try:
-            _client = anthropic.Anthropic()
+            _clients[p] = providers.make_client(p)
         except Exception as e:  # sin credenciales configuradas
             raise HTTPException(503, f"Coach IA no configurado: {e}") from e
-    return _client
+    return _clients[p]
+
+
+def answer_key(route: str, model: str, system: str, messages: list[dict], effort: str) -> str:
+    raw = json.dumps([route, model, effort, system, messages], ensure_ascii=False, sort_keys=True)
+    return hashlib.sha256(raw.encode()).hexdigest()
 
 
 def call_claude(route: str, system: str, messages: list[dict], schema: dict, effort: str,
@@ -93,20 +116,25 @@ def call_claude(route: str, system: str, messages: list[dict], schema: dict, eff
 
     max_tokens es sólo un techo (no se cobra lo que no se usa): uno bajo corta la respuesta y obliga a reintentar.
     cache=True guarda en caché el prefijo de la conversación (roleplay: cada turno reenvía el historial).
+    Fuera del roleplay, una consulta idéntica ya respondida se devuelve sin llamar a la IA ni gastar cupo.
     """
+    p, model = providers.provider(), model_for(route)
+    key = None if cache else answer_key(route, f"{p}:{model}", system, messages, effort)
+    if key and (hit := quotas.cached_answer(key)) is not None:
+        return hit
     if user:
         quotas.check(user, route)   # cupo del plan y tope de gasto del mes, antes de gastar
-    model = model_for(route)
     extra = {"cache_control": {"type": "ephemeral"}} if cache else {}
+    fallback = providers.fallback_kwargs(p, model)
+    api = client().beta.messages if fallback else client().messages
     try:
-        response = client().beta.messages.create(
-            model=model,
+        response = api.create(
+            model=providers.model_id(p, model),
             max_tokens=max_tokens,
             system=system,
             messages=messages,
             output_config={"effort": effort, "format": {"type": "json_schema", "schema": schema}},
-            betas=[FALLBACK_BETA],
-            fallbacks="default",
+            **fallback,
             **extra,
         )
     except anthropic.AuthenticationError as e:
@@ -128,9 +156,28 @@ def call_claude(route: str, system: str, messages: list[dict], schema: dict, eff
         raise HTTPException(502, "Respuesta del coach IA incompleta.")
     text = next((b.text for b in response.content if b.type == "text"), "")
     try:
-        return json.loads(text)
+        data = json.loads(text)
     except json.JSONDecodeError as e:
         raise HTTPException(502, "Respuesta del coach IA incompleta.") from e
+    if key:
+        quotas.save_answer(key, data)
+    return data
+
+
+# --------------------------------------------------------------------------- reglas antes que IA
+WORD_RE = re.compile(r"\w+", re.UNICODE)
+MIN_FEEDBACK_WORDS = 15
+LOCAL_ONLY = "Para esto alcanza el análisis automático de VOXA (gratis y en tu teléfono): "
+
+
+def words(text: str) -> int:
+    return len(WORD_RE.findall(text))
+
+
+def guard(ok: bool, why: str) -> None:
+    """422 con explicación cuando la IA no agregaría nada que las reglas locales no den ya (no se cobra ni gasta cupo)."""
+    if not ok:
+        raise HTTPException(422, LOCAL_ONLY + why)
 
 
 def obj(properties: dict, required: list[str] | None = None) -> dict:
@@ -196,6 +243,8 @@ def feedback(req: FeedbackRequest, uid: str = Depends(quotas.user_id)) -> dict:
 {COACH_RULES}
 Devuelve la rúbrica con valores de 0 a 100. Escala anclada para cada puntaje: 0–39 ausente o contraproducente; 40–69 parcial o genérico; 70–84 sólido, con evidencia en lo que dijo; 85–100 excelente y citable. Sin evidencia, 40 o menos. Usa todo el rango: no agrupes todo entre 70 y 85. La reescritura debe tener una duración similar a la original y seguir el método indicado.
 Si no hay transcripción, basa el feedback en las métricas y explica qué no pudiste evaluar."""
+    guard(words(req.transcript) >= MIN_FEEDBACK_WORDS,
+          f"sin al menos {MIN_FEEDBACK_WORDS} palabras transcritas no hay contenido que comentar más allá de las métricas de voz.")
     metrics = "\n".join(f"- {m.label}: {m.display} (objetivo {m.target}, puntaje {m.score})" for m in req.metrics)
     user = f"""Escenario: {req.scenario}
 Consigna: {req.prompt}
@@ -318,6 +367,8 @@ EVAL_SCHEMA = obj({
 @app.post("/api/roleplay/evaluate")
 def roleplay_evaluate(req: EvaluateRequest, uid: str = Depends(quotas.user_id)) -> dict:
     p = persona_or_404(req.persona_id)
+    guard(sum(t.role == "user" and words(t.text) >= 3 for t in req.history) >= 2,
+          "con menos de dos respuestas tuyas, la evaluación por métricas de la conversación es suficiente.")
     transcript = "\n".join(f"{'USUARIO' if t.role == 'user' else p['name'].upper()}: {t.text}" for t in req.history)
     system = f"""Eres el coach de comunicación de VOXA y evalúas una simulación ya terminada.
 {COACH_RULES}
@@ -358,6 +409,7 @@ WRITING_SCHEMA = obj({
 
 @app.post("/api/writing")
 def writing(req: WritingRequest, uid: str = Depends(quotas.user_id)) -> dict:
+    guard(words(req.text) >= 8, "un texto de menos de 8 palabras se revisa bien con las reglas de escritura.")
     system = f"""Eres el coach de comunicación escrita de VOXA. Mejoras correos, mensajes y publicaciones en español para que sean claros, breves y efectivos sin perder la voz de quien escribe.
 {COACH_RULES}
 Principios: lo importante primero (BLUF), un pedido explícito con plazo cuando corresponde, frases cortas, sin rodeos ni disculpas innecesarias, tono cálido y respetuoso.
@@ -395,6 +447,9 @@ EVENT_SCHEMA = obj({
 
 @app.post("/api/event-questions")
 def event_questions(req: EventRequest, uid: str = Depends(quotas.user_id)) -> dict:
+    personal = " ".join((req.title, req.audience, req.message, req.concern, req.context))
+    guard(words(personal) >= 6, "sin datos de tu evento (ante quién, mensaje, preocupación o material), "
+          "las preguntas típicas de la guía ya son las más probables. Agrega contexto para preguntas a tu medida.")
     system = f"""Eres el coach de comunicación de VOXA y ayudas a preparar eventos reales (entrevistas, charlas, reuniones, conversaciones difíciles).
 {COACH_RULES}
 Genera las 6 preguntas u objeciones más probables y difíciles para ESTE evento concreto (no genéricas), ordenadas de más a menos probable. Para cada una: por qué la harían y cómo responderla en 1–2 frases con una técnica concreta (STAR, BLUF, reformular, dato…). No inventes datos de la persona: si falta algo, sugiere qué preparar."""
@@ -416,15 +471,56 @@ def me(user: str = Depends(quotas.user_id)) -> dict:
     return quotas.summary(user)
 
 
+@app.get("/api/health")
+def health() -> dict:
+    return {"ok": True}
+
+
 @app.get("/api/status")
 def status() -> dict:
-    has_creds = any(os.environ.get(k) for k in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_PROFILE")) or \
-        (Path.home() / ".config" / "anthropic").exists()
+    """Lo único que la app necesita saber: si el coach IA está disponible. El gasto queda en /api/admin/usage."""
+    return {"ai": providers.has_credentials(providers.provider())}
+
+
+def require_admin(authorization: str = Header("")) -> None:
+    token = os.environ.get("VOXA_ADMIN_TOKEN", "")
+    if not token or not hmac.compare_digest(authorization, f"Bearer {token}"):
+        raise HTTPException(401, "No autorizado")
+
+
+@app.get("/api/admin/usage", dependencies=[Depends(require_admin)])
+def admin_usage() -> dict:
     calls = sum(u["calls"] for u in USAGE.values())
-    return {"ai": has_creds, "model": MODEL, "models": {r: model_for(r) for r in ROUTES},
+    return {"provider": providers.provider(), "model": MODEL, "models": {r: model_for(r) for r in ROUTES},
             "usage": {r: {**u, "usd": round(u["usd"], 4)} for r, u in USAGE.items()},
             "spent_this_month_usd": round(quotas.spent_this_month(), 4),
             "usd_per_call": round(sum(u["usd"] for u in USAGE.values()) / calls, 5) if calls else None}
+
+
+# --------------------------------------------------------------------------- pagos (RevenueCat: iOS, Android y web)
+PRO_EVENTS = {"INITIAL_PURCHASE", "RENEWAL", "PRODUCT_CHANGE", "UNCANCELLATION", "NON_RENEWING_PURCHASE",
+              "SUBSCRIPTION_EXTENDED", "TEMPORARY_ENTITLEMENT_GRANT"}
+END_EVENTS = {"EXPIRATION"}
+
+
+@app.post("/api/webhooks/revenuecat")
+async def revenuecat(request: Request, authorization: str = Header("")) -> dict:
+    """RevenueCat avisa cada compra, renovación o vencimiento; aquí se traduce al plan de la persona.
+
+    La cancelación no corta nada: el plan sigue hasta su fecha de vencimiento, que llega como EXPIRATION.
+    """
+    secret = os.environ.get("VOXA_REVENUECAT_AUTH", "")
+    if not secret or not hmac.compare_digest(authorization, secret):
+        raise HTTPException(401, "No autorizado")
+    event = (await request.json()).get("event") or {}
+    kind, exp = event.get("type"), event.get("expiration_at_ms")
+    ids = {i for i in [event.get("app_user_id"), *(event.get("aliases") or [])] if i and quotas.USER_RE.match(i)}
+    for uid in ids:
+        if kind in PRO_EVENTS:
+            quotas.set_plan(uid, "pro", exp / 1000 if exp else None)
+        elif kind in END_EVENTS:
+            quotas.set_plan(uid, "gratis")
+    return {"ok": True}
 
 
 app.mount("/", StaticFiles(directory=PROTOTYPE_DIR, html=True), name="prototype")

@@ -46,7 +46,7 @@
 </main>
 
 <script type="module">
-import { $, esc, renderNav, loadProfile, saveProfile, aiStatus, postJSON, localDay } from './shared.js';
+import { $, esc, renderNav, loadProfile, saveProfile, aiStatus, postJSON, localDay, wordCount, AI_MIN_WORDS } from './shared.js';
 import { EVENT_TYPES, createEvent, eventHTML, eventTypeOptions, validEvent, daysUntil } from './events.js';
 import { LESSONS } from './lessons.js';
 
@@ -103,6 +103,10 @@ $('eventOut').addEventListener('click', (e) => {
 aiStatus().then(s => { if (s.ai) $('evQuestionsAI').classList.remove('hidden'); });
 $('evQuestionsAI').addEventListener('click', async () => {
   const ev = profile.event;
+  if (wordCount([ev.title, ev.audience, ev.message, ev.concern, ev.context].join(' ')) < AI_MIN_WORDS.event) {
+    $('evAI').innerHTML = '<p class="note">Sin datos de tu evento, las preguntas de la guía ya son las más probables. Completa ante quién, tu mensaje o lo que te preocupa (con «Nuevo evento») para recibir preguntas a tu medida.</p>';
+    return;
+  }
   $('evQuestionsAI').disabled = true;
   $('evAI').innerHTML = '<p class="note">Pensando en las preguntas más probables para tu evento…</p>';
   try {

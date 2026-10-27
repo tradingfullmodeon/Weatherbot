@@ -204,9 +204,13 @@ export const loadProfile = () => read(PROFILE_KEY, { goal: '', ladder: {}, local
 export const saveProfile = (p) => write(PROFILE_KEY, p);
 
 // ---------------------------------------------------------------- API del coach IA
+// En la web la API está en el mismo dominio; la app instalable define VOXA_API_BASE con la dirección del servidor.
+const API_BASE = globalThis.VOXA_API_BASE || '';
+// La IA sólo se pide cuando aporta algo que las reglas locales no dan (mismos mínimos que el servidor).
+export const AI_MIN_WORDS = { feedback: 15, writing: 8, event: 6, evaluateTurns: 2 };
 let statusPromise = null;
 export function aiStatus() {
-  statusPromise ??= fetch('api/status').then(r => r.ok ? r.json() : { ai: false }).catch(() => ({ ai: false }));
+  statusPromise ??= fetch(API_BASE + 'api/status').then(r => r.ok ? r.json() : { ai: false }).catch(() => ({ ai: false }));
   return statusPromise;
 }
 // Identificador anónimo del dispositivo: el servidor lo usa para los cupos del plan (hasta que haya cuentas).
@@ -218,7 +222,7 @@ export function deviceId() {
   } catch { return ''; }
 }
 export async function postJSON(path, body) {
-  const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-VOXA-User': deviceId() }, body: JSON.stringify(body) });
+  const r = await fetch(API_BASE + path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-VOXA-User': deviceId() }, body: JSON.stringify(body) });
   if (!r.ok) {
     let detail = `Error ${r.status}`;
     try { detail = (await r.json()).detail || detail; } catch {}
