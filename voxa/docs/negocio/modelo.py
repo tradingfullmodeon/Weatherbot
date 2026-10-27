@@ -73,7 +73,7 @@ B2B_SEAT = 8.0              # USD por asiento al mes, contrato anual
 B2B_USAGE_FACTOR = 1.3      # en empresa se usa más el roleplay
 
 # Costos fijos mensuales por escenario.
-FIXED = {"Fundador + freelancers": 3000, "Equipo chico (2 dev + contenido + crecimiento)": 15000}
+FIXED = {"Solo (fundador + IA para programar)": 150, "Fundador + freelancers": 3000, "Equipo chico (2 dev + contenido + crecimiento)": 15000}
 
 
 def call_cost(call: str, model: str) -> float:
@@ -108,14 +108,14 @@ def main() -> None:
     life = (1 - ANNUAL_SHARE) * LIFE_MONTHLY + ANNUAL_SHARE * LIFE_ANNUAL
     stt = STT_MIN_PAID * STT_SERVER_SHARE * STT_PER_MIN
     print(f"Ingreso bruto por pagador: US${gross:.2f}/mes · neto (sin IVA ni comisiones): US${net:.2f}/mes · vida media: {life:.1f} meses\n")
-    print("| Configuración de IA | Plan gratis | IA por pagador/mes | Costo variable por pagador* | Contribución/mes | Margen | LTV | Pagadores para equilibrio (fijos 3 mil / 15 mil USD) |")
+    print("| Configuración de IA | Plan gratis | IA por pagador/mes | Costo variable por pagador* | Contribución/mes | Margen | LTV | Pagadores para equilibrio (fijos 150 / 3 mil / 15 mil USD) |")
     print("|---|---|---|---|---|---|---|---|")
     for name, cfg in CONFIGS.items():
         for free_ai, label in [(True, "con IA limitada"), (False, "sin IA + prueba 7 días")]:
             v = variable_cost(cfg, free_ai)
             contrib = net - v
             be = [f"{round((f + INFRA_FIXED) / contrib):,}" if contrib > 0 else "no hay" for f in FIXED.values()]
-            print(f"| {name} | {label} | US${ai_cost(USAGE_PAID, cfg):.2f} | US${v:.2f} | US${contrib:.2f} | {100 * contrib / net:.0f}% | US${contrib * life:.0f} | {be[0]} / {be[1]} |")
+            print(f"| {name} | {label} | US${ai_cost(USAGE_PAID, cfg):.2f} | US${v:.2f} | US${contrib:.2f} | {100 * contrib / net:.0f}% | US${contrib * life:.0f} | {" / ".join(be)} |")
     print("\n*Incluye transcripción, infraestructura y la carga de los usuarios gratis (o de las pruebas) por cada pagador.")
 
     print("\nB2B (asiento US$%.0f/mes, uso x%.1f):" % (B2B_SEAT, B2B_USAGE_FACTOR))

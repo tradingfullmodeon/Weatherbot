@@ -2,6 +2,25 @@
 
 Octubre de 2026. El modelo es reproducible: los supuestos están en [`negocio/modelo.py`](negocio/modelo.py) y se recalcula con `python3 voxa/docs/negocio/modelo.py`. Las fuentes de precios y benchmarks se citan al final.
 
+## En simple: qué cuesta y cuándo
+
+**Hoy no pagas nada.** El link de claude.ai funciona con la cuenta de Claude de cada visitante, así que la IA no te cuesta. No hay servidor que mantener.
+
+Los **US$3.000 al mes no son un costo obligatorio.** Eran un escenario: lo que costaría pagarle a un desarrollador y a un creador de contenido a medio tiempo. Hay un escenario mucho más barato.
+
+| Tipo de costo | Cuándo aparece | Cuánto |
+|---|---|---|
+| Probar con las primeras 30 personas | Ahora | **US$0** (link de claude.ai) |
+| Construir la app instalable | Una vez, si decides hacerla | Tu tiempo con un asistente de programación con IA (8–11 semanas) **o** un desarrollador freelance |
+| Publicar en tiendas | Al lanzar | Apple US$99 al año + Google US$25 una vez (≈ US$10 al mes) |
+| Servidor y base de datos | Cuando la app esté publicada | US$30–80 al mes al inicio |
+| IA y transcripción | Sólo cuando alguien la usa | Unos US$1,6 al mes por cada persona que paga, con la máxima calidad (Opus 5.5) |
+
+**Con la operación «solo»** (fundador más IA para programar, unos US$150 al mes de fijos) y el precio medio:
+- se cubren los costos con **unos 140 pagadores, o 33 asientos de empresa**;
+- cada pagador deja US$4,42 netos al mes, de los que US$1,10 son ganancia con Opus 5.5 en todo;
+- con la optimización del punto 7, la ganancia sube a unos US$2,2–2,6.
+
 ## 1. Conclusión
 
 **Sí puede ser rentable, pero no como app de consumo barata con IA gratis y publicidad pagada.** Es rentable con cuatro decisiones:
@@ -183,3 +202,17 @@ Con este ritmo, lo invertido se recupera alrededor del mes 22. El 75% de la cont
 - **Hosting:** [Render](https://render.com/articles/how-much-does-cloud-application-hosting-cost-for-small-businesses) y [Supabase](https://makerkit.dev/blog/saas/supabase-pricing).
 
 Las cifras de tiendas y de precios vienen en su mayoría de agregadores (las tiendas no se pudieron abrir en vivo). Conviene confirmarlas antes de presentarlas a inversionistas. El costo por instalación de US$1 en LatAm es un supuesto.
+
+## 7. Cómo optimizar sin bajar la calidad
+
+| Palanca | Efecto | Calidad |
+|---|---|---|
+| Lo que se puede medir en el dispositivo, gratis (voz, estructura, muletillas, escritura, simulacro, diagnóstico); la IA sólo cuando la persona la pide | Ya está así: el 80% del valor cuesta 0 | Igual |
+| Plan gratis sin IA en el servidor, prueba de 7 días | Margen de −86% a positivo | Igual para quien paga |
+| Opus 5.5 donde la calidad se nota (consejo del coach, evaluación final, lenguaje corporal); probar un modelo más económico sólo en los turnos del roleplay, **y cambiarlo sólo si el panel no ve diferencia** | Contribución por pagador de US$1,10 a ~2,2 (50% de margen) | Se valida antes de cambiar |
+| Caché del historial del roleplay y techos de respuesta correctos | Ya hecho: menos tokens y sin reintentos | Igual |
+| Transcripción y voz del personaje en el teléfono | Casi 0 en voz | Muy buena en iOS y Android |
+| Precio medio (no el más bajo), con el plan anual como opción principal | Ingreso neto de US$3,43 a 4,42 por pagador | Coherente con la calidad |
+| Empresas y universidades primero (asiento US$8–12, margen 68–83%) | 33 asientos cubren la operación «solo» | Igual |
+| Sin publicidad pagada: universidades, clubes, contenido y referidos | Evita perder US$67 por cliente | — |
+
