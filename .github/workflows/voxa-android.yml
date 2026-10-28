@@ -1,0 +1,53 @@
+# Compila la app de VOXA para Android (APK de prueba) en cada cambio de la app web o de la app nativa.
+# Descarga: Actions → «VOXA Android (APK de prueba)» → la última ejecución → Artifacts → voxa-android-debug.
+# En el teléfono: abre el .apk y permite instalar desde esta fuente. No es la versión de la tienda (va sin firma de publicación).
+# Para que la app hable con el servidor, define la variable del repositorio VOXA_API_BASE
+# (Settings → Secrets and variables → Actions → Variables), por ejemplo https://voxa.onrender.com/
+# Sin ella, la app funciona completa en modo local (todo menos el coach IA).
+name: VOXA Android (APK de prueba)
+
+on:
+  push:
+    paths: ["voxa/app/**", "voxa/prototype/**", ".github/workflows/voxa-android.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: voxa-android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: voxa/app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: voxa/app/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+      - name: Dependencias
+        run: npm ci --no-audit --no-fund
+      - name: Empaquetar la app web y sincronizar Android
+        env:
+          VOXA_API_BASE: ${{ vars.VOXA_API_BASE || 'https://voxa.invalid/' }}
+          VOXA_RC_ANDROID_KEY: ${{ vars.VOXA_RC_ANDROID_KEY }}
+        run: node scripts/sync-web.mjs && npx cap sync android
+      - name: Compilar el APK
+        working-directory: voxa/app/android
+        run: ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: voxa-android-debug
+          path: voxa/app/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
