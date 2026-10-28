@@ -134,6 +134,7 @@ import {
 } from './shared.js';
 import { SCENARIOS, GROUPS, IMPRO_TOPICS, methodHelp } from './scenarios.js';
 import { requestMedia, explainError } from './devices.js';
+import { upgradeHTML } from './plan-pro.js';
 import { LESSONS, LESSON_FOR_METRIC } from './lessons.js';
 import { guiraud, MIN_SPEECH_SECONDS, PITCH_MAX_HZ, scoreSpeech } from './audiofile.js';
 
@@ -631,7 +632,7 @@ $('btnCoach').addEventListener('click', async () => {
     persistSession();
     $('aiResult').innerHTML = renderCoach(fb);
   } catch (e) {
-    $('aiResult').innerHTML = `<p class="note">No se pudo obtener el consejo: ${esc(e.message)}</p>`;
+    $('aiResult').innerHTML = `<p class="note">No se pudo obtener el consejo: ${esc(e.message)}${upgradeHTML(e)}</p>`;
   } finally { $('btnCoach').disabled = false; }
 });
 

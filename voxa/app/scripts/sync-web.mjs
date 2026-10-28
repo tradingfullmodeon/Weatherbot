@@ -16,9 +16,14 @@ if (!base.endsWith('/')) base += '/';
 
 rmSync(www, { recursive: true, force: true });
 cpSync(src, www, { recursive: true });
-copyFileSync(join(here, '..', 'native-speech.js'), join(www, 'native-speech.js'));
-// Antes de los módulos de la página: la dirección de la API y la transcripción nativa del teléfono.
-const inject = `<script>window.VOXA_API_BASE=${JSON.stringify(base)};</script><script src="native-speech.js"></script>`;
+const NATIVE = ['native-speech.js', 'native-purchases.js', 'native-reminder.js'];
+for (const f of NATIVE) copyFileSync(join(here, '..', f), join(www, f));
+// Claves PÚBLICAS de RevenueCat por plataforma (las que empiezan con appl_ y goog_; se pueden incluir en la app).
+const rcKeys = { ios: process.env.VOXA_RC_IOS_KEY || '', android: process.env.VOXA_RC_ANDROID_KEY || '' };
+if (!rcKeys.ios && !rcKeys.android) console.warn('Sin VOXA_RC_IOS_KEY ni VOXA_RC_ANDROID_KEY: la app se empaqueta sin compras.');
+// Antes de los módulos de la página: dirección de la API, claves de compras y puentes nativos del teléfono.
+const inject = `<script>window.VOXA_API_BASE=${JSON.stringify(base)};window.VOXA_RC_KEYS=${JSON.stringify(rcKeys)};</script>` +
+  NATIVE.map((f) => `<script src="${f}"></script>`).join('');
 let pages = 0;
 for (const f of readdirSync(www).filter((f) => f.endsWith('.html'))) {
   const p = join(www, f);

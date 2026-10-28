@@ -180,6 +180,30 @@ La decisión de cambiar es tuya. Hoy todo usa el modelo de mayor calidad.
 - servidor: 32 (antes 21), que cubren las nubes, las puertas, la caché, los pagos, las cuentas, CORS y el banco de modelos;
 - motor: 50 (antes 47), que suman la transcripción nativa.
 
+### Segunda ronda: el ciclo de suscripción y hábito, de punta a punta
+
+- **«Tu plan» (`pro.html`)** muestra:
+  - el plan y cuánto coach IA queda en cada función;
+  - qué es gratis para siempre y qué incluye Pro;
+  - el cobro sin sorpresas.
+
+  También permite comprar y restaurar compras en la app, o abrir el link de pago en la web (`VOXA_CHECKOUT_URL`).
+- **«Hoy»** muestra la línea del plan («Prueba del coach IA: te quedan 5 días · 12 consejos»), que lleva a «Tu plan».
+- **Cupo agotado:** cuando el servidor responde 402, la app ofrece «Ver el plan Pro» en el ensayo, el roleplay, la escritura y el evento, en vez de un error mudo.
+- **Compras nativas** (`app/native-purchases.js`, RevenueCat):
+  - la persona se identifica con el mismo id que usa el servidor;
+  - el plan anual aparece primero;
+  - cancelar la compra no se trata como error.
+
+  Después de comprar, `/api/me/sync` confirma el plan con la API de RevenueCat (`VOXA_REVENUECAT_SECRET`) sin esperar al webhook.
+- **Avisos en el teléfono** (`app/native-reminder.js`):
+  - el recordatorio diario de práctica, a la hora elegida;
+  - el aviso 3 días antes de cada renovación, que se reprograma al abrir la app.
+- **Textos de cobro exactos:** el reembolso en iPhone lo hace Apple, no VOXA, y la página lo dice.
+- **Pruebas:**
+  - servidor: 33;
+  - motor y app: 57, que suman el plan, las compras y los avisos.
+
 ## 8. Pasos para tener la plataforma operativa
 
 | # | Paso | Quién | Tiempo |
@@ -190,7 +214,7 @@ La decisión de cambiar es tuya. Hoy todo usa el modelo de mayor calidad.
 | 4 | Invitar a la beta con el link propio (la prueba de 7 días se activa sola) | Tú | — |
 | 5 | Cuentas de desarrollador: Apple (US$99/año) y Google Play (US$25) | Tú | 1–2 días de aprobación |
 | 6 | App instalable: `cd voxa/app && VOXA_API_BASE=https://tu-servidor/ npm run android` (o `ios` en una Mac). Probar micrófono, cámara y transcripción en teléfonos reales | Desarrollo | 1–2 semanas |
-| 7 | Pagos: productos en las tiendas y en RevenueCat (usando el id del dispositivo o de la cuenta como `app_user_id`); el webhook a `/api/webhooks/revenuecat` con `VOXA_REVENUECAT_AUTH` | Desarrollo | 1 semana |
+| 7 | Pagos: crear en RevenueCat el derecho `pro` y una oferta con los paquetes mensual y anual; conectar las tiendas; webhook a `/api/webhooks/revenuecat` con `VOXA_REVENUECAT_AUTH`; cargar `VOXA_REVENUECAT_SECRET` en el servidor y las claves públicas al empaquetar la app. El código de la app y del servidor ya está | Tú, en los paneles | 1–2 días |
 | 8 | (Opcional) Cuentas con Supabase Auth y `VOXA_JWT_SECRET` o `VOXA_JWKS_URL` | Desarrollo | 3–5 días |
 | 9 | Publicar en las tiendas con 4,3 ★ o más en la beta | Tú | 1–2 semanas de revisión |
 

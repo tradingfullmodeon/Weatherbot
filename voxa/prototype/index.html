@@ -46,6 +46,7 @@
     <div class="btns"><a class="btn-link cta" id="tGo" href="evaluar.html">▶ Hacer la práctica de hoy</a></div>
     <p class="note" id="tAlt"></p>
     <p class="note" id="tStreak"></p>
+    <p class="note"><a id="tPlan" class="hidden" href="pro.html"></a></p>
   </section>
 
   <section class="card full" id="goalsCard">
@@ -77,7 +78,9 @@
     <h2>⏰ Recordatorio diario</h2>
     <p class="note">Practicar siempre a la misma hora ayuda a crear el hábito. Elige la hora y tu calendario te avisará cada día.</p>
     <div class="row"><div><label for="remindTime">Hora</label><input type="time" id="remindTime" class="field" value="08:30"></div></div>
-    <div class="btns"><button id="remindIcs" class="cta">📅 Agregar a mi calendario</button><a class="btn-link file-btn" id="remindGoogle" target="_blank" rel="noopener">Google Calendar</a></div>
+    <div class="btns hidden" id="remindNativeBox"><button id="remindNative" class="cta">🔔 Avisarme en este teléfono</button></div>
+    <p class="note" id="remindNativeMsg" aria-live="polite"></p>
+    <div class="btns" id="remindCalBox"><button id="remindIcs" class="cta">📅 Agregar a mi calendario</button><a class="btn-link file-btn" id="remindGoogle" target="_blank" rel="noopener">Google Calendar</a></div>
   </section>
 
   <details class="card full help-card" id="ayuda"><summary>💙 ¿Te sientes muy mal?</summary><div id="helpBox"></div></details>
@@ -99,7 +102,8 @@
 </main>
 
 <script type="module">
-import { $, esc, renderNav, loadProfile, saveProfile, loadSessions, GOALS, LOCALES, userLocale } from './shared.js';
+import { $, esc, renderNav, loadProfile, saveProfile, loadSessions, GOALS, LOCALES, userLocale, aiStatus, getMe } from './shared.js';
+import { planLine } from './plan-pro.js';
 import { todayTask, streak, practicedToday } from './plan.js';
 import { mountDeviceCheck } from './devices.js';
 import { LESSONS } from './lessons.js';
@@ -212,12 +216,38 @@ if (location.hash === '#ayuda') { $('ayuda').classList.remove('hidden'); $('ayud
 const appUrl = location.href.replace(/[^/]*$/, 'index.html');
 if (profile.remindTime) $('remindTime').value = profile.remindTime;
 const updateRemind = () => { $('remindGoogle').href = googleCalendarUrl($('remindTime').value || '08:30', appUrl); };
-$('remindTime').addEventListener('change', () => { profile.remindTime = $('remindTime').value; saveProfile(profile); updateRemind(); });
+$('remindTime').addEventListener('change', () => {
+  profile.remindTime = $('remindTime').value; saveProfile(profile); updateRemind();
+  if (profile.remindNative) setNativeReminder();
+});
+// En la app instalable, el aviso es una notificación del teléfono; en la web, un evento de calendario.
+const nativeReminder = window.VOXA_NATIVE_REMINDER;
+async function setNativeReminder() {
+  const ok = await nativeReminder.set($('remindTime').value || '08:30');
+  profile.remindNative = ok; saveProfile(profile);
+  $('remindNativeMsg').textContent = ok ? `Listo: te avisaremos todos los días a las ${$('remindTime').value || '08:30'}.` : 'Para avisarte, permite las notificaciones de VOXA en los ajustes del teléfono.';
+}
+if (nativeReminder) {
+  $('remindNativeBox').classList.remove('hidden'); $('remindCalBox').classList.add('hidden');
+  $('remindNative').addEventListener('click', setNativeReminder);
+  if (profile.remindNative) $('remindNativeMsg').textContent = `Aviso activo a las ${$('remindTime').value || '08:30'}.`;
+}
 updateRemind();
 $('remindIcs').addEventListener('click', () => {
   const url = URL.createObjectURL(new Blob([icsReminder($('remindTime').value || '08:30', appUrl)], { type: 'text/calendar' }));
   const a = Object.assign(document.createElement('a'), { href: url, download: 'voxa-recordatorio.ics' });
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000);
+});
+
+// ---------------------------------------------------------------- plan (sólo con el coach IA conectado)
+aiStatus().then(async (s) => {
+  if (!s.ai) return;
+  try {
+    const me = await getMe();
+    $('tPlan').textContent = planLine(me) + ' →'; $('tPlan').classList.remove('hidden');
+    // Cada renovación mueve la fecha: el aviso de 3 días antes se reprograma al abrir la app.
+    if (me.plan === 'pro' && me.until) window.VOXA_NATIVE_REMINDER?.renewalNotice(me.until).catch(() => {});
+  } catch {}
 });
 
 // ---------------------------------------------------------------- ajustes

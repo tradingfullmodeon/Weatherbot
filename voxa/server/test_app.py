@@ -319,3 +319,24 @@ def test_model_eval_bench_runs_without_a_key(tmp_path):
                        cwd=__import__("os").path.dirname(__file__), capture_output=True, text=True, timeout=120)
     assert r.returncode == 0, r.stderr[-500:]
     assert "| claude-opus-5-5 |" in out.read_text() and out.with_suffix(".json").exists()
+
+
+def test_checkout_link_and_sync_with_revenuecat(monkeypatch):
+    monkeypatch.setenv("VOXA_CHECKOUT_URL", "https://pay.example/voxa/{user}")
+    me = api.get("/api/me", headers={"X-VOXA-User": "dispositivo777"}).json()
+    assert me["checkout_url"] == "https://pay.example/voxa/dispositivo777"
+    # Sin secreto configurado, sincronizar sólo devuelve el plan actual.
+    assert api.post("/api/me/sync", headers={"X-VOXA-User": "dispositivo777"}).json()["plan"] == "pro"
+    voxa.quotas.set_plan("dispositivo777", "gratis")
+    monkeypatch.setenv("VOXA_REVENUECAT_SECRET", "sk_test")
+    seen = {}
+    def fake(uid, secret):
+        seen.update(uid=uid, secret=secret)
+        return {"subscriber": {"entitlements": {"pro": {"expires_date": "2099-01-01T00:00:00Z"}}}}
+    monkeypatch.setattr(voxa, "fetch_subscriber", fake)
+    out = api.post("/api/me/sync", headers={"X-VOXA-User": "dispositivo777"}).json()
+    assert out["plan"] == "pro" and seen == {"uid": "dispositivo777", "secret": "sk_test"}
+    # Una suscripción vencida no da Pro.
+    voxa.quotas.set_plan("dispositivo888", "gratis")
+    monkeypatch.setattr(voxa, "fetch_subscriber", lambda u, s: {"subscriber": {"entitlements": {"pro": {"expires_date": "2001-01-01T00:00:00Z"}}}})
+    assert api.post("/api/me/sync", headers={"X-VOXA-User": "dispositivo888"}).json()["plan"] == "gratis"

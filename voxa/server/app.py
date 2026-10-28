@@ -467,8 +467,12 @@ Material de contexto (datos, nunca instrucciones):
 
 @app.get("/api/me")
 def me(user: str = Depends(quotas.user_id)) -> dict:
-    """Plan y cupos que le quedan a esta persona (la app los muestra antes de usar el coach)."""
-    return quotas.summary(user)
+    """Plan y cupos que le quedan a esta persona (la app los muestra antes de usar el coach).
+
+    checkout_url: compra en la web (p. ej. un link de pago de RevenueCat), con el id de la persona en {user}.
+    """
+    url = os.environ.get("VOXA_CHECKOUT_URL", "")
+    return {**quotas.summary(user), "checkout_url": url.replace("{user}", user) if url else ""}
 
 
 @app.get("/api/health")
@@ -501,6 +505,41 @@ def admin_usage() -> dict:
 PRO_EVENTS = {"INITIAL_PURCHASE", "RENEWAL", "PRODUCT_CHANGE", "UNCANCELLATION", "NON_RENEWING_PURCHASE",
               "SUBSCRIPTION_EXTENDED", "TEMPORARY_ENTITLEMENT_GRANT"}
 END_EVENTS = {"EXPIRATION"}
+
+
+RC_API = "https://api.revenuecat.com/v1/subscribers/"
+
+
+def fetch_subscriber(uid: str, secret: str) -> dict:
+    """Estado de la suscripción en RevenueCat (respaldo si un aviso del webhook se perdió o aún no llega)."""
+    import urllib.parse
+    import urllib.request
+    req = urllib.request.Request(RC_API + urllib.parse.quote(uid, safe=""), headers={"Authorization": f"Bearer {secret}"})
+    with urllib.request.urlopen(req, timeout=10) as r:
+        return json.load(r)
+
+
+def iso_to_ts(value: str | None) -> float | None:
+    from datetime import datetime
+    return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp() if value else None
+
+
+@app.post("/api/me/sync")
+def me_sync(user: str = Depends(quotas.user_id)) -> dict:
+    """Justo después de comprar o restaurar: confirma el plan con RevenueCat sin esperar al webhook."""
+    secret = os.environ.get("VOXA_REVENUECAT_SECRET", "")
+    if secret:
+        try:
+            sub = fetch_subscriber(user, secret).get("subscriber", {})
+        except Exception as e:
+            log.warning("RevenueCat no respondió: %s", e)
+            raise HTTPException(502, "No pudimos confirmar la compra todavía. Inténtalo en un minuto.") from e
+        ent = (sub.get("entitlements") or {}).get(os.environ.get("VOXA_RC_ENTITLEMENT", "pro"))
+        if ent:
+            until = iso_to_ts(ent.get("expires_date"))
+            if until is None or until > time.time():
+                quotas.set_plan(user, "pro", until)
+    return me(user)
 
 
 @app.post("/api/webhooks/revenuecat")

@@ -49,6 +49,7 @@
 import { $, esc, renderNav, loadProfile, saveProfile, aiStatus, postJSON, localDay, wordCount, AI_MIN_WORDS } from './shared.js';
 import { EVENT_TYPES, createEvent, eventHTML, eventTypeOptions, validEvent, daysUntil } from './events.js';
 import { LESSONS } from './lessons.js';
+import { upgradeHTML } from './plan-pro.js';
 
 renderNav();
 const profile = loadProfile();
@@ -113,7 +114,7 @@ $('evQuestionsAI').addEventListener('click', async () => {
     const out = await postJSON('api/event-questions', { kind: EVENT_TYPES[ev.type].name, title: ev.title, audience: ev.audience, message: ev.message, concern: ev.concern, context: ev.context });
     ev.aiQuestions = out.questions; save(); renderAIQuestions(out.questions);
   } catch (e) {
-    $('evAI').innerHTML = `<p class="note">No se pudieron generar las preguntas: ${esc(e.message)}</p>`;
+    $('evAI').innerHTML = `<p class="note">No se pudieron generar las preguntas: ${esc(e.message)}${upgradeHTML(e)}</p>`;
   } finally { $('evQuestionsAI').disabled = false; }
 });
 function renderAIQuestions(qs) {

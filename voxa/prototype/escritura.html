@@ -51,6 +51,7 @@
 <script type="module">
 import { $, esc, renderNav, saveSession, aiStatus, postJSON, userLocale, wordCount, AI_MIN_WORDS } from './shared.js';
 import { KINDS, analyzeWriting } from './writing.js';
+import { upgradeHTML } from './plan-pro.js';
 
 renderNav();
 
@@ -108,7 +109,7 @@ $('btnAI').addEventListener('click', async () => {
     $('btnCopyRw').addEventListener('click', async () => { try { await navigator.clipboard.writeText(out.rewrite); $('btnCopyRw').textContent = 'Copiado ✓'; } catch {} });
     $('btnUse').addEventListener('click', () => { $('text').value = out.rewrite; newDraft(true); update(); $('text').focus(); });
   } catch (e) {
-    $('aiOut').innerHTML = `<p class="note">No se pudo mejorar el texto: ${esc(e.message)}</p>`;
+    $('aiOut').innerHTML = `<p class="note">No se pudo mejorar el texto: ${esc(e.message)}${upgradeHTML(e)}</p>`;
   } finally { $('btnAI').disabled = false; }
 });
 </script>

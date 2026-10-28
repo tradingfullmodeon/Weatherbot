@@ -221,15 +221,19 @@ export function deviceId() {
     return id;
   } catch { return ''; }
 }
-export async function postJSON(path, body) {
-  const r = await fetch(API_BASE + path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-VOXA-User': deviceId() }, body: JSON.stringify(body) });
+async function api(method, path, body) {
+  const r = await fetch(API_BASE + path, { method, headers: { 'Content-Type': 'application/json', 'X-VOXA-User': deviceId() }, body: body && JSON.stringify(body) });
   if (!r.ok) {
     let detail = `Error ${r.status}`;
     try { detail = (await r.json()).detail || detail; } catch {}
-    throw new Error(detail);
+    throw Object.assign(new Error(detail), { status: r.status });   // 402 = cupo del plan agotado
   }
   return r.json();
 }
+export const postJSON = (path, body) => api('POST', path, body);
+// Plan y cupos de esta persona; syncMe confirma una compra recién hecha sin esperar al aviso de la tienda.
+export const getMe = () => api('GET', 'api/me');
+export const syncMe = () => api('POST', 'api/me/sync', {});
 
 export const GOALS = [
   ['confianza', 'Ganar confianza y perder el miedo'],

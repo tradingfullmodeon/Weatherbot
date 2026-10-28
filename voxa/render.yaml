@@ -23,6 +23,10 @@ services:
         generateValue: true
       - key: VOXA_REVENUECAT_AUTH   # el mismo valor que se configura en el webhook de RevenueCat
         sync: false
+      - key: VOXA_REVENUECAT_SECRET # clave secreta de la API de RevenueCat: confirma una compra sin esperar al webhook
+        sync: false
+      - key: VOXA_CHECKOUT_URL      # opcional: link de pago web con {user}
+        sync: false
       - key: VOXA_DEFAULT_PLAN
         value: prueba
       - key: VOXA_MONTHLY_BUDGET_USD

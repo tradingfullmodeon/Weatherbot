@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VOXA Tu plan</title>
+<link rel="stylesheet" href="voxa.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#4f46e5">
+<style>
+  .plan-left { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
+  .plan-left li { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+  .plan-left strong { font-size: 1.3rem; font-variant-numeric: tabular-nums; margin-right: 4px; }
+  .pkgs { display: grid; gap: 10px; }
+  .pkg { text-align: left; }
+  .ok-list li::marker { content: '✓  '; color: var(--good); }
+</style>
+</head>
+<body>
+<header>
+  <h1>VOXA · Tu plan</h1>
+  <p>Lo que se mide en tu teléfono es gratis para siempre. El coach IA es el plan Pro.</p>
+</header>
+
+<main>
+  <section class="card full">
+    <h2>Dónde estás</h2>
+    <p class="lead" id="planNow">Cargando tu plan…</p>
+    <div id="planLeft"></div>
+  </section>
+
+  <section class="card">
+    <h2>Siempre gratis</h2>
+    <ul class="ok-list" id="free"></ul>
+  </section>
+
+  <section class="card">
+    <h2>Con Pro</h2>
+    <ul class="ok-list" id="pro"></ul>
+    <div id="buy"></div>
+    <p class="note" id="buyMsg" aria-live="polite"></p>
+  </section>
+
+  <section class="card full">
+    <h2>Cobro sin sorpresas</h2>
+    <ul id="terms"></ul>
+  </section>
+</main>
+
+<script type="module">
+import { $, esc, renderNav, aiStatus, getMe, syncMe, deviceId } from './shared.js';
+import { ALWAYS_FREE, PRO_INCLUDES, BILLING_TERMS, MANAGE_SUBSCRIPTION, planLine, remainingHTML } from './plan-pro.js';
+renderNav();
+
+const list = (items) => items.map(x => `<li>${esc(x)}</li>`).join('');
+$('free').innerHTML = list(ALWAYS_FREE); $('pro').innerHTML = list(PRO_INCLUDES); $('terms').innerHTML = list(BILLING_TERMS);
+
+let me = null;
+function showPlan() {
+  $('planNow').textContent = planLine(me);
+  $('planLeft').innerHTML = remainingHTML(me);
+}
+
+// Compra en la app (App Store o Google Play) cuando el puente nativo está; en la web, el link de pago si hay uno.
+const store = window.VOXA_PURCHASES;
+async function confirmPro(isPro) {
+  $('buyMsg').textContent = isPro ? 'Listo: ya tienes Pro. Confirmando con el servidor…' : 'No encontramos una compra activa.';
+  if (!isPro) return;
+  for (let i = 0; i < 5; i++) {   // el aviso de la tienda puede tardar unos segundos
+    try { me = await syncMe(); } catch {}
+    if (me?.plan === 'pro') break;
+    await new Promise(r => setTimeout(r, 2000));
+  }
+  showPlan();
+  $('buyMsg').textContent = me?.plan === 'pro' ? '¡Bienvenido a Pro! El coach IA ya está disponible.' : 'Tu compra quedó registrada; el plan se activará en unos minutos.';
+}
+
+async function showBuy() {
+  if (me?.plan === 'pro') {
+    const platform = window.Capacitor?.getPlatform?.();
+    const manage = MANAGE_SUBSCRIPTION[platform];
+    $('buy').innerHTML = manage ? `<div class="btns"><a class="btn-link" href="${manage}" target="_blank" rel="noopener">Administrar o cancelar mi suscripción</a></div>` : '';
+    if (me.until) window.VOXA_NATIVE_REMINDER?.renewalNotice(me.until).catch(() => {});
+    return;
+  }
+  if (store?.available) {
+    try {
+      await store.init(deviceId());
+      const pkgs = await store.packages();
+      $('buy').innerHTML = `<div class="pkgs">${pkgs.map((p, i) => `<button class="pkg ${i === 0 ? 'cta' : ''}" data-pkg="${esc(p.id)}">${esc(p.label)} · ${esc(p.price)}</button>`).join('')}</div>
+        <div class="btns"><button id="restore">Restaurar compras</button></div>`;
+      $('buy').addEventListener('click', async (e) => {
+        const b = e.target.closest('[data-pkg]');
+        if (b) {
+          $('buyMsg').textContent = 'Abriendo la tienda…';
+          try { const r = await store.buy(b.dataset.pkg); r.cancelled ? ($('buyMsg').textContent = 'Compra cancelada: no se cobró nada.') : confirmPro(r.isPro); }
+          catch (err) { $('buyMsg').textContent = 'La tienda no pudo completar la compra: ' + err.message; }
+        }
+        if (e.target.id === 'restore') {
+          $('buyMsg').textContent = 'Buscando tus compras…';
+          try { confirmPro((await store.restore()).isPro); } catch (err) { $('buyMsg').textContent = 'No pudimos restaurar: ' + err.message; }
+        }
+      });
+    } catch (err) { $('buy').innerHTML = `<p class="note">La tienda no está disponible ahora (${esc(err.message)}).</p>`; }
+  } else if (me?.checkout_url) {
+    $('buy').innerHTML = `<div class="btns"><a class="btn-link cta" href="${esc(me.checkout_url)}" target="_blank" rel="noopener">Pasar a Pro</a></div>
+      <p class="note">Después de pagar, vuelve a esta página y toca «Ya pagué».</p><div class="btns"><button id="paid">Ya pagué</button></div>`;
+    $('paid').addEventListener('click', () => confirmPro(true));
+  } else {
+    $('buy').innerHTML = '<p class="note">La suscripción se activa desde la app de VOXA para iPhone o Android.</p>';
+  }
+}
+
+const status = await aiStatus();
+if (!status.ai) {
+  $('planNow').textContent = 'Esta versión funciona sin el coach IA: todo el análisis de tu práctica está disponible.';
+} else {
+  try { me = await getMe(); showPlan(); } catch (e) { $('planNow').textContent = 'No pudimos cargar tu plan: ' + e.message; }
+  showBuy();
+}
+</script>
+</body>
+</html>

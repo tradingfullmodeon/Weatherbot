@@ -74,7 +74,7 @@ El orden sigue el impacto en el valor percibido (barrido regional en [BENCHMARK.
 | P1 | **Índice VOXA** único que se vuelve a medir | Wellspoken Index, banda IELTS de Stimuler | Re-diagnóstico ≥ 40% al mes | ✅ Hecho |
 | P1 | **Modelos para imitar**: respuestas modelo y «Escuchar cómo sonaría» | BoldVoice, Cake, Mockee | Uso ≥ 30% de los reportes | ✅ Hecho |
 | P1 | **Técnicas por personaje** en la evaluación con IA, con citas verificadas | Pedido del panel; Yoodli (rúbricas) | — | ✅ Hecho |
-| P1 | **Cierre de la práctica** con avance de meta y «Mañana: …» | Duolingo: una racha de 7 días hace 2,4 veces más probable volver | Retención al día 7 ≥ 25% | ✅ Hecho; faltan las notificaciones (app) |
+| P1 | **Cierre de la práctica** con avance de meta y «Mañana: …» | Duolingo: una racha de 7 días hace 2,4 veces más probable volver | Retención al día 7 ≥ 25% | ✅ Hecho, con aviso diario como notificación del teléfono en la app |
 | P1 | **Coach conectado al evento real** (empresa, audiencia, mensaje, preocupación) | Mockee, apps coreanas (preguntas desde el CV y la oferta) | — | ✅ Hecho |
 | P1 | **Calibración con profesores** (50 grabaciones) y un pequeño **estudio de eficacia** antes y después | Liulishuo lo usa como prueba; A7 3,6 | Correlación ≥ 0,6; mejora del índice ≥ 10 puntos en 4 semanas | Pendiente (beta) |
 | P1 | **Diagnóstico paginado** con primera victoria en 60 s | Panel (diseño) | ≥ 80% lo termina | Pendiente |
@@ -89,11 +89,11 @@ El orden sigue el impacto en el valor percibido (barrido regional en [BENCHMARK.
 - **Lanzar en tiendas solo cuando la beta dé 4,3 ★ o más y NPS 20 o más.** Una mala calificación inicial cuesta meses revertirla.
 - **Pedir la reseña en el momento justo:** después de la 3.ª práctica y de una mejora real. Con la API oficial de reseñas dentro de la app, Babbel ganó 0,11 ★ y 64% más de reseñas.
 - **Responder cada reseña en menos de 48 h.** BoldVoice y Speeko lo hacen, y lo citan en las reseñas.
-- **Cobro honesto, cuando llegue.** Es la queja número 1 de la categoría. Se haría así:
-  - aviso 3 días antes del cobro;
-  - cancelación en un toque;
-  - reembolso de 14 días sin preguntas;
-  - el diagnóstico, el ensayo y las lecciones siempre gratis.
+- **Cobro honesto (implementado en «Tu plan», `pro.html`).** Es la queja número 1 de la categoría:
+  - aviso en el teléfono 3 días antes de cada renovación (notificación local programada con la fecha del plan);
+  - cancelación en un toque, con enlace directo a las suscripciones de la tienda;
+  - reembolso en 14 días: en Android lo hace VOXA; en iPhone se pide a Apple, que es quien cobra, y VOXA ayuda;
+  - el diagnóstico, el ensayo, el análisis de voz y las lecciones siempre gratis.
 
 ## 3. Cómo seguir midiendo sin usuarios reales: el panel experto
 

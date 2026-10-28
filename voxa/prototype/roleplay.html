@@ -94,6 +94,7 @@ import {
 import { unblockHelp } from './devices.js';
 import { INTERVIEW_PERSONA, createInterview, currentQuestion, interviewNext, interviewHint, interviewProgress, interviewScore, interviewReportHTML, quoteSaid } from './interview.js';
 import { isCrisis } from './help.js';
+import { upgradeHTML } from './plan-pro.js';
 
 renderNav();
 const locale = userLocale();
@@ -252,7 +253,7 @@ async function send(ms) {
       $('status').textContent = next ? interviewProgress(offline) : 'Fin del simulacro. Pulsa «Terminar y evaluar».';
     }
   } catch (e) {
-    $('status').textContent = 'Error: ' + e.message;
+    $('status').innerHTML = esc(e.message) + upgradeHTML(e);
   } finally { busy = false; }
 }
 
@@ -292,7 +293,7 @@ async function endRoleplay() {
         persona_id: persona.id, difficulty: +$('difficulty').value, history: history.map(({ role, text }) => ({ role, text })),
         context: $('ctx').value, talk_ratio: +c.talkRatio.toFixed(2), questions_asked: c.questions, fillers_per_min: +c.fillersPerMin.toFixed(1),
       });
-    } catch (e) { $('status').textContent = 'Evaluación IA no disponible: ' + e.message; }
+    } catch (e) { $('status').innerHTML = esc('Evaluación IA no disponible: ' + e.message + '. Te mostramos la evaluación por métricas.') + upgradeHTML(e); }
   }
   let scores = ev ? ev.scores : local, total;
   // Con IA, lograr el objetivo de la conversación pesa 40%; el simulacro sin IA pondera la estructura STAR.

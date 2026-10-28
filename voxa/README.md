@@ -18,7 +18,7 @@ Plataforma para mejorar cómo se comunica una persona (confianza, desarrollo pro
 | [`docs/AUDITORIA.md`](docs/AUDITORIA.md) | Auditoría técnica y pedagógica: hallazgos, cómo se reproducían, correcciones y temas abiertos. |
 | [`docs/UX.md`](docs/UX.md) | Revisión de usabilidad: 14 problemas y su solución, principios de diseñadores y comunicadores aplicados, benchmark de UX con las apps mejor valoradas e indicadores antes/después. |
 | [`docs/ESTRATEGIA.md`](docs/ESTRATEGIA.md) | Metodologías de comunicación y aprendizaje, lenguaje no verbal basado en evidencia, competencias y niveles, canales, motor de evaluación, arquitectura, privacidad y regulación, sprint de 30 días, modelo de negocio, plan de desarrollo e indicadores. |
-| [`prototype/`](prototype/) | Web app instalable (PWA): **Hoy** (`index.html`), **Evaluar** (`evaluar.html`), **Roleplay** (`roleplay.html`), **Gimnasio de voz** (`gimnasio.html`), **Escritura** (`escritura.html`) y **Aprender** (`aprender.html`), **Evento real** (`evento.html`), **Diagnóstico** (`diagnostico.html`) y **Progreso** (`progreso.html`). Escenarios en `scenarios.js`, lecciones en `lessons.js`, eventos en `events.js`, diagnóstico y metas en `goals.js`, análisis de grabaciones en `audiofile.js`, calificaciones en `feedback.js`, recordatorios en `reminder.js`, revisión de textos en `writing.js`, plan de 30 días en `plan.js` y acceso a cámara y micrófono en `devices.js`. |
+| [`prototype/`](prototype/) | Web app instalable (PWA): **Hoy** (`index.html`), **Evaluar** (`evaluar.html`), **Roleplay** (`roleplay.html`), **Gimnasio de voz** (`gimnasio.html`), **Escritura** (`escritura.html`) y **Aprender** (`aprender.html`), **Evento real** (`evento.html`), **Diagnóstico** (`diagnostico.html`), **Progreso** (`progreso.html`) y **Tu plan** (`pro.html`: cupos, compra y cobro sin sorpresas; textos en `plan-pro.js`). Escenarios en `scenarios.js`, lecciones en `lessons.js`, eventos en `events.js`, diagnóstico y metas en `goals.js`, análisis de grabaciones en `audiofile.js`, calificaciones en `feedback.js`, recordatorios en `reminder.js`, revisión de textos en `writing.js`, plan de 30 días en `plan.js` y acceso a cámara y micrófono en `devices.js`. |
 | [`artifact/`](artifact/) | Versión publicable como página de claude.ai (una sola página, coach IA vía la capacidad `sample`), generada con `build.py`. |
 | [`server/`](server/) | API FastAPI: coach IA (`/api/feedback`), roleplay con personajes (`/api/roleplay`, `/api/roleplay/evaluate`) escritura (`/api/writing`) y preguntas para un evento real (`/api/event-questions`). Planes y cupos en `quotas.py`, nubes en `providers.py`, banco de pruebas por modelo en `evals/`, pagos en `/api/webhooks/revenuecat`. También sirve el prototipo. |
 | [`app/`](app/) | App para iOS y Android con Capacitor: la misma app web empaquetada (`npm run sync`), proyectos `android/` e `ios/` con permisos de micrófono, cámara, voz y notificaciones, y transcripción nativa del teléfono (`native-speech.js`). |
@@ -67,10 +67,12 @@ Se obtiene un link https con micrófono y cámara en vivo, coach IA incluido y a
 | `VOXA_DEFAULT_PLAN`, `VOXA_MONTHLY_BUDGET_USD`, `VOXA_RATE_LIMIT` | Plan inicial, tope de gasto del mes y consultas por minuto por IP |
 | `VOXA_ADMIN_TOKEN` | Acceso a `/api/admin/usage` |
 | `VOXA_REVENUECAT_AUTH` | Secreto del webhook de pagos |
+| `VOXA_REVENUECAT_SECRET`, `VOXA_RC_ENTITLEMENT` | Clave secreta de la API de RevenueCat y nombre del derecho (por defecto `pro`): `/api/me/sync` confirma una compra recién hecha |
+| `VOXA_CHECKOUT_URL` | Link de pago en la web, con `{user}` donde va el id de la persona (opcional) |
 | `VOXA_JWT_SECRET` o `VOXA_JWKS_URL` (+ `VOXA_JWT_AUD`) | Cuentas verificadas (Supabase Auth u otro emisor); sin ellas se usa el id del dispositivo |
 | `VOXA_CORS_ORIGINS` | Orígenes que pueden llamar a la API (por defecto, la app instalable) |
 
-App instalable: `cd voxa/app && npm install && VOXA_API_BASE=https://tu-servidor/ npm run android` (o `npm run ios` en una Mac).
+App instalable: `cd voxa/app && npm install && VOXA_API_BASE=https://tu-servidor/ VOXA_RC_IOS_KEY=appl_… VOXA_RC_ANDROID_KEY=goog_… npm run android` (o `npm run ios` en una Mac). Las claves de RevenueCat son las públicas de cada plataforma; sin ellas, la app se empaqueta sin compras.
 
 ## Ejecutar la versión completa
 
