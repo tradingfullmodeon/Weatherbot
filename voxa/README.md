@@ -72,6 +72,8 @@ Se obtiene un link https con micrófono y cámara en vivo, coach IA incluido y a
 | `VOXA_JWT_SECRET` o `VOXA_JWKS_URL` (+ `VOXA_JWT_AUD`) | Cuentas verificadas (Supabase Auth u otro emisor); sin ellas se usa el id del dispositivo |
 | `VOXA_CORS_ORIGINS` | Orígenes que pueden llamar a la API (por defecto, la app instalable) |
 
+**APK de prueba para Android, sin instalar nada:** cada cambio compila la app en GitHub (`.github/workflows/voxa-android.yml`). Se descarga en Actions → «VOXA Android (APK de prueba)» → la última ejecución → Artifacts. Para que hable con el servidor, define la variable del repositorio `VOXA_API_BASE`.
+
 App instalable: `cd voxa/app && npm install && VOXA_API_BASE=https://tu-servidor/ VOXA_RC_IOS_KEY=appl_… VOXA_RC_ANDROID_KEY=goog_… npm run android` (o `npm run ios` en una Mac). Las claves de RevenueCat son las públicas de cada plataforma; sin ellas, la app se empaqueta sin compras.
 
 ## Ejecutar la versión completa

@@ -93,3 +93,21 @@ test('el plan de 30 días avanza con los días practicados, no con el calendario
   assert.equal(sprintDay([{ date: ago(10) }, { date: ago(2) }, { date: ago(2) }]), 2);
   assert.equal(sprintDay([{ date: ago(0) }]), 0);
 });
+
+test('primera victoria: abre con lo mejor medido y un solo próximo paso', async () => {
+  const { firstWin, firstWinHTML } = await import('../prototype/goals.js');
+  const items = [
+    { label: 'Ritmo', display: '142 palabras/min', target: '120–165', s: 100 },
+    { label: 'Muletillas («este», «o sea»…)', display: '9', target: 'menos de 3 por min', s: 35 },
+    { label: 'Duración', display: '48 s', target: '≈ 60 s', s: 80 },
+  ];
+  const win = firstWin(items);
+  assert.equal(win.strength.label, 'Ritmo');
+  assert.equal(win.next.label, 'Muletillas («este», «o sea»…)');
+  assert.match(firstWinHTML(win), /Tu primera fortaleza: Ritmo/);
+  // Si nada sale bien todavía, la victoria es haberse animado: nunca un número rojo primero.
+  const low = firstWin([{ label: 'Ritmo', display: '60', target: '120–165', s: 20 }, { label: 'Pausas', display: '6', target: '0 a 2', s: 10 }]);
+  assert.equal(low.strength, null);
+  assert.match(firstWinHTML(low), /el paso más difícil/);
+  assert.equal(firstWin([]), null);
+});

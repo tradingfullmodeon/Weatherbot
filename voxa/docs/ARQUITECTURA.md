@@ -204,6 +204,13 @@ La decisión de cambiar es tuya. Hoy todo usa el modelo de mayor calidad.
   - servidor: 33;
   - motor y app: 57, que suman el plan, las compras y los avisos.
 
+### Tercera ronda: probar en el teléfono y una mejor primera impresión
+
+- **APK de Android compilado en GitHub en cada cambio** (`.github/workflows/voxa-android.yml`): se descarga desde Actions y se instala en cualquier Android para probar micrófono, cámara, transcripción nativa y avisos. No hace falta Android Studio. La primera compilación salió bien al primer intento (7 MB).
+- **Diagnóstico paginado:** 4 pantallas con barra de avance, y la voz primero. Al terminar de hablar, la persona ve **su primera fortaleza medida y un solo paso para entrenar**; si nada sale bien todavía, el mensaje celebra que se animó, nunca abre con un número rojo. Después vienen la autoevaluación (8 toques), el mensaje escrito y el perfil con metas.
+- **Si la grabación no tiene voz útil** (ruido o micrófono equivocado) y la persona escribió lo que dijo, se mide el texto en vez de perder la prueba.
+- **Corrección de accesibilidad:** la clase `visually-hidden` se usaba pero no existía en los estilos, y dejaba visible un selector de archivo nativo.
+
 ## 8. Pasos para tener la plataforma operativa
 
 | # | Paso | Quién | Tiempo |
@@ -213,7 +220,7 @@ La decisión de cambiar es tuya. Hoy todo usa el modelo de mayor calidad.
 | 3 | Correr el banco de modelos con la clave (`python -m evals.run`) y decidir el modelo por función | Juntos | 15 min, menos de US$1 |
 | 4 | Invitar a la beta con el link propio (la prueba de 7 días se activa sola) | Tú | — |
 | 5 | Cuentas de desarrollador: Apple (US$99/año) y Google Play (US$25) | Tú | 1–2 días de aprobación |
-| 6 | App instalable: `cd voxa/app && VOXA_API_BASE=https://tu-servidor/ npm run android` (o `ios` en una Mac). Probar micrófono, cámara y transcripción en teléfonos reales | Desarrollo | 1–2 semanas |
+| 6 | App instalable: descargar el APK de prueba desde GitHub Actions e instalarlo en un Android (con `VOXA_API_BASE` definida como variable del repositorio para usar el coach IA). iOS necesita una Mac o un compilador en la nube con la cuenta de Apple. Probar micrófono, cámara y transcripción en teléfonos reales | Tú (Android, 10 min); desarrollo (iOS) | 10 min Android; 1 semana iOS |
 | 7 | Pagos: crear en RevenueCat el derecho `pro` y una oferta con los paquetes mensual y anual; conectar las tiendas; webhook a `/api/webhooks/revenuecat` con `VOXA_REVENUECAT_AUTH`; cargar `VOXA_REVENUECAT_SECRET` en el servidor y las claves públicas al empaquetar la app. El código de la app y del servidor ya está | Tú, en los paneles | 1–2 días |
 | 8 | (Opcional) Cuentas con Supabase Auth y `VOXA_JWT_SECRET` o `VOXA_JWKS_URL` | Desarrollo | 3–5 días |
 | 9 | Publicar en las tiendas con 4,3 ★ o más en la beta | Tú | 1–2 semanas de revisión |

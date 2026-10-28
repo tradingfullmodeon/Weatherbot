@@ -195,8 +195,8 @@ $('tStreak').textContent = (s ? `🔥 ${s} ${s === 1 ? 'día seguido' : 'días s
 
 // ---------------------------------------------------------------- diagnóstico y metas
 const diag = profile.diagnoses?.at(-1);
-if (!diag) $('goalsBox').innerHTML = `<p class="lead">Empieza por saber dónde estás: un diagnóstico de 8 minutos en 8 dimensiones te da tu nivel, tus fortalezas y metas a tu medida.</p>
-  <div class="btns"><a class="btn-link cta" href="diagnostico.html">Haz tu diagnóstico inicial (8 min)</a></div>`;
+if (!diag) $('goalsBox').innerHTML = `<p class="lead">Empieza por saber dónde estás. Primero te presentas en un minuto y ves tu primera fortaleza; después, tu nivel en 8 dimensiones y metas a tu medida.</p>
+  <div class="btns"><a class="btn-link cta" href="diagnostico.html">Haz tu diagnóstico inicial (6 min)</a></div>`;
 else {
   const age = Math.floor((Date.now() - new Date(diag.date)) / 864e5);
   $('goalsBox').innerHTML = `<p class="note">${indexLine(profile.diagnoses)}</p>

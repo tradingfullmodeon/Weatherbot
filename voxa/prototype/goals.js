@@ -254,3 +254,26 @@ export function goalsHTML(goals, sessions, today = new Date()) {
       <div class="goal-foot"><span class="note">${p.hits} de ${g.count}</span>${p.done ? '' : `<button type="button" data-goal-next="${g.id}">▶ Practicar</button>`}</div></div>`;
   }).join('');
 }
+
+// Primera victoria del diagnóstico (en cuanto termina la prueba de voz): lo mejor medido y un solo próximo paso.
+// Si nada sale bien todavía, la victoria es haberse animado: nunca se abre con un número rojo.
+export function firstWin(items) {
+  if (!items?.length) return null;
+  const sorted = [...items].sort((a, b) => b.s - a.s);
+  const best = sorted[0], worst = sorted.at(-1);
+  return {
+    strength: best.s >= 60 ? { label: best.label, display: best.display, target: best.target } : null,
+    next: worst !== best && worst.s < 70 ? { label: worst.label, display: worst.display, target: worst.target } : null,
+  };
+}
+
+export function firstWinHTML(win) {
+  if (!win) return '';
+  const head = win.strength
+    ? `<p class="lead">✨ <strong>Tu primera fortaleza: ${esc(win.strength.label)}.</strong> Obtuviste ${esc(win.strength.display)}; lo recomendado es ${esc(win.strength.target)}.</p>`
+    : '<p class="lead">✨ <strong>Ya diste el paso más difícil: hablar frente al micrófono.</strong> Desde aquí todo se puede entrenar.</p>';
+  const next = win.next
+    ? `<p>Lo primero que vamos a entrenar: <strong>${esc(win.next.label)}</strong>. Hoy: ${esc(win.next.display)}; la meta: ${esc(win.next.target)}.</p>`
+    : '';
+  return `<div class="win-box">${head}${next}<p class="note">Sigue con 2 pasos cortos para ver tu perfil completo y tus metas.</p></div>`;
+}
