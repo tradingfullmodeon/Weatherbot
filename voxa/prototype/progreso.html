@@ -94,7 +94,7 @@
 </main>
 
 <script type="module">
-import { $, esc, colorFor, mean, renderNav, loadSessions, loadProfile, saveProfile, clearAll, calmText } from './shared.js';
+import { $, esc, colorFor, mean, renderNav, loadSessions, loadProfile, saveProfile, clearAll, calmText, aiStatus, postJSON } from './shared.js';
 import { todayTask, streak } from './plan.js';
 import { diagnosisHTML, drawRadar, goalsHTML, goalHref } from './goals.js';
 
@@ -247,8 +247,10 @@ document.addEventListener('click', (e) => {
   const g = (profile.goals || []).find(x => x.id === b.dataset.goalNext); if (g) location.href = goalHref(g);
 });
 
-$('btnClear').addEventListener('click', () => {
-  if (!confirm('¿Borrar todos tus datos de este navegador? Se borrarán tus prácticas, tu diagnóstico, tus metas, tus lecciones y tu evento (incluido el material que pegaste).')) return;
+$('btnClear').addEventListener('click', async () => {
+  if (!confirm('¿Borrar todos tus datos? Se borrarán tus prácticas, tu diagnóstico, tus metas, tus lecciones y tu evento (incluido el material que pegaste) de este dispositivo, y tu plan y tu uso del coach IA de nuestro servidor. Si pagaste Pro, lo recuperas con «Restaurar compras».')) return;
+  // También lo que guarda el servidor (si el coach IA está conectado); sin conexión, se borra lo local igual.
+  try { if ((await aiStatus()).ai) await Promise.race([postJSON('api/me/delete', {}), new Promise(r => setTimeout(r, 4000))]); } catch {}
   clearAll();
   location.href = 'index.html';
 });

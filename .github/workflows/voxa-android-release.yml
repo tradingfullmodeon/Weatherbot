@@ -1,0 +1,72 @@
+# Paquete firmado de VOXA para Google Play (AAB), listo para subir a la prueba interna o a producción.
+# Se ejecuta a mano (Actions → «VOXA Android para Google Play» → Run workflow) o al crear una etiqueta voxa-v*.
+# Necesita, en Settings → Secrets and variables → Actions:
+#   Secrets:   VOXA_KEYSTORE_BASE64 (la clave de subida .jks en base64), VOXA_KEYSTORE_PASSWORD, VOXA_KEY_ALIAS, VOXA_KEY_PASSWORD
+#   Variables: VOXA_API_BASE (https del servidor) y VOXA_RC_ANDROID_KEY (clave pública goog_ de RevenueCat)
+# Cómo crear la clave de subida: docs/TIENDAS.md §3.
+name: VOXA Android para Google Play
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: "Versión visible (por ejemplo 1.0.0)"
+        default: "1.0.0"
+  push:
+    tags: ["voxa-v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  aab:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: voxa/app
+    steps:
+      - name: Revisar que estén la clave de firma y el servidor
+        env:
+          KS: ${{ secrets.VOXA_KEYSTORE_BASE64 }}
+          API: ${{ vars.VOXA_API_BASE }}
+        working-directory: .
+        run: |
+          test -n "$KS" || { echo "::error::Falta el secret VOXA_KEYSTORE_BASE64 (ver docs/TIENDAS.md §3)"; exit 1; }
+          test -n "$API" || { echo "::error::Falta la variable VOXA_API_BASE con la dirección https del servidor"; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: voxa/app/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+      - run: npm ci --no-audit --no-fund
+      - name: Empaquetar la app web y sincronizar Android
+        env:
+          VOXA_API_BASE: ${{ vars.VOXA_API_BASE }}
+          VOXA_RC_ANDROID_KEY: ${{ vars.VOXA_RC_ANDROID_KEY }}
+        run: node scripts/sync-web.mjs && npx cap sync android
+      - name: Compilar y firmar el AAB
+        working-directory: voxa/app/android
+        env:
+          VOXA_KEYSTORE_FILE: ${{ runner.temp }}/voxa-upload.jks
+          VOXA_KEYSTORE_PASSWORD: ${{ secrets.VOXA_KEYSTORE_PASSWORD }}
+          VOXA_KEY_ALIAS: ${{ secrets.VOXA_KEY_ALIAS }}
+          VOXA_KEY_PASSWORD: ${{ secrets.VOXA_KEY_PASSWORD }}
+          VOXA_VERSION_CODE: ${{ github.run_number }}
+          KS_B64: ${{ secrets.VOXA_KEYSTORE_BASE64 }}
+          VERSION: ${{ inputs.version_name || github.ref_name }}
+        run: |
+          printf '%s' "$KS_B64" | base64 -d > "$VOXA_KEYSTORE_FILE"
+          export VOXA_VERSION_NAME="${VERSION#voxa-v}"
+          ./gradlew bundleRelease --no-daemon
+          rm -f "$VOXA_KEYSTORE_FILE"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: voxa-android-play
+          path: voxa/app/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30

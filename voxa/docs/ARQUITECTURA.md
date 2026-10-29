@@ -216,7 +216,7 @@ La decisión de cambiar es tuya. Hoy todo usa el modelo de mayor calidad.
 | # | Paso | Quién | Tiempo |
 |---|---|---|---|
 | 1 | Crear la cuenta de la API de Anthropic (o elegir otra nube), generar la clave y fijar un límite de gasto en la consola | Tú | 15 min |
-| 2 | Publicar el servidor: Render (Blueprint con `voxa/render.yaml`) o Fly (`fly.toml`). Cargar `ANTHROPIC_API_KEY` | Tú, con la guía del README | 20 min |
+| 2 | Publicar el servidor: Render (Blueprint con `render.yaml` de la raíz; ver [TIENDAS.md](TIENDAS.md) §1) o Fly (`fly.toml`). Cargar `ANTHROPIC_API_KEY` | Tú, con la guía del README | 20 min |
 | 3 | Correr el banco de modelos con la clave (`python -m evals.run`) y decidir el modelo por función | Juntos | 15 min, menos de US$1 |
 | 4 | Invitar a la beta con el link propio (la prueba de 7 días se activa sola) | Tú | — |
 | 5 | Cuentas de desarrollador: Apple (US$99/año) y Google Play (US$25) | Tú | 1–2 días de aprobación |

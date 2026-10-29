@@ -1,5 +1,6 @@
-# Despliegue en Render (https://render.com): un servicio web con disco para los cupos y el gasto.
-# 1) New + → Blueprint → este repositorio. 2) Cargar ANTHROPIC_API_KEY en el panel (no se guarda aquí).
+# VOXA en Render (https://render.com): la app web y el servidor con la IA de VOXA (carpeta voxa/) en un solo servicio.
+# New → Blueprint → este repositorio → rama donde está VOXA. Luego cargar ANTHROPIC_API_KEY en el panel (no se guarda aquí).
+# Paso a paso: voxa/docs/TIENDAS.md §1. El plan Starter (US$7/mes) es necesario porque el plan gratis no admite disco.
 services:
   - type: web
     name: voxa

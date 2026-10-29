@@ -171,6 +171,13 @@ def count(user: str, route: str, usd: float) -> None:
         con.execute("INSERT INTO spend VALUES (?, ?) ON CONFLICT(month) DO UPDATE SET usd = usd + excluded.usd", (month(), usd))
 
 
+def forget(user: str) -> None:
+    """Derecho a borrar: elimina el plan y el uso de esta persona. Las compras se recuperan con «Restaurar compras»."""
+    with _db() as con:
+        con.execute("DELETE FROM plans WHERE user = ?", (user,))
+        con.execute("DELETE FROM usage WHERE user = ?", (user,))
+
+
 def spent_this_month() -> float:
     with _db() as con:
         row = con.execute("SELECT usd FROM spend WHERE month = ?", (month(),)).fetchone()

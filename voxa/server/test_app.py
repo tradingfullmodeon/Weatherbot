@@ -340,3 +340,13 @@ def test_checkout_link_and_sync_with_revenuecat(monkeypatch):
     voxa.quotas.set_plan("dispositivo888", "gratis")
     monkeypatch.setattr(voxa, "fetch_subscriber", lambda u, s: {"subscriber": {"entitlements": {"pro": {"expires_date": "2001-01-01T00:00:00Z"}}}})
     assert api.post("/api/me/sync", headers={"X-VOXA-User": "dispositivo888"}).json()["plan"] == "gratis"
+
+
+def test_delete_my_server_data():
+    h = {"X-VOXA-User": "dispositivo999"}
+    voxa.quotas.set_plan("dispositivo999", "gratis")
+    voxa.quotas.count("dispositivo999", "feedback", 0.01)
+    assert api.post("/api/me/delete", headers=h).json() == {"ok": True}
+    with voxa.quotas._db() as con:
+        assert con.execute("SELECT COUNT(*) FROM usage WHERE user = ?", ("dispositivo999",)).fetchone()[0] == 0
+        assert con.execute("SELECT COUNT(*) FROM plans WHERE user = ?", ("dispositivo999",)).fetchone()[0] == 0

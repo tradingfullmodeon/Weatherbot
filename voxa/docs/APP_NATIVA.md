@@ -119,7 +119,7 @@ Teléfono / navegador ──(texto, métricas; nunca la clave)──► Servidor
 ## 4. Plan de trabajo y costo de construcción
 
 **Paso 0 (1 día): publicar ya la versión completa con nuestra IA en la web.**
-- Qué incluye: el servidor más la app en un solo servicio, con `Dockerfile` y `render.yaml` en `voxa/`.
+- Qué incluye: el servidor más la app en un solo servicio, con `voxa/Dockerfile` y `render.yaml` en la raíz del repositorio.
 - Qué se obtiene: un link https con micrófono y cámara en vivo, coach IA incluido y app instalable desde el navegador (PWA). Todo, menos las tiendas y los pagos.
 - Costo: unos US$7–25 al mes de servidor, más la IA que se use, con tope.
 

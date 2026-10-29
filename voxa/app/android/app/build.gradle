@@ -1,5 +1,10 @@
 apply plugin: 'com.android.application'
 
+// Versión y firma de publicación desde variables de entorno (las pone el flujo voxa-android-release.yml).
+// La clave de firma nunca se guarda en el repositorio.
+def env = System.getenv()
+def signed = env.VOXA_KEYSTORE_FILE != null
+
 android {
     namespace = "app.voxa.coach"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +12,8 @@ android {
         applicationId "app.voxa.coach"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode((env.VOXA_VERSION_CODE ?: "1") as Integer)
+        versionName(env.VOXA_VERSION_NAME ?: "1.0")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +21,19 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (signed) {
+                storeFile file(env.VOXA_KEYSTORE_FILE)
+                storePassword env.VOXA_KEYSTORE_PASSWORD
+                keyAlias env.VOXA_KEY_ALIAS
+                keyPassword env.VOXA_KEY_PASSWORD
+            }
+        }
+    }
     buildTypes {
         release {
+            if (signed) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

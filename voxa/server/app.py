@@ -507,6 +507,16 @@ PRO_EVENTS = {"INITIAL_PURCHASE", "RENEWAL", "PRODUCT_CHANGE", "UNCANCELLATION",
 END_EVENTS = {"EXPIRATION"}
 
 
+@app.post("/api/me/delete")
+def me_delete(user: str = Depends(quotas.user_id)) -> dict:
+    """Borra lo que el servidor guarda de esta persona (plan y conteo de uso). Lo llama «Borrar todos mis datos».
+
+    Las respuestas guardadas en caché no tienen el id de nadie y se borran solas a los 7 días.
+    """
+    quotas.forget(user)
+    return {"ok": True}
+
+
 RC_API = "https://api.revenuecat.com/v1/subscribers/"
 
 

@@ -13,6 +13,7 @@ Plataforma para mejorar cómo se comunica una persona (confianza, desarrollo pro
 | [`docs/PANEL.md`](docs/PANEL.md) | Panel experto simulado (profesora de oratoria, coach ejecutivo, psicóloga, diseñadora de producto, investigador en voz e IA y una usuaria principiante): método, puntajes por ronda y qué se corrigió. |
 | [`docs/PLAN_ACCION.md`](docs/PLAN_ACCION.md) | Plan para subir la calificación y llegar a las primeras 30 personas: a quiénes invitar, mensaje de invitación listo, guía de prueba de 7 días, indicadores y reglas de decisión. |
 | [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) | Arquitectura operativa: qué hacen las reglas y qué hace la IA en cada función, pruebas con distintos modelos y nubes, plataformas elegidas con su costo mensual, seguridad y pasos para operar. |
+| [`docs/TIENDAS.md`](docs/TIENDAS.md) | Puesta en marcha paso a paso: Render, RevenueCat (nombres exactos que espera el código), Google Play y App Store, formularios de privacidad de las tiendas y textos de las fichas. |
 | [`docs/APP_NATIVA.md`](docs/APP_NATIVA.md) | Qué se necesita para tener VOXA en iOS, Android y web con todas las funcionalidades: arquitectura (Capacitor y el servidor actual), componentes, requisitos de tiendas, plan de 8–11 semanas y costos. |
 | [`docs/CASO_NEGOCIO.md`](docs/CASO_NEGOCIO.md) | Mini caso de negocio: costo por usuario, precios frente a la competencia, margen, valor de vida, punto de equilibrio y proyección a 18 meses. El modelo reproducible está en `docs/negocio/modelo.py`. |
 | [`docs/AUDITORIA.md`](docs/AUDITORIA.md) | Auditoría técnica y pedagógica: hallazgos, cómo se reproducían, correcciones y temas abiertos. |
@@ -51,7 +52,7 @@ Para regenerarla tras cambiar el prototipo: `python3 voxa/artifact/build.py` (co
 La IA la pone VOXA: la clave de Anthropic vive sólo en el servidor y cada persona tiene cupos según su plan (`server/quotas.py`: gratis sin IA, prueba de 7 días y Pro con uso justo), más un tope de gasto mensual (`VOXA_MONTHLY_BUDGET_USD`).
 
 Para publicarla en Render:
-1. New → Blueprint → este repositorio (usa `voxa/render.yaml` y `voxa/Dockerfile`).
+1. New → Blueprint → este repositorio (usa `render.yaml` en la raíz del repositorio y `voxa/Dockerfile`; guía paso a paso en [TIENDAS.md](docs/TIENDAS.md) §1).
 2. Carga `ANTHROPIC_API_KEY` en el panel.
 
 Alternativa más económica: Fly.io con `voxa/fly.toml` (los pasos están al inicio del archivo).
