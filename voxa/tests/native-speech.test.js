@@ -58,3 +58,21 @@ test('sin permiso avisa con el mismo error que el navegador', async () => {
   await rec.start();
   assert.equal(err, 'not-allowed'); assert.equal(ended, 1);
 });
+
+test('errores del plugin con los nombres de la Web Speech API', async () => {
+  const plugin = fakePlugin();
+  const window = { Capacitor: { isNativePlatform: () => true, Plugins: { SpeechRecognition: plugin } } };
+  vm.runInNewContext(code, { window });
+  const rec = new window.SpeechRecognition();
+  const errs = [];
+  rec.onerror = (e) => errs.push(e.error);
+  await rec.start();
+  plugin.listeners.error({ code: 'PERMISSION_DENIED', message: 'Microphone permission denied' });
+  plugin.listeners.error({ code: 'no_match', message: '' });
+  plugin.listeners.error({ code: 'busy', message: 'recognizer busy' });
+  assert.deepEqual(errs, ['not-allowed', 'no-speech', 'busy']);
+  // El estado nuevo («state») también cierra la sesión.
+  let ended = 0; rec.onend = () => ended++;
+  plugin.listeners.listeningState({ state: 'stopped', reason: 'silence' });
+  assert.equal(ended, 1);
+});

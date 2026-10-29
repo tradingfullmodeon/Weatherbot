@@ -27,8 +27,13 @@
           this._last = (d.matches && d.matches[0]) || '';
           if (this.interimResults && this.onresult) this.onresult(result(this._last, false));
         }));
-        this._subs.push(await plugin.addListener('listeningState', (d) => { if (d.status === 'stopped') this._finish(); }));
-        await plugin.start({ language: this.lang, partialResults: true, popup: false, maxResults: 1 });
+        this._subs.push(await plugin.addListener('listeningState', (d) => { if (d.status === 'stopped' || d.state === 'stopped') this._finish(); }));
+        this._subs.push(await plugin.addListener('error', (d) => {
+          const code = String((d && d.code) || 'unknown');
+          if (this.onerror) this.onerror({ error: /permis|denied|authori/i.test(code + (d && d.message)) ? 'not-allowed' : /no.?(match|speech)/i.test(code) ? 'no-speech' : code });
+        }));
+        // Con puntuación (iOS 16+), la estructura PREP/STAR se detecta mejor.
+        await plugin.start({ language: this.lang, partialResults: true, popup: false, maxResults: 1, addPunctuation: true });
       } catch (e) {
         if (this.onerror) this.onerror({ error: e && e.error ? e.error : 'service-not-allowed' });
         this._finish();

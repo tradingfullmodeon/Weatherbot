@@ -1,0 +1,44 @@
+# Comprueba que la app de VOXA para iPhone compila (simulador, sin firma), en una Mac de GitHub.
+# No necesita la cuenta de Apple: sirve para detectar problemas antes de publicar.
+# Para TestFlight y la App Store hace falta la cuenta de desarrollador (docs/TIENDAS.md §4).
+# Sólo corre cuando cambia la app nativa (voxa/app/**) o a mano, porque las Mac de GitHub consumen más minutos.
+name: VOXA iOS (compilación de prueba)
+
+on:
+  push:
+    paths: ["voxa/app/**", ".github/workflows/voxa-ios.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: voxa-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulator:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: voxa/app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: voxa/app/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: Empaquetar la app web y sincronizar iOS
+        env:
+          VOXA_API_BASE: ${{ vars.VOXA_API_BASE || 'https://voxa.invalid/' }}
+          VOXA_RC_IOS_KEY: ${{ vars.VOXA_RC_IOS_KEY }}
+        run: node scripts/sync-web.mjs && npx cap sync ios
+      - name: Compilar para el simulador
+        run: |
+          xcodebuild -version
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build | tail -40
+          exit ${PIPESTATUS[0]}
