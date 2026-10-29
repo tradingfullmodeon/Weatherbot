@@ -30,12 +30,19 @@ export function drawShareCard(canvas, st) {
   if (st.index != null) {
     c.font = '800 260px system-ui, sans-serif'; c.fillText(String(st.index), W / 2, 560);
     c.font = '600 48px system-ui, sans-serif'; c.fillText(`Índice VOXA · ${st.level}`, W / 2, 640);
-    if (st.delta > 0) { c.font = '700 56px system-ui, sans-serif'; c.fillStyle = '#bbf7d0'; c.fillText(`+${st.delta} puntos desde mi primer diagnóstico`, W / 2, 740); c.fillStyle = '#fff'; }
+    if (st.delta > 0) {
+      c.fillStyle = '#bbf7d0';
+      c.font = '800 72px system-ui, sans-serif'; c.fillText(`+${st.delta} puntos`, W / 2, 750);
+      c.font = '500 40px system-ui, sans-serif'; c.fillText('desde mi primer diagnóstico', W / 2, 805);
+      c.fillStyle = '#fff';
+    }
   }
-  c.font = '700 72px system-ui, sans-serif';
-  c.fillText(`🔥 ${st.streak}   ·   🎙 ${st.practices}`, W / 2, 950);
-  c.font = '400 40px system-ui, sans-serif'; c.fillStyle = '#e0e7ff';
-  c.fillText('días seguidos         prácticas', W / 2, 1010);
+  // Dos columnas: racha y prácticas, cada una con su etiqueta debajo.
+  for (const [x, value, label] of [[W * 0.3, `🔥 ${st.streak}`, st.streak === 1 ? 'día seguido' : 'días seguidos'],
+    [W * 0.7, `🎙 ${st.practices}`, st.practices === 1 ? 'práctica' : 'prácticas']]) {
+    c.fillStyle = '#fff'; c.font = '700 80px system-ui, sans-serif'; c.fillText(value, x, 980);
+    c.fillStyle = '#e0e7ff'; c.font = '400 40px system-ui, sans-serif'; c.fillText(label, x, 1040);
+  }
   c.font = '500 40px system-ui, sans-serif'; c.fillStyle = '#fff';
   c.fillText('Entreno para hablar con seguridad', W / 2, 1210);
   return canvas;
