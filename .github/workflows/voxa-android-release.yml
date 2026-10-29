@@ -29,10 +29,13 @@ jobs:
         env:
           KS: ${{ secrets.VOXA_KEYSTORE_BASE64 }}
           API: ${{ vars.VOXA_API_BASE }}
+          RC: ${{ vars.VOXA_RC_ANDROID_KEY }}
         working-directory: .
         run: |
           test -n "$KS" || { echo "::error::Falta el secret VOXA_KEYSTORE_BASE64 (ver docs/TIENDAS.md §3)"; exit 1; }
           test -n "$API" || { echo "::error::Falta la variable VOXA_API_BASE con la dirección https del servidor"; exit 1; }
+          # RevenueCat: nunca publicar con la clave de la Test Store (compras sin cobro real).
+          case "$RC" in test_*) echo "::error::VOXA_RC_ANDROID_KEY es una clave de prueba (test_…); usa la clave goog_… de Google Play"; exit 1;; esac
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:

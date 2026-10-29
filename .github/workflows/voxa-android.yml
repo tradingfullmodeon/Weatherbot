@@ -4,6 +4,7 @@
 # Para que la app hable con el servidor, define la variable del repositorio VOXA_API_BASE
 # (Settings → Secrets and variables → Actions → Variables), por ejemplo https://voxa.onrender.com/
 # Sin ella, la app funciona completa en modo local (todo menos el coach IA).
+# Para probar compras sin tiendas: variable VOXA_RC_TEST_KEY con la clave test_… de la Test Store de RevenueCat.
 name: VOXA Android (APK de prueba)
 
 on:
@@ -41,7 +42,8 @@ jobs:
       - name: Empaquetar la app web y sincronizar Android
         env:
           VOXA_API_BASE: ${{ vars.VOXA_API_BASE || 'https://voxa.invalid/' }}
-          VOXA_RC_ANDROID_KEY: ${{ vars.VOXA_RC_ANDROID_KEY }}
+          # En el APK de prueba se usa la Test Store de RevenueCat si está (clave test_…): compras sin cobro real.
+          VOXA_RC_ANDROID_KEY: ${{ vars.VOXA_RC_TEST_KEY || vars.VOXA_RC_ANDROID_KEY }}
         run: node scripts/sync-web.mjs && npx cap sync android
       - name: Compilar el APK
         working-directory: voxa/app/android

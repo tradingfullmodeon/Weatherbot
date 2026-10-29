@@ -28,6 +28,7 @@ test('compra: id del servidor, anual primero, Pro por el derecho «pro» y cance
   const w = native({ Purchases }, { VOXA_RC_KEYS: { android: 'goog_pub', ios: '' } });
   load('native-purchases.js', w);
   const store = w.VOXA_PURCHASES;
+  assert.equal(store.test, false);
   await store.init('d123456789'); await store.init('d123456789');
   assert.deepEqual(plain(calls), [['configure', { apiKey: 'goog_pub', appUserID: 'd123456789' }]]);
   const list = await store.packages();
@@ -68,4 +69,10 @@ test('aviso de renovación 3 días antes; nada si ya pasó la fecha', async () =
   calls.length = 0;
   assert.equal(await w.VOXA_NATIVE_REMINDER.renewalNotice(now / 1000 + 86400, now), false);
   assert.deepEqual(plain(calls), [['cancel', 7002]]);
+});
+
+test('con la clave de la Test Store, la compra se marca como prueba', () => {
+  const w = native({ Purchases: { configure: async () => {} } }, { VOXA_RC_KEYS: { android: 'test_abc', ios: '' } });
+  load('native-purchases.js', w);
+  assert.equal(w.VOXA_PURCHASES.test, true);
 });

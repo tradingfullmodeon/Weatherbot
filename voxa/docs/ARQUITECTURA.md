@@ -211,6 +211,19 @@ La decisión de cambiar es tuya. Hoy todo usa el modelo de mayor calidad.
 - **Si la grabación no tiene voz útil** (ruido o micrófono equivocado) y la persona escribió lo que dijo, se mide el texto en vez de perder la prueba.
 - **Corrección de accesibilidad:** la clase `visually-hidden` se usaba pero no existía en los estilos, y dejaba visible un selector de archivo nativo.
 
+### Cuarta ronda: listos para las tiendas
+
+- **Exigencias de las tiendas:**
+  - política de privacidad (`privacidad.html`) y términos (`terminos.html`), escritos según el comportamiento real de la app;
+  - pantalla de compra con renovación automática y enlaces legales;
+  - borrado de los datos del servidor (`/api/me/delete`).
+- **Compilación firmada para Google Play** (`voxa-android-release.yml`): la clave de firma vive en los secretos de GitHub y nunca en el repositorio, y se niega a publicar con una clave de prueba de RevenueCat.
+- **La transcripción nativa ahora también llega a iPhone.** El complemento anterior sólo existía para CocoaPods y quedaba fuera del proyecto de iOS de Capacitor 8; se reemplazó por `@capgo/capacitor-speech-recognition` (compatible con iOS y Android), con puntuación automática.
+- **Compilación de prueba de iOS en una Mac de GitHub** (`voxa-ios.yml`), sin cuenta de Apple.
+- **Compras de prueba sin tiendas** con la Test Store de RevenueCat (`VOXA_RC_TEST_KEY`), sólo en las compilaciones de prueba.
+- **Kit de calibración con profesores** (`docs/calibracion/`): protocolo, planilla y análisis automático.
+- **Guía de puesta en marcha** con los nombres exactos: [TIENDAS.md](TIENDAS.md).
+
 ## 8. Pasos para tener la plataforma operativa
 
 | # | Paso | Quién | Tiempo |

@@ -50,6 +50,14 @@ El código de la app y del servidor ya está listo. Estos nombres son los que es
 | Paquetes | `$rc_annual` (Anual) y `$rc_monthly` (Mensual) | La app muestra el anual primero |
 | App User ID | El id anónimo del dispositivo que genera VOXA | Igual en la app y en el servidor; no hay que configurarlo |
 
+**Probar ya, sin Google Play ni App Store: la Test Store de RevenueCat.** Cada proyecto de RevenueCat trae una tienda de prueba que imita a una real, sin cobros ([guía de RevenueCat](https://www.revenuecat.com/docs/test-and-launch/sandbox/test-store)). Es lo que pide el correo «Create your first product»:
+1. En RevenueCat, **Apps → Test Store**: créala y copia su clave, que empieza con `test_`.
+2. En **Product catalog**, crea en la Test Store dos productos, mensual y anual, con los precios de abajo. Asígnalos al derecho `pro` y ponlos en la oferta `default` como paquetes Mensual y Anual.
+3. En GitHub, Settings → Secrets and variables → Actions → **Variables**, crea `VOXA_RC_TEST_KEY` con esa clave.
+4. El siguiente APK de prueba trae las compras activadas. En «Tu plan» verás los dos planes, y al «comprar» se abre la compra simulada de RevenueCat.
+
+El paquete para la tienda **se niega a compilar con una clave `test_`**: nunca se publica por error.
+
 **Productos en cada tienda** (créalos primero en la tienda y luego impórtalos en RevenueCat):
 
 | Tienda | Producto | Precio sugerido (caso de negocio) |

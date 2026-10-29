@@ -26,6 +26,7 @@ jobs:
         run: |
           pip install -r voxa/server/requirements.txt
           cd voxa/server && python -m pytest -q
+          cd ../docs/calibracion && python -m pytest -q
       - name: Pruebas del motor de análisis y del contenido
         run: cd voxa && npm test
       - name: La versión publicable está al día

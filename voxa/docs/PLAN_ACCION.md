@@ -76,7 +76,7 @@ El orden sigue el impacto en el valor percibido (barrido regional en [BENCHMARK.
 | P1 | **Técnicas por personaje** en la evaluación con IA, con citas verificadas | Pedido del panel; Yoodli (rúbricas) | — | ✅ Hecho |
 | P1 | **Cierre de la práctica** con avance de meta y «Mañana: …» | Duolingo: una racha de 7 días hace 2,4 veces más probable volver | Retención al día 7 ≥ 25% | ✅ Hecho, con aviso diario como notificación del teléfono en la app |
 | P1 | **Coach conectado al evento real** (empresa, audiencia, mensaje, preocupación) | Mockee, apps coreanas (preguntas desde el CV y la oferta) | — | ✅ Hecho |
-| P1 | **Calibración con profesores** (50 grabaciones) y un pequeño **estudio de eficacia** antes y después | Liulishuo lo usa como prueba; A7 3,6 | Correlación ≥ 0,6; mejora del índice ≥ 10 puntos en 4 semanas | Pendiente (beta) |
+| P1 | **Calibración con profesores** (50 grabaciones) y un pequeño **estudio de eficacia** antes y después | Liulishuo lo usa como prueba; A7 3,6 | Correlación ≥ 0,6; mejora del índice ≥ 10 puntos en 4 semanas | Kit listo ([calibracion/](calibracion/README.md): protocolo, planilla y análisis); falta hacerlo en la beta |
 | P1 | **Diagnóstico paginado** con primera victoria en 60 s | Panel (diseño) | ≥ 80% lo termina | ✅ Hecho: 4 pantallas, la voz primero y la primera fortaleza al terminar de hablar |
 | P2 | **Ejercicios generados desde tus errores** (IA) | Speak «Made for You», Preply | Uso semanal ≥ 25% | Pendiente |
 | P2 | **Modo equipos (B2B)**: código de grupo, material de la empresa, resultados agregados con consentimiento | 75% de la contribución proyectada; Yoodli, Speeko y ELSA venden asientos | 2–3 pilotos en el mes 6 | Pendiente |

@@ -15,6 +15,7 @@
 
   window.VOXA_PURCHASES = {
     available: true,
+    test: apiKey.startsWith('test_'),   // Test Store de RevenueCat: compras simuladas, sin cobro
     init(appUserID) {
       ready = ready || plugin.configure({ apiKey, appUserID });
       return ready;

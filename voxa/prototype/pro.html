@@ -88,7 +88,7 @@ async function showBuy() {
     try {
       await store.init(deviceId());
       const pkgs = await store.packages();
-      $('buy').innerHTML = `<div class="pkgs">${pkgs.map((p, i) => `<button class="pkg ${i === 0 ? 'cta' : ''}" data-pkg="${esc(p.id)}">${esc(p.label)} · ${esc(p.price)}</button>`).join('')}</div>
+      $('buy').innerHTML = (store.test ? '<p class="note"><strong>Modo de prueba:</strong> estas compras son simuladas y no se cobra nada.</p>' : '') + `<div class="pkgs">${pkgs.map((p, i) => `<button class="pkg ${i === 0 ? 'cta' : ''}" data-pkg="${esc(p.id)}">${esc(p.label)} · ${esc(p.price)}</button>`).join('')}</div>
         <div class="btns"><button id="restore">Restaurar compras</button></div>`;
       $('buy').addEventListener('click', async (e) => {
         const b = e.target.closest('[data-pkg]');

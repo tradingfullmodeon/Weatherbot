@@ -33,7 +33,7 @@ jobs:
       - name: Empaquetar la app web y sincronizar iOS
         env:
           VOXA_API_BASE: ${{ vars.VOXA_API_BASE || 'https://voxa.invalid/' }}
-          VOXA_RC_IOS_KEY: ${{ vars.VOXA_RC_IOS_KEY }}
+          VOXA_RC_IOS_KEY: ${{ vars.VOXA_RC_TEST_KEY || vars.VOXA_RC_IOS_KEY }}
         run: node scripts/sync-web.mjs && npx cap sync ios
       - name: Compilar para el simulador
         run: |
