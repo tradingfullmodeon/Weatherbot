@@ -47,6 +47,15 @@ export const HEDGE_RE = wordRe(HEDGES.map(asPattern));
 
 export const $ = (id) => document.getElementById(id);
 export const countMatches = (t, re) => (t.match(re) || []).length;
+// Qué muletillas o atenuadores dijo, y cuántas veces ({«o sea»: 3}); «eeeh» y «eh» cuentan como lo mismo.
+export function phraseCounts(t, re) {
+  const out = {};
+  for (const m of String(t || '').matchAll(re)) {
+    const k = m[2].toLowerCase().replace(/^e+h+$/, 'eh').replace(/^e+m+$/, 'em').replace(/^m{2,}$/, 'mm');
+    out[k] = (out[k] || 0) + 1;
+  }
+  return out;
+}
 export const wordCount = (t) => (t.trim().match(/\p{L}+/gu) || []).length;
 export const mean = (a) => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
 export const std = (a) => { const m = mean(a); return Math.sqrt(mean(a.map(x => (x - m) ** 2))); };
@@ -144,7 +153,15 @@ const PAGES = [
 const icon = (k) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k]}</svg>`;
 export const STORAGE_WARNING = 'Este navegador no permite guardar datos (modo privado o cookies bloqueadas): tu progreso se perderá al cerrar la página. Ábrela en una ventana normal para conservarlo.';
 
+// Tamaño de letra y alto contraste elegidos en Ajustes (se aplican en todas las pantallas).
+export function applyDisplayPrefs(p = loadProfile()) {
+  const root = document.documentElement;
+  if (p.textSize && p.textSize !== 'normal') root.dataset.text = p.textSize; else delete root.dataset.text;
+  if (p.highContrast) root.dataset.contrast = 'alto'; else delete root.dataset.contrast;
+}
+
 export function renderNav() {
+  applyDisplayPrefs();
   const here = location.pathname.split('/').pop() || 'index.html';
   const top = document.createElement('nav');
   top.className = 'tabs'; top.setAttribute('aria-label', 'Secciones');

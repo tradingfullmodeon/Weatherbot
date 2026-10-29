@@ -78,9 +78,9 @@ El orden sigue el impacto en el valor percibido (barrido regional en [BENCHMARK.
 | P1 | **Coach conectado al evento real** (empresa, audiencia, mensaje, preocupación) | Mockee, apps coreanas (preguntas desde el CV y la oferta) | — | ✅ Hecho |
 | P1 | **Calibración con profesores** (50 grabaciones) y un pequeño **estudio de eficacia** antes y después | Liulishuo lo usa como prueba; A7 3,6 | Correlación ≥ 0,6; mejora del índice ≥ 10 puntos en 4 semanas | Kit listo ([calibracion/](calibracion/README.md): protocolo, planilla y análisis); falta hacerlo en la beta |
 | P1 | **Diagnóstico paginado** con primera victoria en 60 s | Panel (diseño) | ≥ 80% lo termina | ✅ Hecho: 4 pantallas, la voz primero y la primera fortaleza al terminar de hablar |
-| P2 | **Ejercicios generados desde tus errores** (IA) | Speak «Made for You», Preply | Uso semanal ≥ 25% | Pendiente |
+| P2 | **Ejercicios generados desde tus errores** | Speak «Made for You», Preply | Uso semanal ≥ 25% | ✅ «Hecho para ti» en Hoy, con reglas y sin costo de IA: tus muletillas y atenuadores más frecuentes y tu métrica más baja → ejercicio o lección |
 | P2 | **Modo equipos (B2B)**: código de grupo, material de la empresa, resultados agregados con consentimiento | 75% de la contribución proyectada; Yoodli, Speeko y ELSA venden asientos | 2–3 pilotos en el mes 6 | Pendiente |
-| P2 | **Recuperar la racha** y retos con amigos | Duolingo recuperó más de 15 M de rachas con una campaña | — | Pendiente |
+| P2 | **Recuperar la racha** y retos con amigos | Duolingo recuperó más de 15 M de rachas con una campaña | — | ✅ Racha con un día de descanso cada 7 y «Compartir mi avance» (tarjeta con Índice, racha y prácticas); pendiente: retos entre amigos |
 | P2 | **Voseo y modismos por país** | A9 3,5 | — | Pendiente |
 | No hacer | Copiloto «invisible» durante entrevistas reales | Final Round AI: riesgo ético y de reputación (Trustpilot 2,8) | — | Descartado |
 

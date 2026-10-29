@@ -21,7 +21,7 @@
 </head>
 <body>
 <header>
-  <h1>VOXA · Gimnasio de voz</h1>
+  <h1>Gimnasio de voz</h1>
   <p>Calentamientos de 1–2 minutos con medición en vivo: respiración, rango de tono, proyección, dicción y pausas.</p>
 </header>
 
@@ -32,9 +32,8 @@
     <div class="prompt" id="howto"></div>
     <div id="extra"></div>
     <div class="btns">
-      <button id="btnMic">Activar micrófono</button>
-      <button id="btnGo" class="primary" disabled>Empezar</button>
-      <button id="btnStop" disabled>Terminar</button>
+      <button id="btnGo" class="cta">▶ Empezar</button>
+      <button id="btnStop" class="hidden">■ Terminar</button>
     </div>
     <p class="note" id="status">Usa auriculares si puedes y un lugar tranquilo. El audio se analiza en tu navegador y no se graba.</p>
   </section>
@@ -118,24 +117,27 @@ function renderExercises() {
 }
 renderExercises();
 
-$('btnMic').addEventListener('click', async () => {
+// Un solo botón: el primer toque pide el micrófono y arranca; los siguientes arrancan directo.
+async function ensureMic() {
+  if (ctx) return true;
   try {
     // Sin ganancia automática ni supresión de ruido: el navegador aplanaría el volumen y atenuaría la voz suave,
     // y aquí lo que se mide son justamente los niveles. Por eso se recomiendan auriculares.
     ({ stream } = await requestMedia({ video: false, audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }));
-  } catch (e) { $('status').innerHTML = esc(explainError(e)) + ' <a href="index.html#dispositivos">Probar mis dispositivos</a>'; return; }
+  } catch (e) { $('status').innerHTML = esc(explainError(e)) + ' <a href="index.html#dispositivos">Probar mis dispositivos</a>'; return false; }
   ctx = new AudioContext();
   analyser = ctx.createAnalyser(); analyser.fftSize = 2048;
   ctx.createMediaStreamSource(stream).connect(analyser);
-  $('btnMic').disabled = true; $('btnGo').disabled = false;
-  $('status').textContent = 'Micrófono listo.';
-});
+  $('status').textContent = '';
+  return true;
+}
 
-$('btnGo').addEventListener('click', () => {
+$('btnGo').addEventListener('click', async () => {
+  if (!(await ensureMic())) return;
   if (ctx.state === 'suspended') ctx.resume();
   samples = []; heard = ''; running = true; t0 = performance.now();
   $('result').innerHTML = ''; $('v1').textContent = '–'; $('v2').textContent = '–'; $('v3').textContent = '–';
-  $('btnGo').disabled = true; $('btnStop').disabled = false;
+  $('btnGo').classList.add('hidden'); $('btnStop').classList.remove('hidden');
   if (ex.id === 'trabalenguas') startRecognition();
   loop();
 });
@@ -279,7 +281,8 @@ function lcs(a, b) {
 function finish() {
   if (!running) return;
   running = false; cancelAnimationFrame(raf);
-  $('btnGo').disabled = false; $('btnStop').disabled = true; $('step').textContent = '✓';
+  $('btnGo').classList.remove('hidden'); $('btnStop').classList.add('hidden'); $('step').textContent = '✓';
+  $('btnGo').textContent = '↻ Otra vez';
   const done = () => {
     const r = evaluate();
     $('v1').textContent = r.v1; $('v2').textContent = r.v2; $('v3').textContent = r.score;

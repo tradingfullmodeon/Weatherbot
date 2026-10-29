@@ -13,6 +13,11 @@
       --good: #4ade80; --mid: #fbbf24; --bad: #f87171; --on-accent: #0f1117;
     }
   }
+  :root[data-text="lg"] { font-size: 112.5%; }
+  :root[data-text="xl"] { font-size: 125%; }
+  :root[data-contrast="alto"] { --muted: var(--text); --line: #6b7280; }
+  :root[data-contrast="alto"] a { text-decoration: underline; }
+  :root[data-contrast="alto"] .card { border-width: 2px; }
   * { box-sizing: border-box; }
   body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
          background: var(--bg); color: var(--text); line-height: 1.5; }
@@ -142,6 +147,12 @@
   .hero { background: linear-gradient(135deg, var(--accent), #7c3aed); color: #fff; border: 0; }
   .hero .muted, .hero .note { color: #e0e7ff; }
   .hero .btn-link.cta { background: #fff; color: #312e81; border-color: #fff; }
+  .hero a:not(.btn-link) { color: #fff; text-decoration: underline; text-underline-offset: 2px; }
+  .check { display: flex; gap: 8px; align-items: center; color: var(--text); min-height: 44px; }
+  .foryou { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .fy { border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+  .fy p { margin: 6px 0; }
+  .memory { border-left: 3px solid var(--accent); padding: 6px 10px; margin-top: 8px; }
   .quick { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
   .quick a { display: block; padding: 14px; border-radius: 14px; border: 1px solid var(--line); text-decoration: none; color: var(--text); background: var(--card); }
   .quick a strong { display: block; }
@@ -740,6 +751,15 @@ const HEDGE_RE = wordRe(HEDGES.map(asPattern));
 
 const $ = (id) => document.getElementById(id);
 const countMatches = (t, re) => (t.match(re) || []).length;
+// Qué muletillas o atenuadores dijo, y cuántas veces ({«o sea»: 3}); «eeeh» y «eh» cuentan como lo mismo.
+function phraseCounts(t, re) {
+  const out = {};
+  for (const m of String(t || '').matchAll(re)) {
+    const k = m[2].toLowerCase().replace(/^e+h+$/, 'eh').replace(/^e+m+$/, 'em').replace(/^m{2,}$/, 'mm');
+    out[k] = (out[k] || 0) + 1;
+  }
+  return out;
+}
 const wordCount = (t) => (t.trim().match(/\p{L}+/gu) || []).length;
 const mean = (a) => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
 const std = (a) => { const m = mean(a); return Math.sqrt(mean(a.map(x => (x - m) ** 2))); };
@@ -837,7 +857,15 @@ const PAGES = [
 const icon = (k) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k]}</svg>`;
 const STORAGE_WARNING = 'Este navegador no permite guardar datos (modo privado o cookies bloqueadas): tu progreso se perderá al cerrar la página. Ábrela en una ventana normal para conservarlo.';
 
+// Tamaño de letra y alto contraste elegidos en Ajustes (se aplican en todas las pantallas).
+function applyDisplayPrefs(p = loadProfile()) {
+  const root = document.documentElement;
+  if (p.textSize && p.textSize !== 'normal') root.dataset.text = p.textSize; else delete root.dataset.text;
+  if (p.highContrast) root.dataset.contrast = 'alto'; else delete root.dataset.contrast;
+}
+
 function renderNav() {
+  applyDisplayPrefs();
   const here = location.pathname.split('/').pop() || 'index.html';
   const top = document.createElement('nav');
   top.className = 'tabs'; top.setAttribute('aria-label', 'Secciones');

@@ -95,6 +95,13 @@ El modelo se configura con `VOXA_MODEL` (por defecto `claude-opus-5-5`) y se pue
 Comparar modelos y nubes en cada función: `cd voxa/server && python -m evals.run --out ../docs/evals/RESULTADOS.md` (necesita la clave; cuesta menos de US$1; ver [ARQUITECTURA.md](docs/ARQUITECTURA.md) §4).
 
 Pruebas:
+- **Recorrido completo de punta a punta** como una persona nueva, en un celular y en modo claro y oscuro, con coach IA simulado (sin clave ni costo), cámara simulada y voz sintética. Revisa errores, tamaño de botones, desbordes y accesibilidad, y deja capturas de cada pantalla:
+  ```bash
+  python3 voxa/tests/e2e/servidor_simulado.py 8800 &
+  python3 voxa/tests/e2e/voz_sintetica.py /tmp/voz.wav
+  VOXA_FAKE_AUDIO=/tmp/voz.wav node voxa/tests/e2e/recorrido.cjs http://localhost:8800 /tmp/capturas
+  ```
+  El servidor simulado también sirve para probar la app a mano en el navegador: http://localhost:8800.
 - Servidor, con un cliente de Anthropic simulado y sin consumir la API: `cd voxa/server && python3 -m pytest -q`.
 - Motor de análisis y contenido (muletillas en contexto, tono, «eeeh», escritura, legibilidad, integridad de escenarios, lecciones y plan): `cd voxa && npm test`.
 

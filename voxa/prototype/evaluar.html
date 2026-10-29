@@ -40,7 +40,7 @@
     <p class="note" id="status" aria-live="polite">Te pediremos permiso para usar la cámara y el micrófono. Nada se sube a internet. <a href="index.html#dispositivos">Probar mis dispositivos</a></p>
   </section>
 
-  <section class="card" id="stageCard">
+  <section class="card hidden" id="stageCard">
     <div class="stage">
       <video id="video" playsinline muted></video>
       <div class="stage-empty" id="stageEmpty">Tu cámara aparecerá aquí.<br>Ubícala a la altura de tus ojos.</div>
@@ -129,7 +129,7 @@
 
 <script type="module">
 import {
-  $, FILLER_RE, HEDGE_RE, countMatches, wordCount, mean, std, esc, colorFor, highlight,
+  $, FILLER_RE, HEDGE_RE, countMatches, phraseCounts, wordCount, mean, std, esc, colorFor, highlight,
   renderNav, saveSession, loadSessions, loadProfile, aiStatus, postJSON, AI_MIN_WORDS, GOALS, detectPitch, findFilledPauses, userLocale, LOCALES,
 } from './shared.js';
 import { SCENARIOS, GROUPS, IMPRO_TOPICS, methodHelp } from './scenarios.js';
@@ -257,6 +257,8 @@ async function begin() {
   if (running) return;
   $('btnStart').disabled = true;
   if (!(await ensureMedia())) { $('btnStart').disabled = false; return; }
+  // La cámara aparece sólo al practicar: antes y después, la pantalla queda para la consigna y el reporte.
+  $('stageCard').classList.remove('hidden');
   // Se conserva el aviso de «seguimos sólo con tu voz» si la cámara no estuvo disponible.
   if (hasCamera || $('voiceOnly').checked) $('status').textContent = '';
   $('overlayPrompt').textContent = currentPrompt;
@@ -295,6 +297,7 @@ function stop() {
   try { recognition && recognition.stop(); } catch {}
   $('btnStop').classList.add('hidden'); $('btnStart').disabled = false; $('recBadge').style.display = 'none';
   $('overlayPrompt').classList.add('hidden');
+  $('stageCard').classList.add('hidden');
   recorder.onstop = () => {
     const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
     const url = URL.createObjectURL(blob);
@@ -592,6 +595,8 @@ function buildReport() {
     scenario: scenario().id, scenarioName: scenario().name, goal: profile.goal,
     total: r.total, dims: r.dims, duration: Math.round(m.dur), attention: m.attention, words: m.words, mode: 'audio',
     metrics: Object.fromEntries(r.items.map(i => [i.key, { value: i.value, s: i.s }])),
+    // Sólo qué muletillas y atenuadores dijo (no la transcripción): alimenta «Hecho para ti».
+    said: { fillers: phraseCounts(finalText + ' ' + interimText, FILLER_RE), hedges: phraseCounts(finalText + ' ' + interimText, HEDGE_RE) },
     anxietyBefore: feelBefore.get(), anxietyAfter: null,
   } };
   persistSession();

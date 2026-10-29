@@ -61,12 +61,26 @@ export function todayTask(sessions = loadSessions()) {
   return { day: day + 1, week: w.week, ...w.tasks[day % 7] };
 }
 
-export function streak(sessions = loadSessions()) {
+// Racha con día de descanso (como el protector de racha de Duolingo): un día suelto sin práctica cada 7 no la corta.
+// rested: los días que se usaron como descanso, del más reciente al más antiguo.
+export function streakInfo(sessions = loadSessions(), today = new Date()) {
   const days = new Set(sessions.map(s => dayKey(s.date)));
-  let n = 0; const d = new Date();
+  const d = new Date(today);
   if (!days.has(localDay(d))) d.setDate(d.getDate() - 1);   // la racha sigue viva si practicaste ayer
-  while (days.has(localDay(d))) { n++; d.setDate(d.getDate() - 1); }
-  return n;
+  let n = 0, sinceRest = Infinity;
+  const rested = [];
+  for (let guard = 0; guard < 3660; guard++) {
+    if (days.has(localDay(d))) { n++; sinceRest++; }
+    else {
+      const before = new Date(d); before.setDate(before.getDate() - 1);
+      // Descanso válido: un solo día, con práctica el día anterior y al menos 6 días practicados desde el último descanso.
+      if (sinceRest >= 6 && days.has(localDay(before))) { rested.push(localDay(d)); sinceRest = 0; }
+      else break;
+    }
+    d.setDate(d.getDate() - 1);
+  }
+  return { days: n, rested };
 }
+export const streak = (sessions = loadSessions(), today = new Date()) => streakInfo(sessions, today).days;
 
 export const practicedToday = (sessions = loadSessions()) => sessions.some(s => dayKey(s.date) === dayKey(new Date().toISOString()));

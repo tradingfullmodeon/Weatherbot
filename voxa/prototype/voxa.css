@@ -10,6 +10,11 @@
       --good: #4ade80; --mid: #fbbf24; --bad: #f87171; --on-accent: #0f1117;
     }
   }
+  :root[data-text="lg"] { font-size: 112.5%; }
+  :root[data-text="xl"] { font-size: 125%; }
+  :root[data-contrast="alto"] { --muted: var(--text); --line: #6b7280; }
+  :root[data-contrast="alto"] a { text-decoration: underline; }
+  :root[data-contrast="alto"] .card { border-width: 2px; }
   * { box-sizing: border-box; }
   body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
          background: var(--bg); color: var(--text); line-height: 1.5; }
@@ -139,6 +144,12 @@
   .hero { background: linear-gradient(135deg, var(--accent), #7c3aed); color: #fff; border: 0; }
   .hero .muted, .hero .note { color: #e0e7ff; }
   .hero .btn-link.cta { background: #fff; color: #312e81; border-color: #fff; }
+  .hero a:not(.btn-link) { color: #fff; text-decoration: underline; text-underline-offset: 2px; }
+  .check { display: flex; gap: 8px; align-items: center; color: var(--text); min-height: 44px; }
+  .foryou { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .fy { border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+  .fy p { margin: 6px 0; }
+  .memory { border-left: 3px solid var(--accent); padding: 6px 10px; margin-top: 8px; }
   .quick { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
   .quick a { display: block; padding: 14px; border-radius: 14px; border: 1px solid var(--line); text-decoration: none; color: var(--text); background: var(--card); }
   .quick a strong { display: block; }

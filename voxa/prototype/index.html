@@ -49,6 +49,8 @@
     <p class="note"><a id="tPlan" class="hidden" href="pro.html"></a></p>
   </section>
 
+  <section class="card full hidden" id="forYouCard"></section>
+
   <section class="card full" id="goalsCard">
     <h2>Tu diagnóstico y tus metas</h2>
     <div id="goalsBox"></div>
@@ -97,15 +99,19 @@
     <select id="sGoal"></select>
     <label for="sLocale" style="margin-top:10px">Variante de español (para reconocer mejor tu voz)</label>
     <select id="sLocale"></select>
+    <label for="sText" style="margin-top:10px">Tamaño de la letra</label>
+    <select id="sText"><option value="normal">Normal</option><option value="lg">Grande</option><option value="xl">Muy grande</option></select>
+    <label class="check" style="margin-top:10px"><input type="checkbox" id="sContrast"> Alto contraste (textos más oscuros y bordes marcados)</label>
     <p class="note" id="sSaved" aria-live="polite"></p>
     <p class="note"><a href="pro.html">Tu plan</a> · <a href="privacidad.html">Privacidad</a> · <a href="terminos.html">Términos de uso</a></p>
   </section>
 </main>
 
 <script type="module">
-import { $, esc, renderNav, loadProfile, saveProfile, loadSessions, GOALS, LOCALES, userLocale, aiStatus, getMe } from './shared.js';
+import { $, esc, renderNav, loadProfile, saveProfile, loadSessions, GOALS, LOCALES, userLocale, aiStatus, getMe, applyDisplayPrefs } from './shared.js';
 import { planLine } from './plan-pro.js';
-import { todayTask, streak, practicedToday } from './plan.js';
+import { madeForYou, madeForYouHTML } from './foryou.js';
+import { todayTask, streak, streakInfo, practicedToday } from './plan.js';
 import { mountDeviceCheck } from './devices.js';
 import { LESSONS } from './lessons.js';
 import { EVENT_TYPES, validEvent, daysUntil, nextEventPractice } from './events.js';
@@ -191,7 +197,11 @@ $('tWhy').textContent = practicedToday(sessions)
   ? '¡Ya practicaste hoy! Si quieres, haz otra ronda: la repetición es la que crea el hábito.'
   : 'Toma unos 7 minutos. Una sola práctica bien hecha vale más que muchas a medias.';
 const last = sessions.filter(x => x.type === 'evaluacion').pop();
+// Si un día de descanso salvó la racha en los últimos dos días, se dice: así no parece un error.
+const rest = streakInfo(sessions).rested[0];
+const restedRecently = rest && (Date.now() - new Date(rest + 'T12:00').getTime()) < 2.5 * 864e5;
 $('tStreak').textContent = (s ? `🔥 ${s} ${s === 1 ? 'día seguido' : 'días seguidos'}` : 'Empieza tu racha hoy') +
+  (restedRecently ? ' · 🛡️ un día de descanso protegió tu racha (1 cada 7 días)' : '') +
   (last ? ` · Último puntaje: ${last.total} en «${last.scenarioName}»` : '');
 
 // ---------------------------------------------------------------- diagnóstico y metas
@@ -240,6 +250,10 @@ $('remindIcs').addEventListener('click', () => {
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000);
 });
 
+// ---------------------------------------------------------------- hecho para ti (con tus propios errores)
+const forYou = madeForYou(sessions);
+if (forYou.length && !firstRun) { $('forYouCard').innerHTML = madeForYouHTML(forYou); $('forYouCard').classList.remove('hidden'); }
+
 // ---------------------------------------------------------------- plan (sólo con el coach IA conectado)
 aiStatus().then(async (s) => {
   if (!s.ai) return;
@@ -255,6 +269,9 @@ aiStatus().then(async (s) => {
 const saved = () => { saveProfile(profile); $('sSaved').textContent = 'Guardado.'; setTimeout(() => $('sSaved').textContent = '', 1500); };
 $('sGoal').addEventListener('change', () => { profile.goal = $('sGoal').value; saved(); });
 $('sLocale').addEventListener('change', () => { profile.locale = $('sLocale').value; saved(); });
+$('sText').value = profile.textSize || 'normal'; $('sContrast').checked = !!profile.highContrast;
+$('sText').addEventListener('change', () => { profile.textSize = $('sText').value; applyDisplayPrefs(profile); saved(); });
+$('sContrast').addEventListener('change', () => { profile.highContrast = $('sContrast').checked; applyDisplayPrefs(profile); saved(); });
 </script>
 </body>
 </html>

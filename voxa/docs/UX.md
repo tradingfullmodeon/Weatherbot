@@ -97,12 +97,50 @@
 
 ---
 
-## 5. Pendientes recomendados
+## 5. Segunda revisión: simplicidad con autoridad (octubre de 2026)
+
+**Cómo se hizo:**
+- Recorrido automatizado de punta a punta (`tests/e2e/recorrido.cjs`), con coach IA simulado y voz sintética en el micrófono. Cubre 18 pantallas en modo claro y oscuro, a 390 px.
+- Revisión de cada captura con criterio de diseñador:
+  - una sola acción principal por pantalla;
+  - jerarquía clara;
+  - contraste;
+  - consistencia de títulos y botones;
+  - y «autoridad»: que la app se vea seria y confiable, sin ruido.
+
+**Qué se encontró y qué se cambió:**
+
+| # | Problema | Principio | Cambio |
+|---|---|---|---|
+| 1 | En «Hoy», los enlaces dentro del recuadro morado eran **invisibles**: contraste de 1,0:1 en modo claro y 2,1:1 en oscuro | WCAG 1.4.3 (mínimo 4,5:1) | Blancos y subrayados: **5,7–6,3:1** |
+| 2 | Evaluar mostraba un recuadro negro de cámara antes de empezar y, al terminar, la cámara y el reloj quedaban congelados sobre el reporte | Una sola cosa a la vez; estado visible del sistema (Nielsen 1) | La cámara aparece sólo mientras practicas; antes y después, la pantalla es de la consigna y del reporte |
+| 3 | Roleplay mostraba 9 personajes grandes y el botón «Comenzar» quedaba dos pantallas más abajo | Ley de Hick (menos opciones, decisión más rápida); revelación progresiva | Los **4 personajes que más sirven para tu meta** y «Ver los 9 personajes». El botón queda a la vista |
+| 4 | El gimnasio pedía «Activar micrófono» y después «Empezar» | Mínimo de pasos; un toque por intención | **Un solo botón** «Empezar»: la primera vez pide el micrófono y arranca. «Terminar» aparece sólo mientras grabas |
+| 5 | Títulos con tres estilos: «VOXA · Roleplay con IA», «Evaluar», «Prepara un evento real» | Consistencia y estándares (Nielsen 4) | Títulos cortos, iguales al menú: Roleplay, Gimnasio de voz, Evento real, Mi progreso, Tu plan |
+| 6 | Sin tamaño de letra ajustable ni alto contraste (pendiente de la primera revisión) | Accesibilidad; usuarios mayores o con baja visión | **Ajustes → Tamaño de la letra** (normal, grande, muy grande) y **Alto contraste** (texto secundario a 16,5:1 y bordes marcados), en todas las pantallas |
+
+**Autoridad sin rigidez** (lo que se mantiene a propósito):
+- **Color:** un solo color de acción, el índigo; verde, ámbar y rojo sólo para resultados. Con la persona en modo calma, los puntajes bajos se muestran en neutro.
+- **Botones:** uno principal por pantalla, grande (52 px) y con verbo («Hacer la práctica de hoy», «Empezar», «Comenzar conversación»). Los secundarios van con borde, y los terciarios como enlace.
+- **Evidencia visible:** cada puntaje dice qué se midió y cuál es la meta («142 palabras/min; recomendado 120–165»). Así se gana autoridad: mostrando el método, no con adornos.
+- **Tono:** se tutea y se celebra lo logrado primero, con un solo foco de mejora. Es la práctica de los mejores profesores de oratoria y del feedback SBI.
+
+**Resultado del recorrido:**
+- 18 pantallas en claro y oscuro;
+- 0 errores de JavaScript;
+- 0 controles bajo 44 px;
+- 0 desbordes horizontales;
+- 0 controles sin nombre accesible;
+- todos los flujos con IA funcionando de punta a punta.
+
+El recorrido encontró además un error real, que ya está corregido: en Roleplay, el perfil se leía antes de declararse y la página no cargaba los personajes.
+
+## 6. Pendientes recomendados
 
 - **Pruebas con personas reales** (5 usuarios por segmento, siguiendo la regla de Nielsen): tiempo hasta la primera práctica, comprensión del reporte y recuerdo del foco 24 h después.
-- **Recordatorios** opcionales (notificaciones web o WhatsApp) con hora elegida por la persona.
+- **Recordatorios:** ✅ en la app, notificación diaria a la hora elegida; en la web, calendario.
 - **Lector de pantalla**: revisar con VoiceOver/TalkBack el flujo de grabación (cuenta regresiva y avisos `aria-live`).
-- **Modo de alto contraste** y tamaño de texto ajustable.
+- **Modo de alto contraste y tamaño de texto:** ✅ hecho (§5).
 - **Analítica de embudo** (bienvenida → primera práctica → día 2 → día 7) para medir la retención en la segunda semana, como Headspace.
 
 ---

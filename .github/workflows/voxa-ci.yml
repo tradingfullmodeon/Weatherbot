@@ -33,3 +33,33 @@ jobs:
         run: |
           python3 voxa/artifact/build.py
           git diff --exit-code voxa/artifact/dist || (echo "::error::Ejecuta python3 voxa/artifact/build.py y sube voxa/artifact/dist/voxa.html" && exit 1)
+
+  # Recorrido completo como una persona nueva (celular, claro y oscuro), con coach IA simulado y voz sintética.
+  # Deja las capturas de las 18 pantallas en Artifacts → voxa-capturas.
+  recorrido:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Dependencias
+        run: |
+          pip install -r voxa/server/requirements.txt
+          mkdir -p "$RUNNER_TEMP/pw" && cd "$RUNNER_TEMP/pw" && npm init -y >/dev/null && npm install --no-audit --no-fund playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: Recorrido de punta a punta
+        run: |
+          python voxa/tests/e2e/servidor_simulado.py 8800 &
+          python voxa/tests/e2e/voz_sintetica.py "$RUNNER_TEMP/voz.wav"
+          for i in $(seq 1 30); do curl -sf localhost:8800/api/health >/dev/null && break; sleep 1; done
+          NODE_PATH="$RUNNER_TEMP/pw/node_modules" VOXA_FAKE_AUDIO="$RUNNER_TEMP/voz.wav" node voxa/tests/e2e/recorrido.cjs http://localhost:8800 "$RUNNER_TEMP/capturas"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: voxa-capturas
+          path: ${{ runner.temp }}/capturas
+          retention-days: 14

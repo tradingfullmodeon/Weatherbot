@@ -27,7 +27,7 @@
 </head>
 <body>
 <header>
-  <h1>VOXA · Roleplay con IA</h1>
+  <h1>Roleplay</h1>
   <p>Practica conversaciones reales por voz con personajes que reaccionan a cómo hablas. Si algo no salió bien, rebobina y vuelve a intentarlo.</p>
 </header>
 
@@ -35,6 +35,7 @@
   <section class="card full">
     <h2>1. Elige con quién practicar <span class="badge-ai" id="aiBadge">comprobando…</span></h2>
     <div class="personas" id="personas"></div>
+    <div class="btns hidden" id="morePersonasBox"><button id="morePersonas" class="link-btn"></button></div>
     <div style="margin-top:12px;max-width:420px">
       <div>
         <label for="difficulty">Dificultad</label>
@@ -89,11 +90,12 @@
 
 <script type="module">
 import {
-  $, FILLER_RE, countMatches, wordCount, mean, esc, colorFor, highlight, renderNav, saveSession, aiStatus, postJSON, AI_MIN_WORDS, userLocale,
+  $, FILLER_RE, countMatches, wordCount, mean, esc, colorFor, highlight, renderNav, saveSession, aiStatus, postJSON, AI_MIN_WORDS, userLocale, loadProfile, saveProfile,
 } from './shared.js';
 import { unblockHelp } from './devices.js';
 import { INTERVIEW_PERSONA, createInterview, currentQuestion, interviewNext, interviewHint, interviewProgress, interviewScore, interviewReportHTML, quoteSaid } from './interview.js';
 import { isCrisis } from './help.js';
+import { orderPersonas, rememberRoleplay, memoryNote, SHOWN_FIRST } from './memory.js';
 import { upgradeHTML } from './plan-pro.js';
 
 renderNav();
@@ -107,6 +109,7 @@ const userTexts = () => history.filter(t => t.role === 'user').map(t => t.text);
 let personas = [], persona = null, ai = false;
 let history = [];               // {role: 'user'|'persona', text, ms?}
 let userSpeechMs = 0, recStart = 0, recognition = null, heard = '';
+const profile = loadProfile();   // meta (orden de personajes) y memoria de cada personaje
 
 const status = await aiStatus();
 ai = status.ai;
@@ -118,11 +121,20 @@ if (!ai) { personas = [OFFLINE_PERSONA]; $('difficulty').disabled = true; $('ctx
 $('ctx').addEventListener('input', () => { $('ctxCount').textContent = $('ctx').value.length; });
 renderPersonas();
 
+// Primero los personajes que más sirven para tu meta; el resto, a un toque («Ver los 9»).
 function renderPersonas() {
-  $('personas').innerHTML = personas.map(p =>
-    `<button class="persona" data-id="${p.id}"><strong>${esc(p.name)}</strong><small>${esc(p.role)}</small></button>`).join('');
-  $('personas').querySelectorAll('.persona').forEach(b => b.addEventListener('click', () => pick(b.dataset.id)));
+  personas = orderPersonas(personas, profile.goal);
   const q = new URLSearchParams(location.search), wanted = q.get('personaje');
+  const wantedAt = personas.findIndex(p => p.id === wanted);
+  const shown = Math.max(SHOWN_FIRST, wantedAt + 1);
+  $('personas').innerHTML = personas.map((p, i) =>
+    `<button class="persona${i >= shown ? ' hidden' : ''}" data-id="${p.id}"><strong>${esc(p.name)}</strong><small>${esc(p.role)}</small></button>`).join('');
+  $('personas').querySelectorAll('.persona').forEach(b => b.addEventListener('click', () => pick(b.dataset.id)));
+  if (personas.length > shown) {
+    $('morePersonas').textContent = `Ver los ${personas.length} personajes`;
+    $('morePersonasBox').classList.remove('hidden');
+    $('morePersonas').addEventListener('click', () => { $('personas').querySelectorAll('.persona.hidden').forEach(b => b.classList.remove('hidden')); $('morePersonasBox').classList.add('hidden'); }, { once: true });
+  }
   if (['1', '2', '3'].includes(q.get('dificultad')) && !$('difficulty').disabled) $('difficulty').value = q.get('dificultad');
   pick(personas.some(p => p.id === wanted) ? wanted : personas[0].id);
 }
@@ -131,7 +143,8 @@ function pick(id) {
   $('personas').querySelectorAll('.persona').forEach(b => b.classList.toggle('on', b.dataset.id === id));
   $('brief').innerHTML = `<strong>${esc(persona.scenario)}</strong>Tu objetivo: ${esc(persona.goal)}
     <div class="note">Técnicas a practicar: ${persona.skills.map(esc).join(' · ')}</div>
-    ${ai ? '' : '<div class="note">Sin servidor IA: el entrevistador usa preguntas fijas y la evaluación es sólo por métricas.</div>'}`;
+    ${ai ? '' : '<div class="note">Sin servidor IA: el entrevistador usa preguntas fijas y la evaluación es sólo por métricas.</div>'}
+    ${memoryNote(profile, persona)?.html || ''}`;
 }
 
 $('btnBegin').addEventListener('click', () => {
@@ -239,7 +252,7 @@ async function send(ms) {
   busy = true; $('status').textContent = `${persona.name} está pensando…`;
   try {
     if (ai) {
-      const out = await postJSON('api/roleplay', { persona_id: persona.id, difficulty: +$('difficulty').value, history: history.map(({ role, text }) => ({ role, text })), context: $('ctx').value });
+      const out = await postJSON('api/roleplay', { persona_id: persona.id, difficulty: +$('difficulty').value, history: history.map(({ role, text }) => ({ role, text })), context: personaContext() });
       addTurn('persona', out.reply);
       $('hint').textContent = $('showHints').checked && out.coach_hint ? '💡 ' + out.coach_hint : '';
       if (out.safety_note) $('hint').textContent = '💙 ' + String(out.safety_note);
@@ -291,7 +304,7 @@ async function endRoleplay() {
     try {
       ev = await postJSON('api/roleplay/evaluate', {
         persona_id: persona.id, difficulty: +$('difficulty').value, history: history.map(({ role, text }) => ({ role, text })),
-        context: $('ctx').value, talk_ratio: +c.talkRatio.toFixed(2), questions_asked: c.questions, fillers_per_min: +c.fillersPerMin.toFixed(1),
+        context: personaContext(), talk_ratio: +c.talkRatio.toFixed(2), questions_asked: c.questions, fillers_per_min: +c.fillersPerMin.toFixed(1),
       });
     } catch (e) { $('status').innerHTML = esc('Evaluación IA no disponible: ' + e.message + '. Te mostramos la evaluación por métricas.') + upgradeHTML(e); }
   }
@@ -306,6 +319,13 @@ async function endRoleplay() {
     difficulty: +$('difficulty').value, metrics: { talkRatio: c.talkRatio, questions: c.questions, fillersPerMin: c.fillersPerMin },
   });
   $('evalOut').innerHTML = renderEval(total, scores, c, ev);
+  // El personaje recordará tu siguiente paso en la próxima práctica.
+  if (persona.id !== 'offline') { rememberRoleplay(profile, persona.id, { next: ev?.next_step || localNextStep(c), total }); saveProfile(profile); }
+}
+
+// Lo que la persona pegó (oferta, CV…) más la memoria de la práctica anterior con este personaje.
+function personaContext() {
+  return [memoryNote(profile, persona)?.context, $('ctx').value.trim()].filter(Boolean).join('\n\n').slice(0, 8000);
 }
 
 function localScores(c) {
@@ -321,6 +341,13 @@ function localScores(c) {
   };
 }
 
+function localNextStep(c) {
+  const interview = ['offline', 'reclutadora'].includes(persona.id);
+  return !interview && c.talkRatio > 0.7 ? 'Hablaste mucho más que tu interlocutor: practica hacer una pregunta abierta y escuchar.'
+    : !interview && c.questions === 0 ? 'No hiciste preguntas: en tu próxima práctica incluye al menos dos preguntas abiertas.'
+    : 'Repite la conversación en dificultad más alta y apunta a respuestas con resultados concretos.';
+}
+
 function renderEval(total, scores, c, ev) {
   const bars = Object.entries(scores).map(([k, v]) =>
     `<div class="dim"><div>${esc(k.replace(/_/g, ' '))} <strong style="float:right">${v}</strong></div><div class="bar"><div style="width:${v}%;background:${colorFor(v)}"></div></div></div>`).join('');
@@ -328,12 +355,8 @@ function renderEval(total, scores, c, ev) {
     <div><div style="font-weight:600">${esc(persona.name)}${persona.id === 'offline' ? '' : ` · dificultad ${$('difficulty').value}/3`}</div>
     <div class="note">Hablaste el ${Math.round(c.talkRatio * 100)}% del tiempo · ${c.questions} ${c.questions === 1 ? 'intervención' : 'intervenciones'} con preguntas · ${c.fillers} muletillas</div></div></div>
     <div class="dims">${bars}</div>`;
-  const interview = ['offline', 'reclutadora'].includes(persona.id);
   if (!ev && persona.id === 'offline') return head + interviewReportHTML(offline);
-  if (!ev) return head + `<div class="fb"><div><h3>Siguiente paso</h3>${!interview && c.talkRatio > 0.7
-    ? 'Hablaste mucho más que tu interlocutor: practica hacer una pregunta abierta y escuchar.'
-    : !interview && c.questions === 0 ? 'No hiciste preguntas: en tu próxima práctica incluye al menos dos preguntas abiertas.'
-    : 'Repite la conversación en dificultad más alta y apunta a respuestas con resultados concretos.'}</div></div>`;
+  if (!ev) return head + `<div class="fb"><div><h3>Siguiente paso</h3>${localNextStep(c)}</div></div>`;
   return head + `<div class="ai-box">
     <p>${esc(ev.summary)}</p>
     <h3 style="color:var(--good)">Tu mejor momento</h3>${quoteSaid(ev.best_moment.quote, userTexts()) ? `<blockquote>«${esc(ev.best_moment.quote)}»</blockquote>` : ''}<p>${esc(ev.best_moment.why)}</p>

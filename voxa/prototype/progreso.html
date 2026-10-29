@@ -22,7 +22,7 @@
 </head>
 <body>
 <header>
-  <h1>VOXA · Mi progreso</h1>
+  <h1>Mi progreso</h1>
   <p>Te comparas contigo: tu línea base, tu tendencia y tu plan de hoy. Los datos viven sólo en este navegador.</p>
 </header>
 
@@ -31,6 +31,8 @@
     <h2>Resumen</h2>
     <div class="kpis" id="kpis"></div>
     <p class="note" id="empty"></p>
+    <div class="btns hidden" id="shareBox"><button id="btnShare">📤 Compartir mi avance</button></div>
+    <p class="note" id="shareMsg" aria-live="polite"></p>
   </section>
 
   <section class="card full">
@@ -97,6 +99,7 @@
 import { $, esc, colorFor, mean, renderNav, loadSessions, loadProfile, saveProfile, clearAll, calmText, aiStatus, postJSON } from './shared.js';
 import { todayTask, streak } from './plan.js';
 import { diagnosisHTML, drawRadar, goalsHTML, goalHref } from './goals.js';
+import { shareStats, shareProgress } from './share.js';
 
 renderNav();
 const sessions = loadSessions().sort((a, b) => a.date.localeCompare(b.date));
@@ -226,6 +229,16 @@ $('rows').innerHTML = [...sessions].reverse().slice(0, 50).map(s =>
   `<tr><td>${new Date(s.date).toLocaleString('es')}</td><td>${esc(s.scenarioName)}</td>
    <td><span class="pill" style="color:${colorFor(s.total)}">${s.total}</span></td>
    <td>${s.anxietyBefore != null ? `${s.anxietyBefore} → ${s.anxietyAfter ?? '–'}` : '–'}</td></tr>`).join('');
+// Compartir el avance (sólo Índice, racha y número de prácticas), cuando ya hay algo que mostrar.
+const share = shareStats(profile, sessions, streak(sessions));
+if (share.practices >= 3 || share.index != null) $('shareBox').classList.remove('hidden');
+$('btnShare').addEventListener('click', async () => {
+  try {
+    const how = await shareProgress(share);
+    $('shareMsg').textContent = how === 'downloaded' ? 'Guardamos la imagen «mi-avance-voxa.png»: compártela donde quieras.' : '';
+  } catch (e) { if (e.name !== 'AbortError') $('shareMsg').textContent = 'No se pudo compartir: ' + e.message; }
+});
+
 $('btnExport').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify({ profile, sessions }, null, 2)], { type: 'application/json' });
   const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'voxa-datos.json' });
