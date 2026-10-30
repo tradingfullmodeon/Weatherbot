@@ -41,9 +41,9 @@ Además, «vox» significa «voz» en latín y lo usan decenas de marcas de audi
 
 | Candidato | Conflictos encontrados | Se mantiene |
 |---|---|---|
-| **Aplomo** | Ninguno en apps ni marcas de la categoría ([búsqueda 1](https://www.educationalappstore.com/best-apps/public-speaking-apps), [búsqueda 2](https://www.appbrain.com/dev/Applomo/): solo un desarrollador «Applomo», sin apps) | ✅ Finalista |
+| **Aplomo** | Ninguno en apps ni marcas de la categoría. Búsqueda web del 30 de octubre de 2026: solo un desarrollador llamado «Applomo», sin apps relacionadas ([AppBrain](https://www.appbrain.com/dev/Applomo/)) | ✅ Finalista |
 | **Atril** | Es el visor de documentos del escritorio MATE de Linux (otro rubro). Además, un atril evoca **leer**, y VOXA enseña a hablar sin leer | ✅ Finalista, con reparos |
-| **En Voz Alta** | Ninguna app ([búsqueda](https://apps.apple.com/py/app/voz/id1617462076)). Pero es descriptivo y difícil de registrar como marca | ✅ Finalista, con reparos |
+| **En Voz Alta** | Búsqueda web sin apps con ese nombre. Pero es descriptivo y difícil de registrar como marca | ✅ Finalista, con reparos |
 | **Tribuna** | Muy usado por diarios y medios políticos; remite solo a hablar en público | ✅ Finalista |
 | **Fluye** | Común en apps de bienestar y meditación | ✅ Finalista |
 | Elocua | Muy parecido a **Eloca: Articulation Coach**, una app de articulación ([mwm.ai](https://mwm.ai/ja/apps/eloca-articulation-training/6761021211)) | ❌ |
