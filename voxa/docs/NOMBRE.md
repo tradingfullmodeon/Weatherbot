@@ -129,3 +129,76 @@ Todo el texto visible que dice «VOXA» pasa a decir «Aplomo»:
 - los textos de las fichas ([TIENDAS.md](TIENDAS.md) §6).
 
 El código interno puede seguir llamándose `voxa` sin que nadie lo vea. Es un cambio de un día, con el recorrido automático completo para verificarlo.
+
+---
+
+# Segunda ronda: benchmark por región y panel de creadores de marca
+
+## 9. Cómo nombran las apps mejor evaluadas en cada región
+
+| Región | Apps (nota) | Cómo se construye el nombre | Patrón |
+|---|---|---|---|
+| **Asia** | Cake 4,9 (Corea) · Speak 4,8 (Corea y EE. UU.) · ELSA 4,8 (Vietnam) · Praktika 4,7 · Stimuler 4,7 (India) · Liulishuo 4,5 (China) · Speak Buddy (Japón) | Cake es una palabra común, ajena a la categoría. ELSA es una sigla con forma de nombre propio. Liulishuo (流利说) se lee «hablar con fluidez». Speak Buddy junta acción y compañía | **Palabras simples o una promesa literal.** En China y Japón se valora que el nombre diga el beneficio |
+| **Europa** | Babbel 4,7 (Alemania) · Busuu 4,5 (Reino Unido) · Preply 4,7 · Gymglish (Francia) · Vocal Image 4,5 (Estonia) | Babbel viene de *babble* y *babbeln*, «charlar» ([Wikipedia](https://en.wikipedia.org/wiki/Babbel)). Gymglish junta gimnasio e inglés. Busuu y Preply son inventados | **Juegos de palabras cortos y fáciles de pronunciar en varios idiomas**: deben funcionar en inglés, alemán, francés y español a la vez |
+| **América** | BoldVoice 4,8 · Wellspoken 4,8 · Duolingo 4,7 · Yoodli 4,8 · Orai 4,6 · Poised (cerró) · Open English 4,7 | Nombran el resultado (Bold, Well-spoken, Poised) o son compuestos lúdicos (Duolingo: dúo + *lingo*) | **El resultado en una o dos palabras**, en tono positivo |
+| **Hispanohablante** | Platzi, Crehana y Domestika (educación) · en oratoria, solo «Curso de Oratoria» y «Hablar en Público» | Marcas inventadas y sonoras para educación; descriptivas y genéricas para oratoria | **No hay una marca de oratoria que ocupe el espacio** |
+
+**Conclusión del barrido:** los tres patrones que más se repiten entre las mejor evaluadas son nombrar el resultado, usar palabras cortas y fáciles de decir en varios idiomas, y tener un tono positivo. «Aplomo» cumple los tres y además tiene equivalentes con el mismo significado en inglés y francés (*aplomb*).
+
+## 10. Panel de creadores de marca (simulado)
+
+Siete perfiles de especialistas, definidos como arquetipos de cómo trabajan las agencias de naming e identidad. Es una simulación: no son personas reales ni hablan por ninguna agencia.
+
+| Perfil | Pregunta que hace |
+|---|---|
+| Directora de naming de agencia global | ¿Es propio, sonoro y fácil de registrar? |
+| Director creativo de identidad visual | ¿Cómo se ve en un ícono de 60 px y en un logo? |
+| Especialista en marcas de Asia | ¿Se pronuncia bien en japonés, coreano y chino? ¿Tiene connotaciones raras? |
+| Brand lead europeo | ¿Funciona en inglés, francés, alemán y portugués? ¿Qué riesgo tiene ante la EUIPO? |
+| Creadora de marcas para Latinoamérica y España | ¿Qué significa en cada país? ¿Hay algún doble sentido? |
+| Experto en sonido de marca (fonosimbolismo) | ¿Qué sensación transmiten sus sonidos? |
+| Fundador de app de consumo | ¿Se recomienda solo, de boca en boca? |
+
+**El panel propuso cinco nombres nuevos** y revisó si chocaban con algo existente:
+
+| Nombre | Idea | Conflictos encontrados |
+|---|---|---|
+| **Habli** | Inventado, de «hablar», con tono amable (como Speeko o Duolingo) | Ninguna app con ese nombre; parecido lejano a HABBL, una app para camioneros ([habbl.com](https://habbl.com/en/habbl-guides-people)) |
+| **Vivaz** | Voz con energía | No se encontró una app con ese nombre; existe «VIVAit Call», de telefonía ([App Store](https://apps.apple.com/es/app/vivait-call-business/id6449590531)) |
+| **Fonia** | De «fono», voz | No se encontró una app; evoca telefonía («telefonía», «radiofonía») |
+| **Aplo** | Versión corta de Aplomo | Muy parecido a **Aplos**, software contable conocido ([Wikipedia](https://en.wikipedia.org/wiki/Aplos_Software)) |
+| **Atril** | Ya evaluado en la primera ronda | Visor de documentos de Linux; además evoca leer |
+
+## 11. «Aplomo» en distintos idiomas y países
+
+| Idioma o país | Cómo se dice y qué evoca | Riesgo |
+|---|---|---|
+| Español (todos los países) | a-PLO-mo: «serenidad y seguridad al actuar» | **Matiz en Argentina, Uruguay y España:** «ser un plomo» es coloquial para alguien pesado o aburrido. El panel lo juzgó bajo: «aplomo» es otra palabra, conocida y siempre positiva. Conviene preguntarlo en la prueba con personas de esos países |
+| Inglés | *aplomb* (a-PLOM), con el mismo significado | Positivo |
+| Francés | *aplomb*, con el mismo significado | Positivo |
+| Italiano | Se usa *aplomb*, tomado del francés | Positivo |
+| Portugués (Brasil) | *aprumo* significa compostura, y se parece | Positivo |
+| Japonés | アプロモ (a-pu-ro-mo): fácil y sin significado negativo | Neutro |
+| Coreano | 아플로모 (a-peul-lo-mo): fácil | Neutro |
+| Chino | Habría que elegir caracteres al transcribirlo, como hizo Liulishuo con un nombre que dice el beneficio | Decidirlo solo si se entra a China |
+
+## 12. Puntajes de la segunda ronda
+
+| Criterio (peso) | Aplomo | Habli | Vivaz | Atril | Fonia | Aplo |
+|---|---|---|---|---|---|---|
+| Recordación (20%) | 4,5 | 4,5 | 4,0 | 4,0 | 3,5 | 4,0 |
+| Asociación con la promesa (20%) | **5,0** | 3,5 | 3,5 | 3,5 | 3,0 | 3,5 |
+| Funciona en Asia, Europa y América (15%) | **4,5** | 3,5 | 3,0 | 3,0 | 3,5 | 4,0 |
+| Distintivo y registrable (15%) | 4,0 | **4,5** | 3,5 | 3,5 | 3,5 | 2,5 |
+| Sin conflictos conocidos (10%) | 4,5 | 4,0 | 4,0 | 3,0 | 3,5 | 2,0 |
+| Autoridad y calidez (10%) | **5,0** | 3,0 | 3,5 | 3,5 | 3,0 | 3,5 |
+| Se recomienda de boca en boca (10%) | 4,5 | 4,5 | 4,0 | 4,0 | 3,5 | 3,5 |
+| **Total** | **4,63** | 3,93 | 3,63 | 3,53 | 3,33 | 3,38 |
+
+**Veredicto del panel:**
+- **Aplomo se confirma.** Es el único que dice el resultado, se entiende en las lenguas romances y en inglés, y transmite autoridad.
+- **Plan B: Habli.** Es inventado, así que es fácil de registrar y de encontrar libre como dominio. Su contra es que suena más infantil y no dice qué se logra. Sirve si la búsqueda legal de «Aplomo» encuentra un impedimento.
+
+**Lo que pidió el director de identidad:** el logo en minúsculas, «aplomo», con la «o» final como una onda de voz que termina estable. En el ícono, solo esa «o» sobre el índigo de la app.
+
+**Lo que pidió la creadora para Latinoamérica:** en la prueba de la beta, incluir al menos 5 personas de Argentina o Uruguay y 5 de España, y preguntar «¿te suena a algo negativo?».
