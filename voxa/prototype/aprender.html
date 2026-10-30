@@ -25,7 +25,8 @@
 </main>
 
 <script type="module">
-import { $, renderNav, loadProfile, saveProfile } from './shared.js';
+import { $, esc, renderNav, loadProfile, saveProfile, loadSessions } from './shared.js';
+import { currentLevel } from './levels.js';
 import { LESSONS, lessonListHTML, lessonHTML, bindQuiz } from './lessons.js';
 
 renderNav();
@@ -42,7 +43,10 @@ function practiceHref(p) {
 
 function renderList() {
   const n = Object.values(profile.lessons).filter(Boolean).length;
-  $('progressNote').textContent = `${n} de ${LESSONS.length} lecciones completadas.`;
+  const lvl = currentLevel(profile, loadSessions());
+  const mine = lvl.lessons.map(id => LESSONS.find(l => l.id === id)).filter(Boolean);
+  $('progressNote').innerHTML = `${n} de ${LESSONS.length} lecciones completadas.` + (mine.length ? ` <strong>Para tu nivel (${esc(lvl.name)}):</strong> ` +
+    mine.map(l => `<button type="button" class="link-btn" data-lesson="${l.id}">${esc(l.title)}</button>`).join(' · ') : '');
   $('list').innerHTML = lessonListHTML(profile.lessons);
   $('listCard').classList.remove('hidden'); $('lessonCard').classList.add('hidden');
 }
@@ -52,7 +56,7 @@ function open(id) {
   $('listCard').classList.add('hidden'); $('lessonCard').classList.remove('hidden');
   window.scrollTo(0, 0);
 }
-$('list').addEventListener('click', (e) => { const b = e.target.closest('[data-lesson]'); if (b) open(b.dataset.lesson); });
+$('listCard').addEventListener('click', (e) => { const b = e.target.closest('[data-lesson]'); if (b) open(b.dataset.lesson); });
 $('lessonCard').addEventListener('click', (e) => {
   if (e.target.closest('[data-back]')) return renderList();
   const p = e.target.closest('[data-practice]');

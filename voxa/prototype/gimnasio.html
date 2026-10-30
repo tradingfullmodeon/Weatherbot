@@ -34,7 +34,7 @@
     <div class="prompt" id="howto"></div>
     <div id="extra"></div>
     <div class="btns">
-      <button id="btnGo" class="cta">▶ Empezar</button>
+      <button id="btnGo" class="cta">Empezar</button>
       <button id="btnStop" class="hidden">■ Terminar</button>
     </div>
     <p class="note" id="status">Usa auriculares si puedes y un lugar tranquilo. El audio se analiza en tu navegador y no se graba.</p>
@@ -292,7 +292,7 @@ function finish() {
     const prev = bests()['gym:' + ex.id];
     saveSession({ id: Date.now().toString(36), date: new Date().toISOString(), type: 'gimnasio', scenario: 'gym:' + ex.id,
       scenarioName: 'Gimnasio: ' + ex.name, total: r.score, dims: { [ex.short]: r.score }, metrics: r.metrics });
-    $('result').innerHTML = `<div><h3 style="color:var(--good)">Resultado</h3>${r.good}${prev != null && r.score > prev ? ' <strong>¡Nueva mejor marca!</strong>' : ''}</div>
+    $('result').innerHTML = `<div><h3 style="color:var(--good)">Resultado</h3>${r.good}${prev != null && r.score > prev ? ' <strong>Nueva mejor marca.</strong>' : ''}</div>
       <div><h3 style="color:var(--accent)">Para mejorar</h3>${ex.tip}</div>`;
     renderExercises();
   };

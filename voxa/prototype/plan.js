@@ -1,6 +1,8 @@
 // Sprint de 30 días: una dimensión por semana (práctica deliberada). Cada tarea enlaza a la práctica
 // concreta para que «la práctica de hoy» sea un solo toque desde Inicio.
 import { loadSessions, localDay } from './shared.js';
+import { levelOfScenario, levelInfo } from './levels.js';
+import { SCENARIOS } from './scenarios.js';
 
 const t = (text, href) => ({ text, href });
 
@@ -53,12 +55,23 @@ export function sprintDay(sessions = loadSessions()) {
   return new Set(sessions.map(s => dayKey(s.date)).filter(d => d < today)).size;
 }
 
-export function todayTask(sessions = loadSessions()) {
+// level: nivel actual (levels.js). Si la tarea del plan está más de un nivel por encima, se cambia por una situación del
+// nivel siguiente al tuyo: el desafío justo (exposición gradual) en lugar de uno que frustra.
+export function todayTask(sessions = loadSessions(), level = null) {
   const day = sprintDay(sessions);
   if (day === null) return { day: 0, week: 'Día 0 · Diagnóstico', text: 'Preséntate en 60 segundos: será tu punto de partida.', href: 'evaluar.html?escenario=intro' };
   if (day >= 28) return { day, week: 'Sprint completado', text: 'Repite tu primer escenario y compara cuánto mejoraste.', href: 'evaluar.html?escenario=intro' };
   const w = SPRINT[Math.floor(day / 7)];
-  return { day: day + 1, week: w.week, ...w.tasks[day % 7] };
+  return { day: day + 1, week: w.week, ...fitToLevel(w.tasks[day % 7], level, day) };
+}
+
+function fitToLevel(task, level, day) {
+  const id = new URLSearchParams(task.href.split('?')[1] || '').get('escenario');
+  if (!level || !id || levelOfScenario(id) <= level.n + 1) return task;
+  const target = levelInfo(level.n + 1);
+  const alt = target.scenarios[day % target.scenarios.length];
+  const name = (x) => SCENARIOS.find(sc => sc.id === x)?.name || x;
+  return { text: `Desafío a tu medida (nivel ${target.n}): ${name(alt)}. «${name(id)}» llega más adelante en tu ruta.`, href: `evaluar.html?escenario=${alt}` };
 }
 
 // Racha con día de descanso (como el protector de racha de Duolingo): un día suelto sin práctica cada 7 no la corta.

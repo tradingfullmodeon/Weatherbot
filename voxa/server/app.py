@@ -270,7 +270,7 @@ Objetivo personal del usuario: {req.goal or "no indicado"}
 Idioma: {LANGUAGE_NAMES[req.language]} (reconocimiento de voz {req.locale})
 Duración: {round(req.duration_s)} s
 Ansiedad declarada antes de empezar (1-5): {req.anxiety_before if req.anxiety_before is not None else "no indicada"}
-Puntaje Talkride automático: {req.total}/100 {req.dims}
+Puntaje automático de la práctica: {req.total}/100 {req.dims}
 Métricas:
 {metrics or "- (sin métricas)"}
 

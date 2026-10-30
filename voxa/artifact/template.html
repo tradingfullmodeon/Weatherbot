@@ -15,15 +15,15 @@
   <!-- ============================ HOY ============================ -->
   <section class="view" id="v-hoy" data-title="Hoy">
     <div class="card full hidden" id="welcome">
-      <h2>Bienvenido a Talkride 👋</h2>
+      <h2>Bienvenido a Talkride </h2>
       <p class="lead">En unos minutos al día vas a hablar y escribir con más claridad y confianza. Primero, dos preguntas rápidas.</p>
       <h3>1. ¿Para qué quieres mejorar?</h3>
       <div class="chips-select" id="wGoal" role="group" aria-label="Objetivo"></div>
       <h3 style="margin-top:16px">2. ¿Cómo te sientes al hablar frente a otros?</h3>
       <div class="chips-select" id="wNerves" role="group" aria-label="Nervios al hablar en público">
-        <button type="button" data-v="1" aria-pressed="false">😌 Cómodo/a</button>
-        <button type="button" data-v="3" aria-pressed="false">😐 Algo nervioso/a</button>
-        <button type="button" data-v="5" aria-pressed="false">😰 Me cuesta mucho</button>
+        <button type="button" data-v="1" aria-pressed="false">Cómodo/a</button>
+        <button type="button" data-v="3" aria-pressed="false">Algo nervioso/a</button>
+        <button type="button" data-v="5" aria-pressed="false">Me cuesta mucho</button>
       </div>
       <div class="btns" style="margin-top:18px"><button id="wDone" class="cta" disabled>Empezar mi diagnóstico</button></div>
       <p class="note">No necesitas crear una cuenta. Tu progreso queda guardado en este navegador.</p>
@@ -33,7 +33,7 @@
       <div class="muted" id="tWeek"></div>
       <h2 style="font-size:1.35rem;margin:4px 0 8px" id="tText"></h2>
       <p class="muted" id="tWhy"></p>
-      <div class="btns"><button class="btn-link cta" id="tGo">▶ Hacer la práctica de hoy</button></div>
+      <div class="btns"><button class="btn-link cta" id="tGo">Hacer la práctica de hoy</button></div>
       <p class="note" id="tAlt"></p>
       <p class="note" id="tStreak"></p>
     </div>
@@ -52,12 +52,12 @@
     <div class="card full" id="quickCard">
       <h2>Practica lo que necesites</h2>
       <div class="quick">
-        <button data-go="evento"><strong>📅 Evento real</strong><span>Prepara una entrevista, charla o reunión con fecha.</span></button>
-        <button data-go="ensayar"><strong>🎤 Ensayar</strong><span>Escribe lo que dirías o sube una grabación de tu celular.</span></button>
-        <button data-go="roleplay"><strong>💬 Roleplay</strong><span>Ensaya una conversación difícil con un personaje.</span></button>
-        <button data-go="escritura"><strong>✍️ Escritura</strong><span>Mejora un correo o mensaje antes de enviarlo.</span></button>
-        <button data-go="aprender"><strong>📘 Aprender</strong><span>Lecciones de 2 minutos con práctica incluida.</span></button>
-        <button data-go="progreso"><strong>📈 Progreso</strong><span>Tu evolución, tu racha y tu escalera de confianza.</span></button>
+        <button data-go="evento"><strong>Evento real</strong><span>Prepara una entrevista, charla o reunión con fecha.</span></button>
+        <button data-go="ensayar"><strong>Ensayar</strong><span>Escribe lo que dirías o sube una grabación de tu celular.</span></button>
+        <button data-go="roleplay"><strong>Roleplay</strong><span>Ensaya una conversación difícil con un personaje.</span></button>
+        <button data-go="escritura"><strong>Escritura</strong><span>Mejora un correo o mensaje antes de enviarlo.</span></button>
+        <button data-go="aprender"><strong>Aprender</strong><span>Lecciones de 2 minutos con práctica incluida.</span></button>
+        <button data-go="progreso"><strong>Progreso</strong><span>Tu evolución, tu racha y tu escalera de confianza.</span></button>
       </div>
     </div>
 
@@ -68,7 +68,7 @@
     </div>
 
     <div class="card" id="remindCard">
-      <h2>⏰ Recordatorio diario</h2>
+      <h2>Recordatorio diario</h2>
       <p class="note">Practicar siempre a la misma hora ayuda a crear el hábito. Elige la hora y tu calendario te avisará cada día.</p>
       <div class="row"><div><label for="remindTime">Hora</label><input type="time" id="remindTime" class="field" value="08:30"></div></div>
       <div class="btns"><a class="btn-link primary" id="remindGoogle" target="_blank" rel="noopener">Agregar a Google Calendar</a></div>
@@ -79,7 +79,7 @@
       <p id="aiState" class="note">Comprobando si Claude está disponible en esta página…</p>
       <p class="note">La primera vez que pidas un consejo, claude.ai te pedirá permiso. Las consultas usan tu propia cuenta de Claude.</p>
     </div>
-    <details class="card full help-card" id="helpHoy"><summary>💙 ¿Te sientes muy mal?</summary><div class="help-box"></div></details>
+    <details class="card full help-card" id="helpHoy"><summary>¿Te sientes muy mal?</summary><div class="help-box"></div></details>
   </section>
 
   <!-- ============================ ENSAYAR ============================ -->
@@ -96,8 +96,8 @@
     <div class="card">
       <h2>3. Ensaya</h2>
       <div class="seg" role="tablist" aria-label="Modo de ensayo">
-        <button role="tab" id="mText" aria-selected="true">✍️ Escribir mi respuesta</button>
-        <button role="tab" id="mAudio" aria-selected="false">🎙 Grabarme o subir audio</button>
+        <button role="tab" id="mText" aria-selected="true">Escribir mi respuesta</button>
+        <button role="tab" id="mAudio" aria-selected="false">Grabarme o subir audio</button>
       </div>
 
       <div id="paneText">
@@ -109,11 +109,11 @@
       <div id="paneAudio" class="hidden">
         <p class="note">Graba tu respuesta y Talkride la analiza en tu navegador: no se sube a ningún lado.</p>
         <div class="rec-choices">
-          <label for="recVideo" class="btn-link cta">🎥 Grabarme en video</label>
+          <label for="recVideo" class="btn-link cta">Grabarme en video</label>
           <input type="file" id="recVideo" accept="video/*" capture="user" class="visually-hidden">
-          <label for="recAudio" class="btn-link file-btn">🎙 Grabar sólo mi voz</label>
+          <label for="recAudio" class="btn-link file-btn">Grabar sólo mi voz</label>
           <input type="file" id="recAudio" accept="audio/*" capture class="visually-hidden">
-          <label for="file" class="btn-link file-btn">📁 Elegir una grabación que ya tengo</label>
+          <label for="file" class="btn-link file-btn">Elegir una grabación que ya tengo</label>
           <input type="file" id="file" accept="audio/*,video/*" class="visually-hidden">
         </div>
         <p class="note" id="recHelp"></p>
@@ -199,7 +199,7 @@
         <p class="note">Se usa sólo durante esta práctica. <span id="ctxCount">0</span>/8000</p>
       </details>
       <p class="note no-ai-only">Sin el coach IA, practicas con un entrevistador de preguntas fijas.</p>
-      <div class="btns"><button id="btnBegin" class="cta">▶ Comenzar conversación</button></div>
+      <div class="btns"><button id="btnBegin" class="cta">Comenzar conversación</button></div>
     </div>
 
     <div class="card full hidden" id="rpStage">
@@ -252,7 +252,7 @@
       <div class="ai-only">
         <h2 style="margin-top:18px">Coach IA</h2>
         <p class="note">Recibe una versión mejorada lista para enviar, sin datos inventados (lo que falte queda marcado como [así]).</p>
-        <div class="btns"><button id="btnWAI" class="cta" disabled>✨ Mejorar mi texto</button></div>
+        <div class="btns"><button id="btnWAI" class="cta" disabled>Mejorar mi texto</button></div>
         <div id="wOut" aria-live="polite"></div>
       </div>
     </div>
@@ -274,11 +274,11 @@
       <h2>2. Prueba de voz: preséntate en 60 segundos</h2>
       <div class="prompt"><strong>Preséntate en 60 segundos</strong>Quién eres, qué haces y qué te apasiona. Cierra con una frase memorable.</div>
       <div class="rec-choices">
-        <label for="dgVideo" class="btn-link cta">🎥 Grabarme en video</label>
+        <label for="dgVideo" class="btn-link cta">Grabarme en video</label>
         <input type="file" id="dgVideo" accept="video/*" capture="user" class="visually-hidden">
-        <label for="dgAudio" class="btn-link file-btn">🎙 Grabar sólo mi voz</label>
+        <label for="dgAudio" class="btn-link file-btn">Grabar sólo mi voz</label>
         <input type="file" id="dgAudio" accept="audio/*" capture class="visually-hidden">
-        <label for="dgFile" class="btn-link file-btn">📁 Elegir una grabación</label>
+        <label for="dgFile" class="btn-link file-btn">Elegir una grabación</label>
         <input type="file" id="dgFile" accept="audio/*,video/*" class="visually-hidden">
       </div>
       <p class="note" id="dgFileName"></p>
@@ -330,7 +330,7 @@
     <div class="card full hidden" id="evCard">
       <div id="eventOut"></div>
       <div class="btns">
-        <button id="evQuestionsAI" class="primary ai-only">✨ Preguntas personalizadas con IA</button>
+        <button id="evQuestionsAI" class="primary ai-only">Preguntas personalizadas con IA</button>
         <button id="evNew">Preparar otro evento</button>
       </div>
       <p class="note" id="evSaved" aria-live="polite"></p>
@@ -393,8 +393,8 @@
       <div class="btns"><button class="cta" id="rateSend">Enviar mi calificación</button></div>
       <p class="note" id="rateMsg" aria-live="polite"></p>
     </div>
-    <details class="card full help-card" id="proHelp"><summary>🧭 Buscar un profesional</summary><div class="pro-box"></div></details>
-    <details class="card full help-card" id="helpProg"><summary>💙 ¿Te sientes muy mal?</summary><div class="help-box"></div></details>
+    <details class="card full help-card" id="proHelp"><summary>Buscar un profesional</summary><div class="pro-box"></div></details>
+    <details class="card full help-card" id="helpProg"><summary>¿Te sientes muy mal?</summary><div class="help-box"></div></details>
     <div class="card full hidden" id="ownerCard">
       <h2>Calificaciones de tus usuarios (sólo tú lo ves)</h2>
       <div id="ownerOut"></div>

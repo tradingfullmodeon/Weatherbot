@@ -105,7 +105,7 @@ export function mountDeviceCheck(box) {
         an.getFloatTimeDomainData(buf);
         const lvl = Math.min(1, rmsOf(buf) * 8); peak = Math.max(peak, lvl);
         $('dcVol').style.width = Math.round(lvl * 100) + '%';
-        $('dcLevel').textContent = peak > 0.15 ? '¡Te escuchamos bien!' : peak > 0.04 ? 'Se te escucha bajo: acércate al micrófono' : '';
+        $('dcLevel').textContent = peak > 0.15 ? 'Te escuchamos bien.' : peak > 0.04 ? 'Se te escucha bajo: acércate al micrófono' : '';
         raf = requestAnimationFrame(tick);
       };
       tick();

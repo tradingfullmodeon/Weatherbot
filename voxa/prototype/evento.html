@@ -40,7 +40,7 @@
   <section class="card full hidden" id="eventCard">
     <div id="eventOut"></div>
     <div class="btns">
-      <button id="evQuestionsAI" class="primary hidden">✨ Preguntas personalizadas con IA</button>
+      <button id="evQuestionsAI" class="primary hidden">Preguntas para tu caso, con el coach</button>
       <button id="evNew">Preparar otro evento</button>
     </div>
     <p class="note" id="evSaved" aria-live="polite"></p>
@@ -120,7 +120,7 @@ $('evQuestionsAI').addEventListener('click', async () => {
   } finally { stopWait(); $('evQuestionsAI').disabled = false; }
 });
 function renderAIQuestions(qs) {
-  $('evAI').innerHTML = `<h3>✨ Preguntas para tu caso</h3>` + qs.map(x => `<details><summary>${esc(x.q)}</summary><p class="note">${esc(x.why)}</p><p><strong>Cómo responder:</strong> ${esc(x.tip)}</p></details>`).join('');
+  $('evAI').innerHTML = `<h3>Preguntas para tu caso</h3>` + qs.map(x => `<details><summary>${esc(x.q)}</summary><p class="note">${esc(x.why)}</p><p><strong>Cómo responder:</strong> ${esc(x.tip)}</p></details>`).join('');
 }
 
 show();

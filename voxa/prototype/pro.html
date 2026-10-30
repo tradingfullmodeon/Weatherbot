@@ -75,7 +75,7 @@ async function confirmPro(isPro) {
     await new Promise(r => setTimeout(r, 2000));
   }
   showPlan();
-  $('buyMsg').textContent = me?.plan === 'pro' ? '¡Bienvenido a Pro! El coach IA ya está disponible.' : 'Tu compra quedó registrada; el plan se activará en unos minutos.';
+  $('buyMsg').textContent = me?.plan === 'pro' ? 'Listo: tienes Pro. El coach IA ya está disponible.' : 'Tu compra quedó registrada; el plan se activará en unos minutos.';
 }
 
 async function showBuy() {

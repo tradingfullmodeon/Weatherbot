@@ -55,7 +55,7 @@
       <textarea id="ctx" maxlength="8000" placeholder="Ej.: Analista de datos en una fintech. Requisitos: SQL avanzado, Power BI, comunicación con áreas de negocio…"></textarea>
       <p class="note">Se envía al personaje sólo durante esta práctica y no se guarda. <span id="ctxCount">0</span>/8000</p>
     </details>
-    <div class="btns"><button id="btnBegin" class="cta">▶ Comenzar conversación</button></div>
+    <div class="btns"><button id="btnBegin" class="cta">Comenzar conversación</button></div>
   </section>
 
   <section class="card full" id="stage" style="display:none">
@@ -63,7 +63,7 @@
     <div class="chat" id="chat" aria-live="polite"></div>
     <div class="hint" id="hint"></div>
     <div class="talk">
-      <button id="btnMic" class="cta" aria-pressed="false">🎙 Tocar para hablar</button>
+      <button id="btnMic" class="cta" aria-pressed="false">Tocar para hablar</button>
       <input id="txt" placeholder="…o escribe tu respuesta y pulsa Enter">
       <button id="btnSend">Enviar</button>
     </div>
@@ -92,7 +92,7 @@
 
 <script type="module">
 import {
-  $, FILLER_RE, countMatches, wordCount, mean, esc, colorFor, highlight, renderNav, saveSession, aiStatus, postJSON, AI_MIN_WORDS, waitMessages, WAIT_STEPS, userLocale, loadProfile, saveProfile,
+  $, FILLER_RE, countMatches, wordCount, mean, esc, colorFor, highlight, renderNav, saveSession, aiStatus, postJSON, AI_MIN_WORDS, waitMessages, WAIT_STEPS, userLocale, loadProfile, saveProfile, loadSessions,
 } from './shared.js';
 import { unblockHelp } from './devices.js';
 import { INTERVIEW_PERSONA, createInterview, currentQuestion, interviewNext, interviewHint, interviewProgress, interviewScore, interviewReportHTML, quoteSaid } from './interview.js';
@@ -100,6 +100,7 @@ import { isCrisis } from './help.js';
 import { orderPersonas, rememberRoleplay, memoryNote, SHOWN_FIRST } from './memory.js';
 import { upgradeHTML } from './plan-pro.js';
 import { ringHTML } from './charts.js';
+import { currentLevel } from './levels.js';
 
 renderNav();
 const locale = userLocale();
@@ -138,7 +139,7 @@ function renderPersonas() {
     $('morePersonasBox').classList.remove('hidden');
     $('morePersonas').addEventListener('click', () => { $('personas').querySelectorAll('.persona.hidden').forEach(b => b.classList.remove('hidden')); $('morePersonasBox').classList.add('hidden'); }, { once: true });
   }
-  if (['1', '2', '3'].includes(q.get('dificultad')) && !$('difficulty').disabled) $('difficulty').value = q.get('dificultad');
+  if (!$('difficulty').disabled) $('difficulty').value = ['1', '2', '3'].includes(q.get('dificultad')) ? q.get('dificultad') : String(currentLevel(loadProfile(), loadSessions()).difficulty);
   pick(personas.some(p => p.id === wanted) ? wanted : personas[0].id);
 }
 function pick(id) {
@@ -205,7 +206,7 @@ function say(text) {
 }
 
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (!SR) { $('btnMic').disabled = true; $('btnMic').textContent = '🎙 No disponible en este navegador'; }
+if (!SR) { $('btnMic').disabled = true; $('btnMic').textContent = 'Voz no disponible en este navegador'; }
 function startListening() {
   if (!SR || recognition) return;
   speechSynthesis?.cancel();
@@ -234,7 +235,7 @@ function stopListening() {
   if (!recognition) return;
   const r = recognition; recognition = null;
   const ms = performance.now() - recStart;
-  $('btnMic').classList.remove('rec-on'); $('btnMic').setAttribute('aria-pressed', 'false'); $('btnMic').textContent = '🎙 Tocar para hablar';
+  $('btnMic').classList.remove('rec-on'); $('btnMic').setAttribute('aria-pressed', 'false'); $('btnMic').textContent = 'Tocar para hablar';
   r.onend = () => send(ms);
   r.stop();
 }
@@ -257,15 +258,15 @@ async function send(ms) {
     if (ai) {
       const out = await postJSON('api/roleplay', { persona_id: persona.id, difficulty: +$('difficulty').value, history: history.map(({ role, text }) => ({ role, text })), context: personaContext() });
       addTurn('persona', out.reply);
-      $('hint').textContent = $('showHints').checked && out.coach_hint ? '💡 ' + out.coach_hint : '';
-      if (out.safety_note) $('hint').textContent = '💙 ' + String(out.safety_note);
+      $('hint').textContent = $('showHints').checked && out.coach_hint ? 'Pista: ' + out.coach_hint : '';
+      if (out.safety_note) $('hint').textContent = String(out.safety_note);
       if (out.end) $('status').textContent = 'La conversación llegó a un cierre. Pulsa «Terminar y evaluar».';
       else $('status').textContent = '';
     } else {
       const asked = currentQuestion(offline);
       const next = interviewNext(offline, text, userTexts());
       if (next) addTurn('persona', next);
-      $('hint').textContent = $('showHints').checked ? '💡 ' + interviewHint(text, asked) : '';
+      $('hint').textContent = $('showHints').checked ? 'Pista: ' + interviewHint(text, asked) : '';
       $('status').textContent = next ? interviewProgress(offline) : 'Fin del simulacro. Pulsa «Terminar y evaluar».';
     }
   } catch (e) {

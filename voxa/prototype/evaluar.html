@@ -37,7 +37,7 @@
     </label>
 
     <div class="btns" style="margin-top:16px">
-      <button id="btnStart" class="cta">▶ Empezar</button>
+      <button id="btnStart" class="cta">Empezar</button>
     </div>
     <p class="note" id="status" aria-live="polite">Te pediremos permiso para usar la cámara y el micrófono. Nada se sube a internet. <a href="index.html#dispositivos">Probar mis dispositivos</a></p>
   </section>
@@ -139,6 +139,7 @@ import { requestMedia, explainError } from './devices.js';
 import { upgradeHTML } from './plan-pro.js';
 import { LESSONS, LESSON_FOR_METRIC } from './lessons.js';
 import { guiraud, MIN_SPEECH_SECONDS, PITCH_MAX_HZ, scoreSpeech } from './audiofile.js';
+import { currentLevel, levelOfScenario, SOLID } from './levels.js';
 import { loadVision as loadPresence, analyzeFace, presenceSummary, presenceItems } from './presence.js';
 
 renderNav();
@@ -147,7 +148,7 @@ const locale = userLocale(profile);
 const params = new URLSearchParams(location.search);
 
 // ---------------------------------------------------------------- escala de nervios (5 botones)
-const FEEL = [['😌', 'Tranquilo'], ['🙂', 'Bien'], ['😐', 'Algo'], ['😟', 'Nervioso'], ['😰', 'Mucho']];
+const FEEL = [['1', 'Tranquilo'], ['2', 'Bien'], ['3', 'Algo'], ['4', 'Nervioso'], ['5', 'Mucho']];
 function feelScale(id, initial, onChange) {
   const box = $(id); let value = initial;
   box.innerHTML = FEEL.map(([e, l], i) => `<button type="button" data-v="${i + 1}" aria-pressed="${i + 1 === value}" aria-label="${i + 1} de 5: ${l}">${e}<small>${l}</small></button>`).join('');
@@ -177,10 +178,15 @@ let attention = [];    // atención de la audiencia virtual (0–1) por segundo
 let lastVideoTime = -1;
 
 // ---------------------------------------------------------------- escenario
+// Cada situación muestra su nivel; las de niveles más altos se marcan como desafío (se pueden hacer igual).
+const myLevel = currentLevel(profile, loadSessions());
 for (const g of GROUPS) {
   const og = document.createElement('optgroup');
   og.label = g;
-  for (const s of SCENARIOS.filter(x => x.group === g)) og.appendChild(new Option(`${s.name} · ${s.seconds} s`, s.id));
+  for (const s of SCENARIOS.filter(x => x.group === g)) {
+    const n = levelOfScenario(s.id);
+    og.appendChild(new Option(`${s.name} · nivel ${n}${n > myLevel.n ? ' · desafío' : ''}`, s.id));
+  }
   $('scenario').appendChild(og);
 }
 $('scenario').value = SCENARIOS.some(s => s.id === params.get('escenario')) ? params.get('escenario') : 'intro';
@@ -220,7 +226,7 @@ async function ensureMedia() {
   } else {
     v.srcObject = null;
     $('stageEmpty').classList.remove('hidden');
-    $('stageEmpty').innerHTML = '🎙 Modo sólo voz<br>Evaluaremos tu voz y tu lenguaje.';
+    $('stageEmpty').innerHTML = 'Modo sólo voz<br>Evaluaremos tu voz y tu lenguaje.';
     $('lGaze').textContent = 'sin cámara';
     if (wantVideo) $('status').textContent = 'No pudimos usar la cámara, así que seguimos sólo con tu voz.';
   }
@@ -369,7 +375,7 @@ function loop() {
 // ---------------------------------------------------------------- audiencia virtual
 // La atención del público sube o baja con señales de entrega de los últimos segundos. Cada persona
 // tiene una sensibilidad distinta, así que el público se "apaga" de a poco y no todo a la vez.
-const AUDIENCE = ['🧑', '👩', '👨‍🦱', '👩‍🦰', '🧔', '👵', '👨‍🦳', '👩‍🦱'];
+const AUDIENCE = Array(8).fill('<svg viewBox="0 0 24 24" width="60%" height="60%" aria-hidden="true"><circle cx="12" cy="8" r="4.2" fill="currentColor"/><path d="M3.5 22a8.5 8.5 0 0 1 17 0z" fill="currentColor"/></svg>');
 const SENS = [0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.72, 0.8];
 let fillersAtLast = 0;
 function updateAudience(t) {
@@ -501,7 +507,8 @@ const STRENGTH = {
 
 // ---------------------------------------------------------------- reporte
 // Mensaje de mentalidad de crecimiento: se compara con tu intento anterior, no con otras personas.
-function levelFor(s) { return s >= 85 ? 'Nivel Referente' : s >= 70 ? 'Nivel Hábil' : s >= 55 ? 'Nivel Competente' : s >= 40 ? 'Nivel Practicante' : 'Nivel Explorador'; }
+// Resultado de una práctica (no es el nivel de la persona: ése sale del diagnóstico y de varias prácticas, levels.js).
+function levelFor(s) { return s >= 85 ? 'Práctica excelente' : s >= 70 ? 'Práctica sólida' : s >= 55 ? 'Práctica en camino' : s >= 40 ? 'Base en construcción' : 'Primer paso'; }
 function encouragement(total, prev) {
   if (prev == null) return 'Este es tu punto de partida: desde aquí medimos tu progreso.';
   const d = total - prev;
@@ -523,7 +530,9 @@ function buildReport() {
   $('report').style.display = 'block';
   $('ring').textContent = r.total;
   $('ring').style.setProperty('--p', r.total); $('ring').style.setProperty('--c', colorFor(r.total));
-  $('levelTxt').textContent = levelFor(r.total);
+  // Si la práctica es sólida y de tu nivel (o más), se dice que cuenta para subir.
+  const counts = r.total >= SOLID && levelOfScenario(scenario().id) >= myLevel.n && myLevel.next;
+  $('levelTxt').textContent = levelFor(r.total) + (counts ? ` · cuenta para subir a ${myLevel.next.name}` : '');
   $('encourage').textContent = encouragement(r.total, prev);
   $('scoreSub').textContent = `${scenario().name} · ${Math.round(m.dur)} s${m.attention != null ? ` · atención del público ${Math.round(m.attention * 100)}%` : ''}${m.hasVision ? '' : ' · sin análisis visual'}`;
 
@@ -540,7 +549,7 @@ function buildReport() {
   $('fb').innerHTML = `
     <div><h3 style="color:var(--good)">✓ Lo que hiciste bien</h3>${STRENGTH[best.key]}</div>
     <div><h3 style="color:var(--mid)">→ ${allGood ? 'Tu siguiente paso' : `Tu único foco: ${esc(worst.label)}`}</h3>${why}</div>
-    <div><h3 style="color:var(--accent)">⏱ Ejercicio de 2 minutos</h3>${exercise}${allGood ? '' : lessonLink(worst.key)}</div>`;
+    <div><h3 style="color:var(--accent)">Ejercicio de 2 minutos</h3>${exercise}${allGood ? '' : lessonLink(worst.key)}</div>`;
 
   $('finalTranscript').innerHTML = highlight(finalText + interimText) || '<span class="note">Sin transcripción.</span>';
   drawChart(m);
@@ -562,7 +571,7 @@ function buildReport() {
 
 function lessonLink(metric) {
   const l = LESSONS.find(x => x.id === LESSON_FOR_METRIC[metric]);
-  return l ? `<p style="margin-top:8px"><a href="aprender.html?leccion=${l.id}">📘 Lección de ${l.minutes} min: ${esc(l.title)}</a></p>` : '';
+  return l ? `<p style="margin-top:8px"><a href="aprender.html?leccion=${l.id}">Lección de ${l.minutes} min: ${esc(l.title)}</a></p>` : '';
 }
 
 function persistSession() {
@@ -653,7 +662,7 @@ function aiPrompt(m, r) {
 Escenario: ${scenario().name}. Consigna: ${currentPrompt}
 Método esperado: ${scenario().method}. Duración: ${Math.round(m.dur)} s.
 Métricas: ${r.items.map(i => `${i.label}=${i.display} (ideal ${i.target})`).join('; ')}.
-Puntaje Talkride: ${r.total}/100 (${Object.entries(r.dims).map(([d, s]) => `${d} ${s}`).join(', ')}).
+Puntaje de la práctica: ${r.total}/100 (${Object.entries(r.dims).map(([d, s]) => `${d} ${s}`).join(', ')}).
 Transcripción: """${(finalText + interimText).trim() || '(no disponible)'}"""
 
 Devuelve:

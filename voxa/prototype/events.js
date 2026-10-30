@@ -10,7 +10,7 @@ const P = (text, target) => ({ text, ...target });
 
 export const EVENT_TYPES = {
   entrevista: {
-    name: 'Entrevista de trabajo', icon: '💼',
+    name: 'Entrevista de trabajo', icon: '',
     practices: [
       P('Preséntate en 60 segundos pensando en este puesto.', { view: 'evaluar', scenario: 'intro' }),
       P('Lee la lección STAR y responde «Cuéntame de un logro».', { view: 'evaluar', scenario: 'interview', lesson: 'star' }),
@@ -30,7 +30,7 @@ export const EVENT_TYPES = {
     ],
   },
   presentacion: {
-    name: 'Presentación o charla', icon: '🎤',
+    name: 'Presentación o charla', icon: '',
     practices: [
       P('Escribe tu mensaje clave en una frase y practica la apertura.', { view: 'evaluar', scenario: 'opening', lesson: 'historia' }),
       P('Gimnasio: sirena de tono y escalera de volumen.', { view: 'gimnasio', exercise: 'proyeccion' }),
@@ -50,7 +50,7 @@ export const EVENT_TYPES = {
     ],
   },
   reunion: {
-    name: 'Reunión importante', icon: '📊',
+    name: 'Reunión importante', icon: '',
     practices: [
       P('Lección BLUF y una actualización ejecutiva de 90 s.', { view: 'evaluar', scenario: 'meeting', lesson: 'bluf' }),
       P('Escribe el correo previo a la reunión con el pedido al inicio.', { view: 'escritura', kind: 'pedido' }),
@@ -67,7 +67,7 @@ export const EVENT_TYPES = {
     ],
   },
   dificil: {
-    name: 'Conversación difícil', icon: '🤝',
+    name: 'Conversación difícil', icon: '',
     practices: [
       P('Lección de Comunicación No Violenta y practica tu primera frase.', { view: 'evaluar', scenario: 'family', lesson: 'cnv' }),
       P('Lección de escucha activa y roleplay con la clienta molesta.', { view: 'roleplay', persona: 'cliente', lesson: 'escucha' }),
@@ -84,7 +84,7 @@ export const EVENT_TYPES = {
     ],
   },
   pitch: {
-    name: 'Pitch a inversionistas o clientes', icon: '🚀',
+    name: 'Pitch a inversionistas o clientes', icon: '',
     practices: [
       P('Lección «Contar una historia» y abre tu pitch con una.', { view: 'evaluar', scenario: 'pitch', lesson: 'historia' }),
       P('Elevator pitch de 30 s.', { view: 'evaluar', scenario: 'elevator' }),
@@ -103,7 +103,7 @@ export const EVENT_TYPES = {
     ],
   },
   discurso: {
-    name: 'Brindis o discurso', icon: '🥂',
+    name: 'Brindis o discurso', icon: '',
     practices: [
       P('Lección «Contar una historia» y elige tu anécdota.', { view: 'evaluar', scenario: 'toast', lesson: 'historia' }),
       P('Brindis de 60 s con audiencia virtual.', { view: 'evaluar', scenario: 'toast', audience: true }),
@@ -197,7 +197,7 @@ export function validEvent(event) {
 // Las páginas reaccionan a: [data-practice=i] (abrir práctica), [data-done=i] (marcar práctica),
 // [data-routine="clave:i"] (rutina del día) y #evNotes (reflexión posterior).
 export function eventTypeOptions() {
-  return Object.entries(EVENT_TYPES).map(([id, t]) => `<option value="${id}">${t.icon} ${esc(t.name)}</option>`).join('');
+  return Object.entries(EVENT_TYPES).map(([id, t]) => `<option value="${id}">${esc(t.name)}</option>`).join('');
 }
 
 export function eventHTML(ev, lessonTitle = () => '') {
@@ -213,7 +213,7 @@ export function eventHTML(ev, lessonTitle = () => '') {
   const routine = (key, title) => `<h3>${title}</h3><ul class="ladder">${DAY_ROUTINE[key].map((r, i) =>
     `<li><label><input type="checkbox" data-routine="${key}:${i}" ${ev.routine?.[`${key}:${i}`] ? 'checked' : ''}> <span>${esc(r)}</span></label></li>`).join('')}</ul>`;
   return `
-    <div class="score-big"><div class="ring" style="--p:100;--c:var(--accent);font-size:1.1rem">${t.icon}<br>${left >= 0 ? Math.max(0, left) : '✓'}</div>
+    <div class="score-big"><div class="ring" style="--p:100;--c:var(--accent);font-size:1.6rem">${left >= 0 ? Math.max(0, left) : '✓'}<small style="display:block;font-size:.7rem;font-weight:600">${left === 1 ? 'día' : 'días'}</small></div>
       <div><div style="font-size:1.15rem;font-weight:700">${esc(ev.title || t.name)}</div>
       <div class="lead">${when} · ${fmtDate(ev.date)}</div>
       <div class="note">${ev.audience ? `Ante: ${esc(ev.audience)} · ` : ''}${doneCount} de ${(ev.plan || []).length} prácticas hechas</div></div></div>
@@ -224,11 +224,11 @@ export function eventHTML(ev, lessonTitle = () => '') {
     <div class="ev-questions">${t.questions.map(([q, why, tip]) => `<details><summary>${esc(q)}</summary><p class="note">${esc(why)}</p><p><strong>Cómo responder:</strong> ${esc(tip)}</p></details>`).join('')}</div>
     <div id="evAI"></div>
     <div class="fb" style="margin-top:12px">
-      <div>${routine('before', '🌙 La noche anterior')}</div>
-      <div>${routine('hour', '⏰ Una hora antes')}</div>
-      <div>${routine('minutes', '🫁 Diez minutos antes')}</div>
+      <div>${routine('before', 'La noche anterior')}</div>
+      <div>${routine('hour', 'Una hora antes')}</div>
+      <div>${routine('minutes', 'Diez minutos antes')}</div>
     </div>
-    <h3 style="margin-top:14px">✍️ Después del evento</h3>
+    <h3 style="margin-top:14px">Después del evento</h3>
     <ul>${DAY_ROUTINE.after.map(r => `<li>${esc(r)}</li>`).join('')}</ul>
     <label for="evNotes">Tus notas</label>
     <textarea id="evNotes" placeholder="Qué salió bien, qué harías distinto…">${esc(ev.notes || '')}</textarea>`;

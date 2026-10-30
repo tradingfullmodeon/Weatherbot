@@ -33,7 +33,7 @@ export function memoryNote(profile, persona, now = new Date()) {
   const days = Math.floor((now - new Date(m.date)) / 864e5);
   if (days > 60) return null;
   return {
-    html: `<div class="note memory">🧠 La última vez con ${esc(persona.name)} (${ago(days)}) sacaste ${m.total}. Tu siguiente paso era: <strong>${esc(m.next)}</strong></div>`,
+    html: `<div class="note memory">La última vez con ${esc(persona.name)} (${ago(days)}) sacaste ${m.total}. Tu siguiente paso era: <strong>${esc(m.next)}</strong></div>`,
     context: `Nota de la práctica anterior con este personaje (${ago(days)}): el usuario debía trabajar en «${m.next}». Dale la oportunidad de demostrarlo y reconócelo si lo logra.`,
   };
 }

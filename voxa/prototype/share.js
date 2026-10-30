@@ -38,8 +38,8 @@ export function drawShareCard(canvas, st) {
     }
   }
   // Dos columnas: racha y prácticas, cada una con su etiqueta debajo.
-  for (const [x, value, label] of [[W * 0.3, `🔥 ${st.streak}`, st.streak === 1 ? 'día seguido' : 'días seguidos'],
-    [W * 0.7, `🎙 ${st.practices}`, st.practices === 1 ? 'práctica' : 'prácticas']]) {
+  for (const [x, value, label] of [[W * 0.3, `${st.streak}`, st.streak === 1 ? 'día seguido' : 'días seguidos'],
+    [W * 0.7, `${st.practices}`, st.practices === 1 ? 'práctica' : 'prácticas']]) {
     c.fillStyle = '#fff'; c.font = '700 80px system-ui, sans-serif'; c.fillText(value, x, 980);
     c.fillStyle = '#d3ece8'; c.font = '400 40px system-ui, sans-serif'; c.fillText(label, x, 1040);
   }

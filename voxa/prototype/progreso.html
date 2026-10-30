@@ -30,10 +30,16 @@
 
 <main>
   <section class="card full">
+    <p class="overline">Tu ruta</p>
+    <h2>Tu nivel</h2>
+    <div id="levelBox"></div>
+  </section>
+
+  <section class="card full">
     <h2>Resumen</h2>
     <div class="kpis" id="kpis"></div>
     <p class="note" id="empty"></p>
-    <div class="btns hidden" id="shareBox"><button id="btnShare">📤 Compartir mi avance</button></div>
+    <div class="btns hidden" id="shareBox"><button id="btnShare">Compartir mi avance</button></div>
     <p class="note" id="shareMsg" aria-live="polite"></p>
   </section>
 
@@ -102,11 +108,14 @@ import { $, esc, colorFor, mean, renderNav, loadSessions, loadProfile, saveProfi
 import { todayTask, streak } from './plan.js';
 import { diagnosisHTML, drawRadar, goalsHTML, goalHref } from './goals.js';
 import { lineChartSVG, pairBarsSVG } from './charts.js';
+import { currentLevel, levelCardHTML } from './levels.js';
 import { shareStats, shareProgress } from './share.js';
 
 renderNav();
 const sessions = loadSessions().sort((a, b) => a.date.localeCompare(b.date));
 const profile = loadProfile();
+const lvl = currentLevel(profile, sessions);
+$('levelBox').innerHTML = levelCardHTML(lvl);
 const evals = sessions.filter(s => s.type === 'evaluacion');
 
 // ---------------------------------------------------------------- KPIs
@@ -117,7 +126,7 @@ const best = evals.reduce((b, s) => (!b || s.total > b.total ? s : b), null);
 const delta = base && last ? last.total - base.total : 0;
 const anxDrop = mean(sessions.filter(s => s.anxietyAfter != null).map(s => s.anxietyBefore - s.anxietyAfter));
 $('kpis').innerHTML = [
-  kpi('Sesiones', sessions.length, `${evals.length} evaluaciones · ${count('roleplay')} roleplays · ${count('gimnasio')} de gimnasio · ${count('escritura')} escritos`),
+  kpi('Sesiones', sessions.length, [[evals.length, 'evaluación', 'evaluaciones'], [count('roleplay'), 'roleplay', 'roleplays'], [count('gimnasio'), 'de gimnasio', 'de gimnasio'], [count('escritura'), 'escrito', 'escritos']].map(([n, one, many]) => `${n} ${n === 1 ? one : many}`).join(' · ')),
   kpi('Racha', (n => `${n} ${n === 1 ? 'día' : 'días'}`)(streak(sessions)), 'días seguidos practicando'),
   kpi('Punto de partida', base ? base.total : '–', base ? esc(base.scenarioName) : ''),
   kpi('Última', last ? last.total : '–', base && last !== base ? `<span style="color:${delta >= 0 ? 'var(--good)' : 'var(--bad)'}">${delta >= 0 ? '+' : ''}${delta} vs. tu punto de partida</span>` : ''),
@@ -126,9 +135,9 @@ $('kpis').innerHTML = [
 ].join('');
 
 // ---------------------------------------------------------------- Sprint 30 días
-const task = todayTask(sessions);
+const task = todayTask(sessions, lvl);
 $('today').innerHTML = `<strong>${esc(task.week)}${task.day ? ` · día ${task.day} de 28` : ''}</strong><p>${esc(task.text)}</p>
-  <a class="btn-link primary" href="${task.href}">▶ Hacer la práctica de hoy</a>`;
+  <a class="btn-link primary" href="${task.href}">Hacer la práctica de hoy</a>`;
 $('sprintNote').textContent = sessions.length
   ? 'El sprint empezó con tu primera sesión. Cada semana se enfoca en una sola dimensión (práctica deliberada).'
   : 'Tu primera práctica será tu punto de partida.';
@@ -152,7 +161,7 @@ $('focus').innerHTML = topWeak
 const C = { total: 'var(--accent)', voz: '#3b82c4', lenguaje: '#c2780a', presencia: '#7a5aa8' };
 function drawTrend() {
   if (!evals.length) { $('trend').innerHTML = '<p class="note">Haz tu primera evaluación para ver tu evolución.</p>'; return; }
-  const names = { total: 'Puntaje Talkride', voz: 'Voz', lenguaje: 'Lenguaje', presencia: 'Presencia' };
+  const names = { total: 'Puntaje de la práctica', voz: 'Voz', lenguaje: 'Lenguaje', presencia: 'Presencia' };
   const series = [{ key: 'total', values: evals.map(s => s.total) },
     ...['voz', 'lenguaje', 'presencia'].map(d => ({ key: d, values: evals.map(s => s.dims?.[d] ?? null) }))]
     .filter(x => x.values.some(v => v != null)).map(x => ({ ...x, label: names[x.key], color: C[x.key] }));

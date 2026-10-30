@@ -26,6 +26,13 @@
   <div id="steps" style="display:contents"></div>
 
   <section class="card full">
+    <p class="overline">La ruta</p>
+    <h2>Cinco niveles</h2>
+    <p>El método se repite en cada nivel; lo que cambia es la dificultad de las situaciones y de los personajes. Para subir hacen falta dos cosas: el Índice Talkride del nivel siguiente en tu diagnóstico y tres prácticas con 70 o más en tu nivel. Así nadie sube sólo por cómo se ve, ni se queda abajo por un mal día.</p>
+    <div id="levels"></div>
+  </section>
+
+  <section class="card full">
     <h2>Lo que no hacemos</h2>
     <ul>
       <li>No te damos trucos sin evidencia: ni «posturas de poder», ni la regla del 7-38-55 fuera de contexto, ni «detectar mentiras» por los gestos.</li>
@@ -55,9 +62,14 @@
 <script type="module">
 import { $, renderNav } from './shared.js';
 import { methodFullHTML, METHOD_PROMISE } from './method.js';
+import { LEVEL_PATH } from './levels.js';
+import { SCENARIOS } from './scenarios.js';
 renderNav();
 $('promise').textContent = METHOD_PROMISE;
 $('steps').innerHTML = methodFullHTML();
+const sname = (id) => SCENARIOS.find(x => x.id === id)?.name || id;
+$('levels').innerHTML = `<ol class="levels-list">${LEVEL_PATH.map(l => `<li><p class="overline">Nivel ${l.n} · desde ${l.min} de Índice</p>
+  <h3>${l.name}</h3><p>${l.focus}</p><p class="note">Situaciones: ${l.scenarios.map(sname).join(', ')}. Roleplay en dificultad ${l.difficulty}.</p></li>`).join('')}</ol>`;
 </script>
 </body>
 </html>

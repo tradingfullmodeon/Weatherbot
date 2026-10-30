@@ -91,7 +91,7 @@ function streak(sessions) {
   return n;
 }
 // Escala de nervios tipo SUDS: siempre dice nervios de qué intensidad, sin términos ambiguos como «Algo».
-const FEEL = [['😌', 'Sin nervios'], ['🙂', 'Pocos'], ['😐', 'Algunos'], ['😟', 'Bastantes'], ['😰', 'Muchísimos']];
+const FEEL = [['', 'Sin nervios'], ['', 'Pocos'], ['', 'Algunos'], ['', 'Bastantes'], ['', 'Muchísimos']];
 function feelScale(id, initial, onChange) {
   const box = $(id); let value = initial;
   const paint = () => box.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.v === value)));
@@ -207,7 +207,7 @@ onShow.hoy = () => {
   // Con metas activas, la práctica del día avanza una meta; el plan de 30 días queda como alternativa.
   const gd = goalOfTheDay(profile.goals, sessions, new Date(), caps());
   if (gd) {
-    $('tWeek').textContent = '🎯 Tu meta de hoy';
+    $('tWeek').textContent = 'Tu meta de hoy';
     $('tText').textContent = gd.text;
     $('tWhy').textContent = gd.detail;
     $('tGo').onclick = () => go(gd.goal.next.view, gd.goal.next);
@@ -230,12 +230,12 @@ onShow.hoy = () => {
   const days = new Set(sessions.map(x => dayKey(x.date)));
   const week = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - 6 + i); return d; });
   const strip = week.map(d => `<span class="wk${days.has(localDay(d)) ? ' on' : ''}${localDay(d) === localDay() ? ' today' : ''}" title="${d.toLocaleDateString('es', { weekday: 'long' })}">${'DLMMJVS'[d.getDay()]}</span>`).join('');
-  $('tStreak').innerHTML = `<span class="week" aria-label="Días practicados esta semana">${strip}</span> ` + esc((s ? `🔥 ${s} ${s === 1 ? 'día seguido' : 'días seguidos'}` : 'Empieza tu racha hoy') + (last && !calmNow() ? ` · Último puntaje: ${last.total} en «${last.scenarioName}»` : ''));
+  $('tStreak').innerHTML = `<span class="week" aria-label="Días practicados esta semana">${strip}</span> ` + esc((s ? `${s} ${s === 1 ? 'día seguido' : 'días seguidos'}` : 'Empieza tu racha hoy') + (last && !calmNow() ? ` · Último puntaje: ${last.total} en «${last.scenarioName}»` : ''));
   $('tip').textContent = TIPS[Math.floor(Date.now() / 864e5) % TIPS.length];
   const next = LESSONS.find(l => !profile.lessons?.[l.id]);
   renderGoalsBox();
   $('rateAsk').classList.toggle('hidden', firstRun || !shouldAskRating(profile, sessions));
-  $('nextLesson').innerHTML = next ? `<button type="button" class="linkish" data-open-lesson="${next.id}">📘 Lección sugerida (${next.minutes} min): ${esc(next.title)}</button>` : '';
+  $('nextLesson').innerHTML = next ? `<button type="button" class="linkish" data-open-lesson="${next.id}">Lección sugerida (${next.minutes} min): ${esc(next.title)}</button>` : '';
 };
 
 // ================================================================= ENSAYAR
@@ -276,7 +276,7 @@ const touch = matchMedia('(pointer: coarse)').matches;
 $('recHelp').textContent = touch
   ? 'Al tocar «Grabarme en video» se abre la cámara de tu celular: graba tu respuesta, confirma y vuelve aquí.'
   : 'En el computador, graba con la app de cámara o de grabadora de voz y elige el archivo. Desde el celular, estos botones abren la cámara directamente.';
-if (!touch) { $('recVideo').previousElementSibling.textContent = '🎥 Elegir un video'; $('recAudio').previousElementSibling.textContent = '🎙 Elegir un audio'; }
+if (!touch) { $('recVideo').previousElementSibling.textContent = 'Elegir un video'; $('recAudio').previousElementSibling.textContent = 'Elegir un audio'; }
 let previewUrl = null;
 for (const id of ['recVideo', 'recAudio', 'file']) $(id).addEventListener('change', () => {
   file = $(id).files[0] || null;
@@ -325,7 +325,8 @@ const STRENGTH = {
   length: 'Desarrollaste bien tus ideas.', structure: 'Tu respuesta tiene todas las partes del método.', variety: 'Usas un vocabulario variado.', pitch: 'Tu voz es expresiva y varía bien el tono.', speech: 'Buen equilibrio entre hablar y hacer pausas.',
   pauses: 'Fluidez, sin bloqueos largos.', volume: 'Usas el volumen para marcar lo importante.', duration: 'Respetaste el tiempo.',
 };
-function levelFor(s) { return s >= 85 ? 'Nivel Referente' : s >= 70 ? 'Nivel Hábil' : s >= 55 ? 'Nivel Competente' : s >= 40 ? 'Nivel Practicante' : 'Nivel Explorador'; }
+// Resultado de una práctica (no es el nivel de la persona: ése sale del diagnóstico y de varias prácticas, levels.js).
+function levelFor(s) { return s >= 85 ? 'Práctica excelente' : s >= 70 ? 'Práctica sólida' : s >= 55 ? 'Práctica en camino' : s >= 40 ? 'Base en construcción' : 'Primer paso'; }
 function encouragement(total, prev) {
   if (prev == null) return 'Este es tu punto de partida: desde aquí medimos tu progreso.';
   const d = total - prev;
@@ -352,7 +353,7 @@ $('btnEval').addEventListener('click', async () => {
       catch (err) {
         if (err.code !== 'needs-playback') throw err;
         // Hace falta un toque nuevo para reproducir con sonido (regla de los navegadores móviles).
-        $('evalStatus').innerHTML = 'Tu celular guardó la grabación en un formato que no podemos leer directo. <button type="button" id="btnPlayback" class="primary">▶ Escuchar y analizar</button> <span class="note">(tarda lo que dura la grabación; no se oirá nada)</span>';
+        $('evalStatus').innerHTML = 'Tu celular guardó la grabación en un formato que no podemos leer directo. <button type="button" id="btnPlayback" class="primary">Escuchar y analizar</button> <span class="note">(tarda lo que dura la grabación; no se oirá nada)</span>';
         $('btnEval').disabled = false; $('anProgress').classList.add('hidden');
         $('btnPlayback').addEventListener('click', async () => {
           $('btnPlayback').disabled = true; $('anProgress').classList.remove('hidden');
@@ -408,7 +409,7 @@ function showReport(m, isAudio, text) {
   const st = streak(loadSessions()) || 1;
   $('encourage').textContent = (calm ? 'Lo hiciste. Cada práctica baja un poco los nervios: así funciona la exposición.'
     : partial ? 'Sin tu texto medimos sólo la voz, así que este puntaje no se compara con otros.' : encouragement(r.total, prev))
-    + ` 🔥 Racha: ${st} ${st === 1 ? 'día' : 'días'}.`;
+    + ` Racha: ${st} ${st === 1 ? 'día' : 'días'}.`;
   if (persistentHighAnxiety([...loadSessions(), { anxietyBefore: feelBefore.get() }])) $('encourage').textContent += ' Llevas varias prácticas con nervios al máximo: si el miedo te limita en tu día a día, conversarlo con un profesional ayuda mucho (en Progreso, «Buscar un profesional»).';
   $('scoreSub').textContent = `${scenario().name} · ${isAudio ? `grabación de ${Math.round(m.dur)} s` : 'respuesta escrita'}`;
   const sorted = [...r.items].sort((a, b) => b.s - a.s);
@@ -424,10 +425,10 @@ function showReport(m, isAudio, text) {
   $('fb').innerHTML = `
     <div><h3 style="color:var(--good)">✓ Lo que hiciste bien</h3>${STRENGTH[best.key]}</div>
     <div><h3 style="color:var(--mid)">→ ${allGood || polish ? 'Tu siguiente paso' : `Tu único foco: ${esc(worst.label)}`}</h3>${why}</div>
-    <div><h3 style="color:var(--accent)">⏱ Ejercicio de 2 minutos</h3>${ex}${allGood ? '' : lessonLink(worst.key)}</div>`;
-  if (m.partialText) $('fb').insertAdjacentHTML('beforeend', '<div style="grid-column:1/-1"><h3>📝 Texto parcial</h3>Lo que escribiste parece sólo una parte de lo que dijiste, así que no medimos tu ritmo. Para medirlo, escribe todo lo que dijiste.</div>');
+    <div><h3 style="color:var(--accent)">Ejercicio de 2 minutos</h3>${ex}${allGood ? '' : lessonLink(worst.key)}</div>`;
+  if (m.partialText) $('fb').insertAdjacentHTML('beforeend', '<div style="grid-column:1/-1"><h3>Texto parcial</h3>Lo que escribiste parece sólo una parte de lo que dijiste, así que no medimos tu ritmo. Para medirlo, escribe todo lo que dijiste.</div>');
   // Sin transcripción (esta página no puede usar el reconocimiento de voz) faltan ritmo, muletillas y contenido.
-  if (isAudio && !m.hasText) $('fb').insertAdjacentHTML('beforeend', `<div style="grid-column:1/-1"><h3>📝 Completa tu evaluación</h3>Esta página no puede escuchar tu voz para transcribirla, así que sin lo que dijiste no medimos el ritmo, las muletillas, la estructura ni el contenido. Escríbelo en «¿Qué dijiste?» y vuelve a evaluar: no se compara con tu intento sin texto.</div>`);
+  if (isAudio && !m.hasText) $('fb').insertAdjacentHTML('beforeend', `<div style="grid-column:1/-1"><h3>Completa tu evaluación</h3>Esta página no puede escuchar tu voz para transcribirla, así que sin lo que dijiste no medimos el ritmo, las muletillas, la estructura ni el contenido. Escríbelo en «¿Qué dijiste?» y vuelve a evaluar: no se compara con tu intento sin texto.</div>`);
   // Análisis de lenguaje corporal: sólo para videos y si este visor puede enviar imágenes a Claude.
   $('presenceOut').innerHTML = '';
   $('presenceBox').classList.add('hidden');
@@ -454,7 +455,7 @@ const LESSON_FOR_METHOD = [[/^PREP/, 'prep'], [/^STAR/, 'star'], [/^BLUF/, 'bluf
 function lessonLink(metric) {
   const byMethod = ['structure', 'length', 'variety'].includes(metric) && LESSON_FOR_METHOD.find(([re]) => re.test(scenario().method))?.[1];
   const l = LESSONS.find(x => x.id === (byMethod || LESSON_FOR_METRIC[metric]));
-  return l ? `<p style="margin-top:8px"><button type="button" class="linkish" data-open-lesson="${l.id}">📘 Lección de ${l.minutes} min: ${esc(l.title)}</button></p>` : '';
+  return l ? `<p style="margin-top:8px"><button type="button" class="linkish" data-open-lesson="${l.id}">Lección de ${l.minutes} min: ${esc(l.title)}</button></p>` : '';
 }
 // «Escuchar cómo sonaría»: la reescritura del coach leída con la voz del navegador, para imitarla.
 document.addEventListener('click', (e) => {
@@ -472,7 +473,7 @@ function persist() {
   // Cierre de la práctica: cuánto avanzó tu meta y qué toca mañana (lo que trae de vuelta al día siguiente).
   const sessions = loadSessions(), g = (profile.goals || []).find(x => !goalProgress(x, sessions).done && goalAvailable(x, caps()));
   const nextTask = todayTask(sessions, true);
-  $('savedNote').textContent += (g ? ` 🎯 «${g.title}»: ${goalProgress(g, sessions).hits} de ${g.count} días.` : '') + ` Mañana: ${nextTask.text}`;
+  $('savedNote').textContent += (g ? ` «${g.title}»: ${goalProgress(g, sessions).hits} de ${g.count} días.` : '') + ` Mañana: ${nextTask.text}`;
 }
 $('btnRetry').addEventListener('click', () => {
   $('report').classList.add('hidden');
@@ -562,7 +563,7 @@ function renderCoach(fb) {
     <div class="chips">${list(fb.structure.present).map(x => `<span class="chip">✓ ${esc(x)}</span>`).join('')}${list(fb.structure.missing).map(x => `<span class="chip miss">✗ ${esc(x)}</span>`).join('')}</div>
     <p>${esc(fb.structure.comment)}</p>` : ''}
     ${fb.rewrite ? `<h3>Así podrías decirlo</h3><blockquote style="white-space:pre-wrap">${esc(fb.rewrite)}</blockquote>
-      ${'speechSynthesis' in window ? `<div class="btns"><button type="button" data-speak>🔊 Escuchar cómo sonaría</button></div><p class="note">Escúchala, luego dila tú en voz alta imitando las pausas y el énfasis (técnica de «sombra»).</p>` : ''}` : ''}
+      ${'speechSynthesis' in window ? `<div class="btns"><button type="button" data-speak>Escuchar cómo sonaría</button></div><p class="note">Escúchala, luego dila tú en voz alta imitando las pausas y el énfasis (técnica de «sombra»).</p>` : ''}` : ''}
     ${fb.exercise ? `<h3 style="color:var(--accent)">Ejercicio: ${esc(fb.exercise.title)} (${Number(fb.exercise.minutes) || 2} min)</h3><ol>${list(fb.exercise.steps).map(x => `<li>${esc(x)}</li>`).join('')}</ol>` : ''}
     ${fb.rubric ? `<details><summary>Rúbrica del coach</summary><div class="dims">${dimBars(Object.fromEntries(Object.entries(fb.rubric).map(([k, v]) => [k, Math.max(0, Math.min(100, Number(v) || 0))])))}</div></details>` : ''}
     ${fb.next_challenge ? `<h3>Próximo reto</h3><p>${esc(fb.next_challenge)}</p>` : ''}
@@ -670,14 +671,14 @@ $('talkForm').addEventListener('submit', async (e) => {
       const out = await sample.json(turns, { modelTier: 'quick', cache: false, signal: rpCtl.signal });
       if (!out?.reply) throw { code: 'invalid_json' };
       addTurn('persona', String(out.reply));
-      $('hint').textContent = $('showHints').checked && out.coach_hint ? '💡 ' + out.coach_hint : '';
-      if (out.safety_note) $('hint').textContent = '💙 ' + String(out.safety_note);
+      $('hint').textContent = $('showHints').checked && out.coach_hint ? '' + out.coach_hint : '';
+      if (out.safety_note) $('hint').textContent = '' + String(out.safety_note);
       $('rpStatus').textContent = out.end ? 'La conversación llegó a un cierre. Pulsa «Terminar y evaluar».' : '';
     } else {
       const asked = currentQuestion(offline);
       const next = interviewNext(offline, text, userTexts());
       if (next) addTurn('persona', next);
-      $('hint').textContent = $('showHints').checked ? '💡 ' + interviewHint(text, asked) : '';
+      $('hint').textContent = $('showHints').checked ? '' + interviewHint(text, asked) : '';
       $('rpStatus').textContent = next ? interviewProgress(offline) : 'Fin del simulacro. Pulsa «Terminar y evaluar».';
     }
   } catch (err) {
@@ -778,7 +779,7 @@ const newDraft = (byAI = false) => { draftId = Date.now().toString(36); draftByA
 function updateWriting() {
   const text = $('text').value;
   if (!text.trim()) { newDraft(); $('checks').innerHTML = '<li class="warn"><span class="i">·</span><span>Escribe tu borrador y la revisión aparecerá aquí.</span></li>'; $('wStats').textContent = ''; $('wScore').textContent = '–'; $('btnWAI').disabled = true; return; }
-  if (crisisCheck(text)) { $('checks').innerHTML = `<li class="warn"><span class="i">💙</span><span>${CRISIS_MSG}</span></li>`; return; }
+  if (crisisCheck(text)) { $('checks').innerHTML = `<li class="warn"><span class="i"></span><span>${CRISIS_MSG}</span></li>`; return; }
   wLast = analyzeWriting(text, kind());
   $('checks').innerHTML = wLast.checks.map(c => `<li class="${c.ok ? 'ok' : 'warn'}"><span class="i">${c.ok ? '✓' : '!'}</span><span>${esc(c.msg)}</span></li>`).join('');
   $('wStats').innerHTML = `<span>${wLast.words} palabras</span><span>${wLast.sentences} frases</span><span>~${Math.max(1, Math.round(wLast.words / 200 * 60))} s de lectura</span>`;
@@ -940,7 +941,7 @@ $('evType').innerHTML = eventTypeOptions();
 const lessonTitle = (id) => LESSONS.find(l => l.id === id)?.title || '';
 function saveEv() { saveProfile(profile); $('evSaved').textContent = 'Guardado.'; setTimeout(() => $('evSaved').textContent = '', 1200); }
 function renderEventQuestions(qs) {
-  $('evAI').innerHTML = '<h3>✨ Preguntas para tu caso</h3>' + qs.map(x => `<details><summary>${esc(x.q)}</summary><p class="note">${esc(x.why)}</p><p><strong>Cómo responder:</strong> ${esc(x.tip)}</p></details>`).join('');
+  $('evAI').innerHTML = '<h3>Preguntas para tu caso</h3>' + qs.map(x => `<details><summary>${esc(x.q)}</summary><p class="note">${esc(x.why)}</p><p><strong>Cómo responder:</strong> ${esc(x.tip)}</p></details>`).join('');
 }
 onShow.evento = () => {
   const ev = profile.event, active = validEvent(ev);
@@ -1029,7 +1030,7 @@ Responde SÓLO con JSON: {"scores":{"encuadre":0,"iluminacion":0,"mirada":0,"pos
       <h3 style="color:var(--mid)">Tu ajuste principal</h3><p>${esc(out.focus)}</p>
       <ol>${(Array.isArray(out.how) ? out.how : []).map(x => `<li>${esc(x)}</li>`).join('')}</ol>
       <details><summary>Ver detalle por aspecto</summary><ul>${Object.entries(notes).map(([k, v]) => `<li><strong>${esc(k)}:</strong> ${esc(v)}</li>`).join('')}</ul></details>
-      <p style="margin-top:8px"><button type="button" class="linkish" data-open-lesson="presencia">📘 Lección: Presencia en cámara</button></p>
+      <p style="margin-top:8px"><button type="button" class="linkish" data-open-lesson="presencia">Lección: Presencia en cámara</button></p>
     </div>`;
     if (last) { last.session.presence = scores; persist(); }
   } catch (e) {
@@ -1077,7 +1078,7 @@ async function diagnosisSpeech() {
       if (err.code !== 'needs-playback') throw err;
       // Reproducir necesita un toque nuevo de la persona (regla de los navegadores móviles, sobre todo iPhone).
       $('dgProgress').classList.add('hidden');
-      $('dgVoiceStatus').innerHTML = 'Tu celular guardó la grabación en un formato que no podemos leer directo. <button type="button" id="dgPlay" class="primary">▶ Escuchar y analizar</button>';
+      $('dgVoiceStatus').innerHTML = 'Tu celular guardó la grabación en un formato que no podemos leer directo. <button type="button" id="dgPlay" class="primary">Escuchar y analizar</button>';
       await new Promise(ok => $('dgPlay').addEventListener('click', ok, { once: true }));
       $('dgProgress').classList.remove('hidden');
       $('dgVoiceStatus').textContent = 'Escuchando tu grabación (tarda lo que dura; no se oirá nada)…';
@@ -1109,7 +1110,7 @@ $('dgRun').addEventListener('click', async () => {
   drawRadar($('dgOut').querySelector('#radar'), dgResult.profile, prev?.profile, dgResult.measured);
   $('dgGoals').innerHTML = goalPickerHTML(suggestGoals(dgResult, caps()))
     + (validEvent(profile.event) ? `<p class="note">Además, tu plan para «${esc(profile.event.title || EVENT_TYPES[profile.event.type].name)}» sigue en Hoy: es tu prioridad hasta esa fecha.</p>`
-      : ['entrevista', 'presentaciones', 'conversaciones', 'ventas'].includes(profile.goal) ? '<p class="note">¿Tu situación ya tiene fecha? Después de guardar, prepárala en «📅 Evento real» desde Hoy.</p>' : '');
+      : ['entrevista', 'presentaciones', 'conversaciones', 'ventas'].includes(profile.goal) ? '<p class="note">¿Tu situación ya tiene fecha? Después de guardar, prepárala en «Evento real» desde Hoy.</p>' : '');
   $('dgResult').classList.remove('hidden');
   $('dgRun').disabled = false;
   $('dgResult').scrollIntoView({ behavior: 'smooth' });
@@ -1141,10 +1142,10 @@ function renderGoalsBox() {
   const age = Math.floor((Date.now() - new Date(d.date)) / 864e5);
   // Quien viene por una situación con fecha (entrevista, charla, conversación) ve primero cómo prepararla.
   const eventCta = !validEvent(profile.event) && ['entrevista', 'presentaciones', 'conversaciones', 'ventas'].includes(profile.goal)
-    ? `<div class="prompt" style="margin-bottom:10px"><strong>¿Tienes una fecha?</strong>Si tu entrevista, charla o reunión ya tiene día, arma tu plan hasta ese día con preguntas difíciles probables. <button class="linkish" data-go="evento">📅 Preparar mi evento</button></div>` : '';
+    ? `<div class="prompt" style="margin-bottom:10px"><strong>¿Tienes una fecha?</strong>Si tu entrevista, charla o reunión ya tiene día, arma tu plan hasta ese día con preguntas difíciles probables. <button class="linkish" data-go="evento">Preparar mi evento</button></div>` : '';
   $('goalsBox').innerHTML = eventCta + `<p class="note">${indexLine(profile.diagnoses)}</p>
     ${goalsHTML(profile.goals, loadSessions())}
-    ${age >= 28 ? '<p style="margin-top:10px"><button class="linkish" data-go="diagnostico">🔁 Pasaron 4 semanas: repite el diagnóstico y compara</button></p>' : ''}`;
+    ${age >= 28 ? '<p style="margin-top:10px"><button class="linkish" data-go="diagnostico">Pasaron 4 semanas: repite el diagnóstico y compara</button></p>' : ''}`;
 }
 function renderProgressDiagnosis(sessions) {
   const ds = profile.diagnoses || [];

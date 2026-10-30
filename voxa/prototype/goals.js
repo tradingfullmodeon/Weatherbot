@@ -203,9 +203,9 @@ export function diagnosisHTML(r, previous = null) {
     : `<li>En <strong>${esc(dimName(g.dim))}</strong> eres más exigente contigo (${g.self}) de lo que medimos (${g.measured}): lo haces mejor de lo que crees.</li>`).join('');
   return `
     <div class="score-big">${ringHTML(r.total)}
-      <div><div style="font-size:1.15rem;font-weight:700">Índice Talkride ${r.total} · nivel ${esc(r.level)}</div>
-      <div class="lead">${previous ? `Antes: ${previous.total} (nivel ${esc(previous.level)}). ${r.total - previous.total >= 0 ? '+' : ''}${r.total - previous.total} puntos.` : 'Este es tu punto de partida.'}</div>
-      <div class="note">Tu índice de comunicación de 0 a 100: combina cómo te ves (40%) con lo que medimos en tus pruebas (60%). Vuelve a medirlo cada 4 semanas.</div></div></div>
+      <div><div style="font-size:1.15rem;font-weight:700">Índice Talkride ${r.total} · rango ${esc(r.level)}</div>
+      <div class="lead">${previous ? `Antes: ${previous.total} (rango ${esc(previous.level)}). ${r.total - previous.total >= 0 ? '+' : ''}${r.total - previous.total} puntos.` : 'Este es tu punto de partida.'}</div>
+      <div class="note">Tu índice de comunicación de 0 a 100: combina cómo te ves (40%) con lo que medimos en tus pruebas (60%). Vuelve a medirlo cada 4 semanas. Tu nivel en la ruta sube hasta este rango a medida que lo confirmas con prácticas.</div></div></div>
     <div id="radar"></div>
     <div class="fb">
       <div><h3 style="color:var(--good)">Tus fortalezas</h3><ul>${r.strengths.map(d => `<li>${esc(dimName(d))}${src(d)}</li>`).join('')}</ul></div>
@@ -223,7 +223,7 @@ export function indexLine(diagnoses) {
   const first = diagnoses?.[0], last = diagnoses?.at(-1);
   if (!last) return '';
   const d = diagnoses.length > 1 ? last.total - first.total : null;
-  return `Índice Talkride <strong>${last.total}</strong> · nivel ${esc(last.level)}${d != null ? ` · <span style="color:${d >= 0 ? 'var(--good)' : 'var(--bad)'}">${d >= 0 ? '+' : ''}${d} desde tu primer diagnóstico</span>` : ''} · ${new Date(last.date).toLocaleDateString('es')}`;
+  return `Índice Talkride <strong>${last.total}</strong> · rango ${esc(last.level)}${d != null ? ` · <span style="color:${d >= 0 ? 'var(--good)' : 'var(--bad)'}">${d >= 0 ? '+' : ''}${d} desde tu primer diagnóstico</span>` : ''} · ${new Date(last.date).toLocaleDateString('es')}`;
 }
 
 export function goalPickerHTML(suggestions) {
@@ -242,11 +242,11 @@ export function goalsHTML(goals, sessions, today = new Date()) {
   return goals.map(g => {
     const p = goalProgress(g, sessions, today);
     const left = Math.max(0, p.daysLeft);
-    const state = p.done ? '✅ ¡Cumplida!' : p.expired ? '⏰ Se venció el plazo: puedes renovarla' : left === 0 ? 'Último día' : `Falta${left === 1 ? '' : 'n'} ${left} ${left === 1 ? 'día' : 'días'}`;
+    const state = p.done ? '✓ Cumplida' : p.expired ? 'Se venció el plazo: puedes renovarla' : left === 0 ? 'Último día' : `Falta${left === 1 ? '' : 'n'} ${left} ${left === 1 ? 'día' : 'días'}`;
     return `<div class="goal"><div class="goal-head"><strong>${esc(g.title)}</strong><span class="note">${state}</span></div>
       <div class="note">${esc(g.detail)}${g.why ? ` · Para: ${esc(g.why)}` : ''}</div>
       <div class="bar" style="margin-top:6px"><div style="width:${Math.round(p.ratio * 100)}%;background:${p.done ? 'var(--good)' : 'var(--accent)'}"></div></div>
-      <div class="goal-foot"><span class="note">${p.hits} de ${g.count}</span>${p.done ? '' : `<button type="button" data-goal-next="${g.id}">▶ Practicar</button>`}</div></div>`;
+      <div class="goal-foot"><span class="note">${p.hits} de ${g.count}</span>${p.done ? '' : `<button type="button" data-goal-next="${g.id}">Practicar</button>`}</div></div>`;
   }).join('');
 }
 

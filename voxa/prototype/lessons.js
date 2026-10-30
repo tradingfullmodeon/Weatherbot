@@ -184,7 +184,7 @@ export const LESSON_FOR_METRIC = {
 export function lessonListHTML(done = {}) {
   const areas = [...new Set(LESSONS.map(l => l.area))];
   return areas.map(a => `<h3>${esc(a)}</h3><div class="lesson-list">${LESSONS.filter(l => l.area === a).map(l =>
-    `<button class="lesson-item" data-lesson="${l.id}"><span>${done[l.id] ? '✅' : '📘'}</span><span><strong>${esc(l.title)}</strong><small>${l.minutes} min</small></span></button>`).join('')}</div>`).join('');
+    `<button class="lesson-item" data-lesson="${l.id}"><span class="lesson-mark${done[l.id] ? ' done' : ''}" aria-hidden="true">${done[l.id] ? '✓' : l.minutes}</span><span><strong>${esc(l.title)}</strong><small>${l.minutes} min</small></span></button>`).join('')}</div>`).join('');
 }
 
 // De dónde viene cada método (autoridad visible: los usuarios confían más en técnicas con autor y evidencia).
@@ -211,7 +211,7 @@ export function lessonHTML(l, done = false, lite = false) {
     <p class="lead">${esc(l.why)}</p>
     <h3>Cómo hacerlo</h3>
     <ol>${l.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
-    ${LESSON_SOURCES[l.id] ? `<p class="note">📚 Base: ${esc(LESSON_SOURCES[l.id])}</p>` : ''}
+    ${LESSON_SOURCES[l.id] ? `<p class="note">Base: ${esc(LESSON_SOURCES[l.id])}</p>` : ''}
     <div class="fb">
       <div><h3 style="color:var(--bad)">✗ Así no</h3>${esc(l.bad)}</div>
       <div><h3 style="color:var(--good)">✓ Así sí</h3>${esc(l.good)}</div>
@@ -221,8 +221,8 @@ export function lessonHTML(l, done = false, lite = false) {
     <h3>Repaso rápido</h3>
     <p><strong>${esc(l.quiz.q)}</strong></p>
     <div class="quiz" role="group" aria-label="Opciones">${l.quiz.options.map((o, i) => `<button type="button" data-opt="${i}">${esc(o)}</button>`).join('')}</div>
-    <p class="note quiz-out" aria-live="polite">${done ? '✅ Ya completaste esta lección.' : ''}</p>
-    <div class="btns"><button type="button" class="cta" data-practice="${l.id}">▶ Practicar ahora: ${esc(lite && l.practice.liteLabel || l.practice.label)}</button><button type="button" data-back>Volver a las lecciones</button></div>
+    <p class="note quiz-out" aria-live="polite">${done ? '✓ Ya completaste esta lección.' : ''}</p>
+    <div class="btns"><button type="button" class="cta" data-practice="${l.id}">Practicar ahora: ${esc(lite && l.practice.liteLabel || l.practice.label)}</button><button type="button" data-back>Volver a las lecciones</button></div>
   </article>`;
 }
 
@@ -233,7 +233,7 @@ export function bindQuiz(container, onCorrect) {
     const art = b.closest('.lesson'), l = LESSONS.find(x => x.id === art.dataset.id), i = +b.dataset.opt;
     art.querySelectorAll('.quiz button').forEach(x => x.classList.remove('right', 'wrong'));
     b.classList.add(i === l.quiz.answer ? 'right' : 'wrong');
-    art.querySelector('.quiz-out').textContent = (i === l.quiz.answer ? '✅ ¡Correcto! ' : '✗ No exactamente. ') + l.quiz.explain;
+    art.querySelector('.quiz-out').textContent = (i === l.quiz.answer ? '✓ Correcto. ' : '✗ No exactamente. ') + l.quiz.explain;
     if (i === l.quiz.answer) onCorrect(l);
   });
 }

@@ -29,8 +29,8 @@
     <label class="check"><input type="checkbox" id="dgCam" checked> Con cámara: también medimos tu presencia (encuadre, mirada y expresión). El video no sale de tu teléfono.</label>
     <video id="dgVideo" class="dg-video hidden" playsinline muted aria-label="Vista previa de tu cámara"></video>
     <div class="btns">
-      <button id="btnRec" class="cta">🎙 Grabar ahora</button>
-      <label for="dgFile" class="btn-link file-btn">📁 Elegir una grabación</label>
+      <button id="btnRec" class="cta">Grabar ahora</button>
+      <label for="dgFile" class="btn-link file-btn">Elegir una grabación</label>
       <input type="file" id="dgFile" accept="audio/*,video/*" class="visually-hidden">
     </div>
     <p class="note" id="recState" aria-live="polite"></p>
@@ -138,7 +138,7 @@ $('btnRec').addEventListener('click', async () => {
     stream.getTracks().forEach(t => t.stop());
     v.classList.add('hidden'); v.srcObject = null;
     recording = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
-    $('btnRec').textContent = '🎙 Grabar de nuevo';
+    $('btnRec').textContent = 'Grabar de nuevo';
     $('recState').textContent = 'Grabación lista.';
     done();
   };
@@ -180,7 +180,7 @@ async function speechItems() {
       if (err.code !== 'needs-playback') throw err;
       // Reproducir necesita un toque nuevo de la persona (regla de los navegadores móviles, sobre todo iPhone).
       $('dgProgress').classList.add('hidden');
-      $('dgVoiceStatus').innerHTML = 'Tu celular guardó la grabación en un formato que no podemos leer directo. <button type="button" id="dgPlay" class="primary">▶ Escuchar y analizar</button>';
+      $('dgVoiceStatus').innerHTML = 'Tu celular guardó la grabación en un formato que no podemos leer directo. <button type="button" id="dgPlay" class="primary">Escuchar y analizar</button>';
       await new Promise(ok => $('dgPlay').addEventListener('click', ok, { once: true }));
       $('dgProgress').classList.remove('hidden');
       $('dgVoiceStatus').textContent = 'Escuchando tu grabación (tarda lo que dura; no se oirá nada)…';

@@ -29,9 +29,9 @@
 
     <h3 style="margin-top:16px">2. ¿Cómo te sientes al hablar frente a otros?</h3>
     <div class="chips-select" id="wNerves" role="group" aria-label="Nervios al hablar en público">
-      <button type="button" data-v="1" aria-pressed="false">😌 Cómodo/a</button>
-      <button type="button" data-v="3" aria-pressed="false">😐 Algo nervioso/a</button>
-      <button type="button" data-v="5" aria-pressed="false">😰 Me cuesta mucho</button>
+      <button type="button" data-v="1" aria-pressed="false">Cómodo/a</button>
+      <button type="button" data-v="3" aria-pressed="false">Algo nervioso/a</button>
+      <button type="button" data-v="5" aria-pressed="false">Me cuesta mucho</button>
     </div>
 
     <h3 style="margin-top:16px">3. ¿En qué idioma quieres practicar?</h3>
@@ -48,13 +48,20 @@
     <div class="muted" id="tWeek"></div>
     <h2 style="font-size:1.4rem;margin:4px 0 8px" id="tText"></h2>
     <p class="muted" id="tWhy"></p>
-    <div class="btns"><a class="btn-link cta" id="tGo" href="evaluar.html">▶ Hacer la práctica de hoy</a></div>
+    <div class="btns"><a class="btn-link cta" id="tGo" href="evaluar.html">Hacer la práctica de hoy</a></div>
     <p class="note" id="tAlt"></p>
     <p class="note" id="tStreak"></p>
     <p class="note"><a id="tPlan" class="hidden" href="pro.html"></a></p>
   </section>
 
   <section class="card full hidden" id="forYouCard"></section>
+
+  <section class="card full" id="levelCard">
+    <p class="overline">Tu ruta</p>
+    <h2>Tu nivel</h2>
+    <p class="note hidden" id="levelUp" role="status"></p>
+    <div id="levelBox"></div>
+  </section>
 
   <section class="card full" id="goalsCard">
     <h2>Tu diagnóstico y tus metas</h2>
@@ -91,7 +98,7 @@
     <h2 data-icon="clock">Recordatorio diario</h2>
     <p class="note">Practicar siempre a la misma hora ayuda a crear el hábito. Elige la hora y tu calendario te avisará cada día.</p>
     <div class="row"><div><label for="remindTime">Hora</label><input type="time" id="remindTime" class="field" value="08:30"></div></div>
-    <div class="btns hidden" id="remindNativeBox"><button id="remindNative" class="cta">🔔 Avisarme en este teléfono</button></div>
+    <div class="btns hidden" id="remindNativeBox"><button id="remindNative" class="cta">Avisarme en este teléfono</button></div>
     <p class="note" id="remindNativeMsg" aria-live="polite"></p>
     <div class="btns" id="remindCalBox"><button id="remindIcs" class="cta">Agregar a mi calendario</button><a class="btn-link file-btn" id="remindGoogle" target="_blank" rel="noopener">Google Calendar</a></div>
   </section>
@@ -123,6 +130,7 @@ import { $, esc, renderNav, loadProfile, saveProfile, loadSessions, GOALS, LOCAL
 import { planLine } from './plan-pro.js';
 import { madeForYou, madeForYouHTML } from './foryou.js';
 import { methodStripHTML } from './method.js';
+import { currentLevel, levelCardHTML } from './levels.js';
 $('wMethod').innerHTML = methodStripHTML(); $('methodBox').innerHTML = methodStripHTML();
 import { todayTask, streak, streakInfo, practicedToday } from './plan.js';
 import { mountDeviceCheck } from './devices.js';
@@ -137,6 +145,14 @@ mountDeviceCheck($('deviceCheck'));
 renderNav();
 const profile = loadProfile();
 const sessions = loadSessions();
+// Nivel: la ruta de cinco peldaños; al subir, se celebra una vez y se guarda el nivel visto.
+const lvl = currentLevel(profile, sessions);
+$('levelBox').innerHTML = levelCardHTML(lvl);
+if (profile.levelSeen && lvl.n > profile.levelSeen) {
+  $('levelUp').textContent = `Subiste al nivel ${lvl.n}, ${lvl.name}. Ahora practicas situaciones de nivel ${lvl.n} y el roleplay empieza en dificultad ${lvl.difficulty}.`;
+  $('levelUp').classList.remove('hidden');
+}
+if (profile.levelSeen !== lvl.n) { profile.levelSeen = lvl.n; saveProfile(profile); }
 
 // Un consejo breve y accionable por día (rotación determinista).
 const TIPS = [
@@ -184,7 +200,7 @@ $('wDone').addEventListener('click', () => {
 });
 
 // ---------------------------------------------------------------- práctica de hoy
-const task = todayTask(sessions);
+const task = todayTask(sessions, lvl);
 const s = streak(sessions);
 $('tWeek').textContent = task.week + (task.day ? ` · día ${task.day} de 28` : '');
 $('tText').textContent = task.text;
@@ -201,20 +217,20 @@ if (gd) {
 const ev = profile.event;
 if (validEvent(ev) && daysUntil(ev.date) >= 0) {
   const left = daysUntil(ev.date), next = nextEventPractice(ev);
-  $('tWeek').textContent = `${EVENT_TYPES[ev.type].icon} ${ev.title || EVENT_TYPES[ev.type].name} · ${left === 0 ? 'es hoy' : left === 1 ? 'es mañana' : `faltan ${left} días`}`;
+  $('tWeek').textContent = `${ev.title || EVENT_TYPES[ev.type].name} · ${left === 0 ? 'es hoy' : left === 1 ? 'es mañana' : `faltan ${left} días`}`;
   $('tText').textContent = left === 0 ? 'Hoy es el día: haz tu rutina previa y confía en lo que practicaste.' : next ? next.text : 'Completaste el plan de tu evento. Repasa las preguntas difíciles.';
   $('tGo').href = 'evento.html';
-  $('tGo').textContent = left === 0 ? '▶ Ver mi rutina del día' : '▶ Ir a mi plan del evento';
+  $('tGo').textContent = left === 0 ? 'Ver mi rutina del día' : 'Ir a mi plan del evento';
 }
 $('tWhy').textContent = practicedToday(sessions)
-  ? '¡Ya practicaste hoy! Si quieres, haz otra ronda: la repetición es la que crea el hábito.'
+  ? 'Ya practicaste hoy. Si quieres, haz otra ronda: la repetición es la que crea el hábito.'
   : 'Toma unos 7 minutos. Una sola práctica bien hecha vale más que muchas a medias.';
 const last = sessions.filter(x => x.type === 'evaluacion').pop();
 // Si un día de descanso salvó la racha en los últimos dos días, se dice: así no parece un error.
 const rest = streakInfo(sessions).rested[0];
 const restedRecently = rest && (Date.now() - new Date(rest + 'T12:00').getTime()) < 2.5 * 864e5;
 $('tStreak').textContent = (s ? `Racha: ${s} ${s === 1 ? 'día seguido' : 'días seguidos'}` : 'Empieza tu racha hoy') +
-  (restedRecently ? ' · 🛡️ un día de descanso protegió tu racha (1 cada 7 días)' : '') +
+  (restedRecently ? ' · un día de descanso protegió tu racha (1 cada 7 días)' : '') +
   (last ? ` · Último puntaje: ${last.total} en «${last.scenarioName}»` : '');
 
 // ---------------------------------------------------------------- diagnóstico y metas
@@ -225,7 +241,7 @@ else {
   const age = Math.floor((Date.now() - new Date(diag.date)) / 864e5);
   $('goalsBox').innerHTML = `<p class="note">${indexLine(profile.diagnoses)}</p>
     ${goalsHTML(profile.goals, sessions)}
-    ${age >= 28 ? '<p style="margin-top:10px"><a href="diagnostico.html">🔁 Pasaron 4 semanas: repite el diagnóstico y compara</a></p>' : ''}`;
+    ${age >= 28 ? '<p style="margin-top:10px"><a href="diagnostico.html">Pasaron 4 semanas: repite el diagnóstico y compara</a></p>' : ''}`;
 }
 document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-goal-next]'); if (!b) return;
