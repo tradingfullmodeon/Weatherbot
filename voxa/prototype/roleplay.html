@@ -99,6 +99,7 @@ import { INTERVIEW_PERSONA, createInterview, currentQuestion, interviewNext, int
 import { isCrisis } from './help.js';
 import { orderPersonas, rememberRoleplay, memoryNote, SHOWN_FIRST } from './memory.js';
 import { upgradeHTML } from './plan-pro.js';
+import { ringHTML } from './charts.js';
 
 renderNav();
 const locale = userLocale();
@@ -197,7 +198,7 @@ function say(text) {
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = locale;
-  const voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('es'));
+  const voices = speechSynthesis.getVoices().filter(v => v.lang.toLowerCase().startsWith(locale.slice(0, 2)));
   u.voice = voices.find(v => v.lang === locale) || voices[0] || null;
   u.rate = 1.02;
   speechSynthesis.speak(u);
@@ -355,7 +356,7 @@ function localNextStep(c) {
 function renderEval(total, scores, c, ev) {
   const bars = Object.entries(scores).map(([k, v]) =>
     `<div class="dim"><div>${esc(k.replace(/_/g, ' '))} <strong style="float:right">${v}</strong></div><div class="bar"><div style="width:${v}%;background:${colorFor(v)}"></div></div></div>`).join('');
-  const head = `<div class="score-big"><div class="ring" style="border:8px solid ${colorFor(total)}">${total}</div>
+  const head = `<div class="score-big">${ringHTML(total)}
     <div><div style="font-weight:600">${esc(persona.name)}${persona.id === 'offline' ? '' : ` · dificultad ${$('difficulty').value}/3`}</div>
     <div class="note">Hablaste el ${Math.round(c.talkRatio * 100)}% del tiempo · ${c.questions} ${c.questions === 1 ? 'intervención' : 'intervenciones'} con preguntas · ${c.fillers} muletillas</div></div></div>
     <div class="dims">${bars}</div>`;

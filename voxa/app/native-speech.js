@@ -14,7 +14,7 @@
 
   class NativeSpeechRecognition {
     constructor() {
-      this.lang = 'es-419'; this.continuous = true; this.interimResults = true;
+      this.lang = 'es-MX'; this.continuous = true; this.interimResults = true;
       this.onresult = null; this.onend = null; this.onerror = null;
       this._last = ''; this._subs = [];
     }

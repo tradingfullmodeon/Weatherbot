@@ -25,7 +25,9 @@
   <!-- 1. La voz primero: en un minuto la persona ya ve algo bueno medido de verdad. -->
   <section class="card full dg-step" data-step="1" data-name="Tu voz">
     <h2 tabindex="-1">Preséntate en 60 segundos</h2>
-    <div class="prompt"><strong>Quién eres, qué haces y qué te apasiona</strong>Cierra con una frase memorable. Puedes terminar antes: con 30 segundos ya medimos.</div>
+    <div class="prompt"><strong>Quién eres, qué haces y qué te apasiona</strong>Mira a la cámara como si fuera tu público y cierra con una frase memorable. Puedes terminar antes: con 30 segundos ya medimos.</div>
+    <label class="check"><input type="checkbox" id="dgCam" checked> Con cámara: también medimos tu presencia (encuadre, mirada y expresión). El video no sale de tu teléfono.</label>
+    <video id="dgVideo" class="dg-video hidden" playsinline muted aria-label="Vista previa de tu cámara"></video>
     <div class="btns">
       <button id="btnRec" class="cta">🎙 Grabar ahora</button>
       <label for="dgFile" class="btn-link file-btn">📁 Elegir una grabación</label>
@@ -71,6 +73,7 @@
 <script type="module">
 import { $, renderNav, loadProfile, saveProfile, loadSessions, wordCount, countMatches, FILLER_RE, HEDGE_RE, userLocale } from './shared.js';
 import { requestMedia, explainError } from './devices.js';
+import { loadVision, sampleVideo, presenceSummary, presenceItems } from './presence.js';
 import { SCENARIOS } from './scenarios.js';
 import { KINDS, analyzeWriting, assertivenessOf } from './writing.js';
 import { analyzeAudio, analyzeByPlayback, voiceMetrics, scoreSpeech, guiraud } from './audiofile.js';
@@ -101,29 +104,39 @@ function go(n) {
 
 // ---------------------------------------------------------------- prueba de voz: grabar en vivo o subir
 let recording = null, recorder = null, stream = null, recognition = null, timer = 0, recStopped = null;
+let faces = [], stopSampling = null;   // presencia medida en esta grabación (si hubo cámara)
 let voiceItems;   // resultado de la prueba de voz ya analizado (undefined = falta analizar)
 const resetVoice = () => { voiceItems = undefined; $('dgWin').innerHTML = ''; $('dgWinBtn').classList.remove('hidden'); $('dgNext1').classList.add('hidden'); };
 $('dgFile').addEventListener('change', (e) => {
-  recording = e.target.files[0] || null; resetVoice();
+  recording = e.target.files[0] || null; resetVoice(); faces = [];
   $('recState').textContent = recording ? `Grabación lista: ${recording.name}` : '';
 });
 $('dgSaid').addEventListener('input', resetVoice);
 function stopRec() {
   clearInterval(timer);
+  stopSampling?.(); stopSampling = null;
   try { recognition?.stop(); } catch {}
   if (recorder?.state === 'recording') recorder.stop();
 }
 $('btnRec').addEventListener('click', async () => {
   if (recorder?.state === 'recording') { stopRec(); return; }
-  try { ({ stream } = await requestMedia({ video: false })); }
+  let withVideo = false;
+  try { const r = await requestMedia({ video: $('dgCam').checked }); stream = r.stream; withVideo = r.video; }
   catch (e) { $('recState').textContent = explainError(e) + ' También puedes elegir una grabación o escribir lo que dirías.'; return; }
   const chunks = [];
-  resetVoice();
+  resetVoice(); faces = [];
+  // Con cámara: vista previa y medición de presencia en el teléfono mientras habla. Sólo se graba el audio.
+  const v = $('dgVideo');
+  if (withVideo) {
+    v.srcObject = stream; v.classList.remove('hidden'); v.play().catch(() => {});
+    loadVision().then(det => { if (det && recorder?.state === 'recording') stopSampling = sampleVideo(v, det, faces); });
+  } else if ($('dgCam').checked) $('recState').textContent = 'No pudimos usar la cámara: medimos sólo tu voz.';
   let done; recStopped = new Promise(r => { done = r; });
-  recorder = new MediaRecorder(stream);
+  recorder = new MediaRecorder(new MediaStream(stream.getAudioTracks()));
   recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
   recorder.onstop = () => {
     stream.getTracks().forEach(t => t.stop());
+    v.classList.add('hidden'); v.srcObject = null;
     recording = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
     $('btnRec').textContent = '🎙 Grabar de nuevo';
     $('recState').textContent = 'Grabación lista.';
@@ -184,6 +197,10 @@ async function speechItems() {
 }
 
 // Presencia: la última evaluación con cámara (MediaPipe) aporta encuadre, mirada, estabilidad y sonrisa.
+function measuredPresence() {
+  const m = presenceSummary(faces);
+  return m.hasVision ? Object.fromEntries(presenceItems(m).map(i => [i.key, i.s])) : lastPresence();
+}
 function lastPresence() {
   const s = [...loadSessions()].reverse().find(x => x.metrics?.gaze);
   if (!s) return null;
@@ -226,11 +243,11 @@ $('dgRun').addEventListener('click', async () => {
   const items = await analyzeVoice();
   const w = $('dgWrite').value.trim();
   const writingScore = wordCount(w) >= 5 ? analyzeWriting(w, KINDS.find(k => k.id === 'pedido')).score : null;
-  result = computeProfile(answers, measuredFrom({ speechItems: items, writingScore, presenceScores: lastPresence(), seconds,
+  result = computeProfile(answers, measuredFrom({ speechItems: items, writingScore, presenceScores: measuredPresence(), seconds,
     words: wordCount($('dgSaid').value) || null, writingAssertiveness: wordCount(w) >= 5 ? assertivenessOf(w) : null }));
   const prev = profile.diagnoses?.at(-1) || null;
   $('dgOut').innerHTML = diagnosisHTML(result, prev);
-  drawRadar($('dgOut').querySelector('#radar'), result.profile, prev?.profile);
+  drawRadar($('dgOut').querySelector('#radar'), result.profile, prev?.profile, result.measured);
   $('dgGoals').innerHTML = goalPickerHTML(suggestGoals(result));
   $('dgRun').disabled = false;
   go(4);

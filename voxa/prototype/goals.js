@@ -2,6 +2,7 @@
 // metas específicas y desafiantes con plazo y compromiso (Locke y Latham), que avanzan solas con cada
 // práctica → re-diagnóstico para comparar. Lo usa la versión publicada (artifact/app.js).
 import { esc, colorFor, mean, localDay } from './shared.js';
+import { radarSVG, ringHTML } from './charts.js';
 
 export const DIMENSIONS = [
   { id: 'estructura', name: 'Estructura y claridad', icon: '🧭' },
@@ -176,42 +177,36 @@ export function selfAssessmentHTML(answers = {}) {
 }
 
 // Gráfico de radar con el perfil (y, opcional, un perfil anterior para comparar).
-export function drawRadar(canvas, profile, previous = null) {
-  const ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height, cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 58;
-  const css = getComputedStyle(document.documentElement);
-  const dims = DIMENSIONS.filter(d => profile[d.id] != null);
-  if (dims.length < 3) return;
-  ctx.clearRect(0, 0, W, H);
-  const pt = (i, v) => { const a = -Math.PI / 2 + i * 2 * Math.PI / dims.length; return [cx + Math.cos(a) * R * v / 100, cy + Math.sin(a) * R * v / 100]; };
-  ctx.strokeStyle = css.getPropertyValue('--line'); ctx.lineWidth = 1;
-  for (const lvl of [25, 50, 75, 100]) { ctx.beginPath(); dims.forEach((_, i) => { const [x, y] = pt(i, lvl); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.closePath(); ctx.stroke(); }
-  ctx.fillStyle = css.getPropertyValue('--muted'); ctx.font = '13px system-ui'; ctx.textAlign = 'center';
-  dims.forEach((d, i) => { const [x, y] = pt(i, 122); ctx.fillText(`${d.icon} ${d.name.split(' ')[0]}`, x, y + 4); });
-  const shape = (p, color, alpha) => {
-    ctx.beginPath(); dims.forEach((d, i) => { const [x, y] = pt(i, p[d.id] ?? 0); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.closePath();
-    ctx.globalAlpha = alpha; ctx.fillStyle = color; ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
-  };
-  if (previous) shape(previous, css.getPropertyValue('--muted'), 0.12);
-  shape(profile, css.getPropertyValue('--accent'), 0.25);
+// Radar del perfil en SVG dentro de un contenedor (#radar). measured marca qué dimensiones se midieron en una prueba.
+export function drawRadar(el, profile, previous = null, measured = null) {
+  if (!el) return;
+  const axes = DIMENSIONS.filter(d => profile[d.id] != null).map(d => ({ id: d.id, name: SHORT[d.id] || d.name }));
+  if (axes.length < 3) { el.innerHTML = ''; return; }
+  const self = measured && axes.some(a => measured[a.id] == null);
+  el.innerHTML = radarSVG(axes, profile, { measured, previous }) +
+    `<div class="chart-legend"><span><i style="background:var(--accent)"></i>Medido en tus pruebas</span>` +
+    (self ? `<span><i style="border:2px solid var(--accent);background:var(--card)"></i>Según cómo te ves</span>` : '') +
+    (previous ? `<span><i style="border:2px dashed var(--muted);background:none"></i>Tu diagnóstico anterior</span>` : '') + '</div>';
 }
+const SHORT = { estructura: 'Estructura', presencia: 'Presencia' };
 
 export function diagnosisHTML(r, previous = null) {
   const src = (d) => r.measured[d] == null ? ' <small class="note">(según cómo te ves)</small>' : '';
   const rows = DIMENSIONS.filter(d => r.profile[d.id] != null).map(d => {
     const v = r.profile[d.id], prev = previous?.profile?.[d.id];
     const delta = prev != null ? v - prev : null;
-    return `<tr><td>${d.icon} ${esc(d.name)}</td><td class="num">${r.self[d.id] ?? '–'}</td><td class="num">${r.measured[d.id] ?? '–'}</td>
+    return `<tr><td>${esc(d.name)}</td><td class="num">${r.self[d.id] ?? '–'}</td><td class="num">${r.measured[d.id] ?? '–'}</td>
       <td><span class="pill" style="color:${colorFor(v)}">${v}</span>${delta != null ? ` <small style="color:${delta >= 0 ? 'var(--good)' : 'var(--bad)'}">${delta >= 0 ? '+' : ''}${delta}</small>` : ''}</td></tr>`;
   }).join('');
   const gaps = r.gaps.map(g => g.kind === 'sobre'
     ? `<li>En <strong>${esc(dimName(g.dim))}</strong> te ves mejor (${g.self}) de lo que medimos (${g.measured}): es un punto ciego que vale la pena practicar.</li>`
     : `<li>En <strong>${esc(dimName(g.dim))}</strong> eres más exigente contigo (${g.self}) de lo que medimos (${g.measured}): lo haces mejor de lo que crees.</li>`).join('');
   return `
-    <div class="score-big"><div class="ring" style="border:8px solid ${colorFor(r.total)}">${r.total}</div>
+    <div class="score-big">${ringHTML(r.total)}
       <div><div style="font-size:1.15rem;font-weight:700">Índice Talkride ${r.total} · nivel ${esc(r.level)}</div>
       <div class="lead">${previous ? `Antes: ${previous.total} (nivel ${esc(previous.level)}). ${r.total - previous.total >= 0 ? '+' : ''}${r.total - previous.total} puntos.` : 'Este es tu punto de partida.'}</div>
       <div class="note">Tu índice de comunicación de 0 a 100: combina cómo te ves (40%) con lo que medimos en tus pruebas (60%). Vuelve a medirlo cada 4 semanas.</div></div></div>
-    <canvas id="radar" width="520" height="420" aria-label="Perfil de comunicación por dimensión" style="width:100%;max-width:520px;height:auto;margin:8px auto;display:block"></canvas>
+    <div id="radar"></div>
     <div class="fb">
       <div><h3 style="color:var(--good)">Tus fortalezas</h3><ul>${r.strengths.map(d => `<li>${esc(dimName(d))}${src(d)}</li>`).join('')}</ul></div>
       <div><h3 style="color:var(--mid)">Tus prioridades</h3><ul>${r.priorities.map(d => `<li>${esc(dimName(d))}${src(d)}</li>`).join('')}</ul></div>

@@ -64,8 +64,13 @@
   mark.hedge { background: #bfdbfe; color: #111; border-radius: 3px; padding: 0 2px; }
   .note { font-size: .8rem; color: var(--muted); }
   .score-big { display: flex; align-items: center; gap: 16px; }
-  .ring { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center;
-          font-size: 1.8rem; font-weight: 700; }
+  /* Anillo de puntaje: el arco muestra el valor (--p, 0–100) en su color (--c). No se deforma en pantallas angostas. */
+  .ring { flex: none; width: 96px; height: 96px; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+          font-size: 1.8rem; font-weight: 800; font-variant-numeric: tabular-nums; text-align: center; line-height: 1.1;
+          background: radial-gradient(closest-side, var(--card) 80%, transparent 81%), conic-gradient(var(--c, var(--accent)) calc(var(--p, 100) * 1%), var(--line) 0); }
+  .chart-svg { display: block; width: 100%; height: auto; margin: 8px auto; overflow: visible; font-family: inherit; }
+  .chart-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: center; font-size: .8rem; color: var(--muted); }
+  .chart-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
   .dims { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 14px; }
   .dim .bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; margin-top: 4px; }
   .dim .bar > div { height: 100%; }
@@ -229,3 +234,12 @@
   /* Íconos de línea propios junto a títulos y accesos (reemplazan los emojis). */
   [data-icon]:not(strong) { display: inline-flex; align-items: center; }
   [data-icon] > svg { flex: none; color: var(--accent); margin-inline-end: 8px; vertical-align: -4px; }
+  .dg-video { width: 100%; max-width: 320px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; background: #000; transform: scaleX(-1); margin: 8px 0; }
+  /* Método RIDE: cuatro pasos con su letra; en columna en el celular y en fila en pantallas anchas. */
+  .ride-steps { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .ride-steps li { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+  .ride-steps li small { display: block; color: var(--muted); font-size: .8rem; }
+  .ride-l { flex: none; width: 32px; height: 32px; border-radius: 10px; display: inline-grid; place-items: center; font-weight: 800;
+            background: var(--accent); color: var(--on-accent); margin-inline-end: 10px; }
+  .ride-steps li .ride-l { margin-inline-end: 0; }
+  .ride-step h2 { display: flex; align-items: center; }

@@ -1,6 +1,13 @@
 // Utilidades compartidas por las páginas de Talkride: diccionarios, métricas de texto,
 // historial local de sesiones y acceso a la API del coach IA.
 
+import { PRACTICE_LANGS, practiceLangOf, speechLocaleFor, langInfo, FILLERS_BY_LANG, HEDGES_BY_LANG } from './lang.js';
+export { PRACTICE_LANGS, langInfo };
+
+// Idioma en que practica la persona (es, en, pt, fr, de, it). Cada página lo lee al cargar: las reglas de análisis,
+// el reconocimiento de voz y el coach IA usan este idioma.
+export const PRACTICE_LANG = (() => { try { return practiceLangOf(JSON.parse(localStorage.getItem('voxa.profile.v1') || '{}')); } catch { return 'es'; } })();
+
 // Muletillas frecuentes en español (incluye variantes regionales).
 export const FILLERS = ['eh+', 'em+', 'ehm+', 'mm+', 'este', 'o sea', 'bueno', 'pues', 'como que', 'digamos',
   'tipo', 'básicamente', 'literalmente', 'en plan', 'vale', 'sabes', 'cachai', 'me explico',
@@ -41,8 +48,13 @@ const CONTEXTUAL = {
   viste: String.raw`viste(?=\s*[?,]|\s*$)`,
   po: String.raw`po(?=${PAUSE})`,
 };
-export const FILLER_RE = wordRe(FILLERS.map(w => CONTEXTUAL[w] ?? asPattern(w)));
-export const HEDGE_RE = wordRe(HEDGES.map(asPattern));
+const ES_FILLER_RE = wordRe(FILLERS.map(w => CONTEXTUAL[w] ?? asPattern(w)));
+const ES_HEDGE_RE = wordRe(HEDGES.map(asPattern));
+// Muletillas y atenuadores de un idioma (el español con sus reglas de contexto; los demás, con las de lang.js).
+export const fillerReFor = (lang) => lang === 'es' || !FILLERS_BY_LANG[lang] ? ES_FILLER_RE : wordRe(FILLERS_BY_LANG[lang]);
+export const hedgeReFor = (lang) => lang === 'es' || !HEDGES_BY_LANG[lang] ? ES_HEDGE_RE : wordRe(HEDGES_BY_LANG[lang].map(asPattern));
+export const FILLER_RE = fillerReFor(PRACTICE_LANG);
+export const HEDGE_RE = hedgeReFor(PRACTICE_LANG);
 
 
 export const $ = (id) => document.getElementById(id);
@@ -191,15 +203,12 @@ export function renderNav() {
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
-export const LOCALES = [
-  ['es-419', 'Latinoamérica'], ['es-AR', 'Argentina'], ['es-CL', 'Chile'], ['es-CO', 'Colombia'],
-  ['es-MX', 'México'], ['es-PE', 'Perú'], ['es-ES', 'España'], ['es-US', 'Estados Unidos'],
-];
-// Variante de español del perfil o, si no hay, la del navegador.
+// Idiomas de práctica para los selectores: [id, nombre].
+export const LOCALES = PRACTICE_LANGS.map(l => [l.id, l.label]);
+export const practiceLang = (profile = loadProfile()) => practiceLangOf(profile);
+// Código del reconocimiento de voz para el idioma de práctica (en español, el país del dispositivo si es de Latinoamérica).
 export function userLocale(profile = loadProfile()) {
-  if (profile.locale) return profile.locale;
-  const nav = (navigator.language || '').toLowerCase();
-  return LOCALES.find(([id]) => id.toLowerCase() === nav)?.[0] || 'es-419';
+  return speechLocaleFor(practiceLangOf(profile));
 }
 
 // ---------------------------------------------------------------- historial local
@@ -253,7 +262,9 @@ export function deviceId() {
   } catch { return ''; }
 }
 async function api(method, path, body) {
-  const r = await fetch(API_BASE + path, { method, headers: { 'Content-Type': 'application/json', 'X-VOXA-User': deviceId() }, body: body && JSON.stringify(body) });
+  // Toda llamada al coach lleva el idioma de práctica: el coach explica en español y cita y reescribe en ese idioma.
+  const payload = body && typeof body === 'object' && !Array.isArray(body) && !('language' in body) ? { ...body, language: PRACTICE_LANG } : body;
+  const r = await fetch(API_BASE + path, { method, headers: { 'Content-Type': 'application/json', 'X-VOXA-User': deviceId() }, body: payload && JSON.stringify(payload) });
   if (!r.ok) {
     let detail = `Error ${r.status}`;
     try { detail = (await r.json()).detail || detail; } catch {}

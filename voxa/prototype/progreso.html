@@ -60,8 +60,8 @@
 
   <section class="card full">
     <h2>Evolución del puntaje</h2>
-    <canvas id="trend" width="1000" height="220" aria-label="Puntaje por sesión"></canvas>
-    <div class="legend" id="legend"></div>
+    <div id="trend"></div>
+    <div class="chart-legend" id="legend"></div>
   </section>
 
   <section class="card full">
@@ -71,7 +71,7 @@
 
   <section class="card">
     <h2>Nervios antes y después</h2>
-    <canvas id="anx" width="500" height="180" aria-label="Nervios antes y después de cada práctica"></canvas>
+    <div id="anx"></div>
     <p class="note" id="anxNote"></p>
   </section>
 
@@ -101,6 +101,7 @@
 import { $, esc, colorFor, mean, renderNav, loadSessions, loadProfile, saveProfile, clearAll, calmText, aiStatus, postJSON } from './shared.js';
 import { todayTask, streak } from './plan.js';
 import { diagnosisHTML, drawRadar, goalsHTML, goalHref } from './goals.js';
+import { lineChartSVG, pairBarsSVG } from './charts.js';
 import { shareStats, shareProgress } from './share.js';
 
 renderNav();
@@ -148,49 +149,23 @@ $('focus').innerHTML = topWeak
   : '<p class="note">Aparecerá cuando tengas evaluaciones.</p>';
 
 // ---------------------------------------------------------------- gráficos
-const css = getComputedStyle(document.documentElement);
-const C = { total: css.getPropertyValue('--accent').trim(), voz: '#0ea5e9', lenguaje: '#f59e0b', presencia: '#10b981' };
-function line(ctx, pts, color, W, H, pad, width = 2) {
-  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width; ctx.beginPath();
-  pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke();
-  pts.forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, width + 1, 0, 7); ctx.fill(); });
-}
-function axes(ctx, W, H, pad, max) {
-  ctx.strokeStyle = css.getPropertyValue('--line'); ctx.fillStyle = css.getPropertyValue('--muted');
-  ctx.font = '12px system-ui'; ctx.lineWidth = 1;
-  for (const v of [0, max / 2, max]) {
-    const y = H - pad - v / max * (H - 2 * pad);
-    ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W - 10, y); ctx.stroke(); ctx.fillText(String(v), 4, y + 4);
-  }
-}
+const C = { total: 'var(--accent)', voz: '#3b82c4', lenguaje: '#c2780a', presencia: '#7a5aa8' };
 function drawTrend() {
-  const c = $('trend'), ctx = c.getContext('2d'), W = c.width, H = c.height, pad = 30;
-  axes(ctx, W, H, pad, 100);
-  if (!evals.length) return;
-  const x = (i) => pad + (evals.length === 1 ? (W - pad) / 2 : i / (evals.length - 1) * (W - pad - 20));
-  const y = (v) => H - pad - v / 100 * (H - 2 * pad);
-  for (const d of ['voz', 'lenguaje', 'presencia']) {
-    const pts = evals.map((s, i) => s.dims?.[d] != null ? [x(i), y(s.dims[d])] : null).filter(Boolean);
-    if (pts.length) line(ctx, pts, C[d], W, H, pad, 1.5);
-  }
-  line(ctx, evals.map((s, i) => [x(i), y(s.total)]), C.total, W, H, pad, 3);
-  $('legend').innerHTML = Object.entries({ total: 'Puntaje Talkride', voz: 'Voz', lenguaje: 'Lenguaje', presencia: 'Presencia' })
-    .map(([k, l]) => `<span><i style="background:${C[k]}"></i>${l}</span>`).join('');
+  if (!evals.length) { $('trend').innerHTML = '<p class="note">Haz tu primera evaluación para ver tu evolución.</p>'; return; }
+  const names = { total: 'Puntaje Talkride', voz: 'Voz', lenguaje: 'Lenguaje', presencia: 'Presencia' };
+  const series = [{ key: 'total', values: evals.map(s => s.total) },
+    ...['voz', 'lenguaje', 'presencia'].map(d => ({ key: d, values: evals.map(s => s.dims?.[d] ?? null) }))]
+    .filter(x => x.values.some(v => v != null)).map(x => ({ ...x, label: names[x.key], color: C[x.key] }));
+  $('trend').innerHTML = lineChartSVG(series, { title: 'Puntaje por práctica' });
+  $('legend').innerHTML = series.map(x => `<span><i style="background:${x.color}"></i>${x.label}</span>`).join('');
 }
 function drawAnx() {
   const data = sessions.filter(s => s.anxietyBefore != null && s.anxietyAfter != null).slice(-20);
-  const c = $('anx'), ctx = c.getContext('2d'), W = c.width, H = c.height, pad = 24;
-  axes(ctx, W, H, pad, 5);
   if (!data.length) { $('anxNote').textContent = 'Registra tus nervios antes y después en cada evaluación.'; return; }
-  const bw = (W - pad - 10) / data.length;
-  data.forEach((s, i) => {
-    const x0 = pad + i * bw + 2, h = (v) => v / 5 * (H - 2 * pad);
-    ctx.fillStyle = '#f87171'; ctx.fillRect(x0, H - pad - h(s.anxietyBefore), bw / 2 - 2, h(s.anxietyBefore));
-    ctx.fillStyle = '#4ade80'; ctx.fillRect(x0 + bw / 2, H - pad - h(s.anxietyAfter), bw / 2 - 2, h(s.anxietyAfter));
-  });
+  $('anx').innerHTML = pairBarsSVG(data.map(s => [s.anxietyBefore, s.anxietyAfter]), { title: 'Nervios antes y después de cada práctica' });
   const firstHalf = mean(data.slice(0, Math.ceil(data.length / 2)).map(s => s.anxietyBefore));
   const secondHalf = mean(data.slice(Math.ceil(data.length / 2)).map(s => s.anxietyBefore));
-  $('anxNote').innerHTML = `<span style="color:#f87171">■</span> antes · <span style="color:#4ade80">■</span> después. ` +
+  $('anxNote').innerHTML = `<span style="color:var(--bad)">■</span> antes · <span style="color:var(--good)">■</span> después (escala 1–5). ` +
     (data.length >= 4 && secondHalf < firstHalf ? `Tus nervios al empezar bajaron de ${firstHalf.toFixed(1)} a ${secondHalf.toFixed(1)}: la exposición repetida funciona.` : 'Con más sesiones verás si tus nervios al empezar bajan.');
 }
 drawTrend(); drawAnx();
@@ -252,9 +227,9 @@ if (!ds.length) $('pDiagOut').innerHTML = '<p class="note">Todavía no haces tu 
 else {
   const first = ds[0], latest = ds[ds.length - 1];
   $('pDiagOut').innerHTML = diagnosisHTML(latest, ds.length > 1 ? first : null)
-    + `<p class="note">${ds.length > 1 ? `Comparado con tu primer diagnóstico (${new Date(first.date).toLocaleDateString('es')}). El área gris es tu punto de partida.` : 'Repite el diagnóstico en unas 4 semanas para ver tu avance.'}</p>
+    + `<p class="note">${ds.length > 1 ? `Comparado con tu primer diagnóstico (${new Date(first.date).toLocaleDateString('es')}). La línea punteada es tu punto de partida.` : 'Repite el diagnóstico en unas 4 semanas para ver tu avance.'}</p>
     <div class="btns"><a class="btn-link" href="diagnostico.html">Repetir el diagnóstico</a></div>`;
-  drawRadar($('pDiagOut').querySelector('#radar'), latest.profile, ds.length > 1 ? first.profile : null);
+  drawRadar($('pDiagOut').querySelector('#radar'), latest.profile, ds.length > 1 ? first.profile : null, latest.measured);
 }
 $('pGoals').innerHTML = goalsHTML(profile.goals, sessions);
 document.addEventListener('click', (e) => {

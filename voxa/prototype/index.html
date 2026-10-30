@@ -19,8 +19,10 @@
 <main>
   <!-- Bienvenida: 3 preguntas, sin registro (patrón de "compromiso gradual"). -->
   <section class="card full hidden" id="welcome" aria-labelledby="wTitle">
-    <h2 id="wTitle">Bienvenido a Talkride 👋</h2>
-    <p class="lead">En 7 minutos al día vas a hablar con más claridad y confianza. Primero, tres preguntas rápidas.</p>
+    <h2 id="wTitle">Bienvenido a Talkride</h2>
+    <p class="lead">En 7 minutos al día vas a hablar con más claridad y confianza, con el método RIDE:</p>
+    <div id="wMethod"></div>
+    <p>Primero, tres preguntas rápidas.</p>
 
     <h3>1. ¿Para qué quieres mejorar?</h3>
     <div class="chips-select" id="wGoal" role="group" aria-label="Objetivo"></div>
@@ -32,8 +34,9 @@
       <button type="button" data-v="5" aria-pressed="false">😰 Me cuesta mucho</button>
     </div>
 
-    <h3 style="margin-top:16px">3. ¿Qué español hablas?</h3>
-    <select id="wLocale" aria-label="Variante de español" style="max-width:320px"></select>
+    <h3 style="margin-top:16px">3. ¿En qué idioma quieres practicar?</h3>
+    <select id="wLocale" aria-label="Idioma de práctica" style="max-width:320px"></select>
+    <p class="note">La app te guía en español; tu voz, tus textos y los personajes van en el idioma que elijas. Puedes cambiarlo cuando quieras en Ajustes.</p>
 
     <div class="btns" style="margin-top:18px">
       <button id="wDone" class="cta" disabled>Empezar mi diagnóstico</button>
@@ -56,6 +59,12 @@
   <section class="card full" id="goalsCard">
     <h2>Tu diagnóstico y tus metas</h2>
     <div id="goalsBox"></div>
+  </section>
+
+  <section class="card full" id="methodCard">
+    <h2>Cómo entrenas: el método RIDE</h2>
+    <div id="methodBox"></div>
+    <p class="note"><a href="metodo.html">Conoce el método y en qué se basa →</a></p>
   </section>
 
   <section class="card full">
@@ -99,7 +108,7 @@
     <h2>Ajustes</h2>
     <label for="sGoal">Tu objetivo</label>
     <select id="sGoal"></select>
-    <label for="sLocale" style="margin-top:10px">Variante de español (para reconocer mejor tu voz)</label>
+    <label for="sLocale" style="margin-top:10px">Idioma en que practicas (voz, textos y personajes)</label>
     <select id="sLocale"></select>
     <label for="sText" style="margin-top:10px">Tamaño de la letra</label>
     <select id="sText"><option value="normal">Normal</option><option value="lg">Grande</option><option value="xl">Muy grande</option></select>
@@ -110,9 +119,11 @@
 </main>
 
 <script type="module">
-import { $, esc, renderNav, loadProfile, saveProfile, loadSessions, GOALS, LOCALES, userLocale, aiStatus, getMe, applyDisplayPrefs, fillIcons } from './shared.js';
+import { $, esc, renderNav, loadProfile, saveProfile, loadSessions, GOALS, LOCALES, practiceLang, aiStatus, getMe, applyDisplayPrefs, fillIcons } from './shared.js';
 import { planLine } from './plan-pro.js';
 import { madeForYou, madeForYouHTML } from './foryou.js';
+import { methodStripHTML } from './method.js';
+$('wMethod').innerHTML = methodStripHTML(); $('methodBox').innerHTML = methodStripHTML();
 import { todayTask, streak, streakInfo, practicedToday } from './plan.js';
 import { mountDeviceCheck } from './devices.js';
 import { LESSONS } from './lessons.js';
@@ -145,7 +156,7 @@ const nextLesson = LESSONS.find(l => !profile.lessons?.[l.id]);
 if (nextLesson) $('nextLesson').innerHTML = `<a href="aprender.html?leccion=${nextLesson.id}">Lección sugerida (${nextLesson.minutes} min): ${esc(nextLesson.title)}</a>`;
 
 // ---------------------------------------------------------------- bienvenida
-const fillLocales = (sel) => { for (const [id, label] of LOCALES) sel.add(new Option(label, id)); sel.value = userLocale(profile); };
+const fillLocales = (sel) => { for (const [id, label] of LOCALES) sel.add(new Option(label, id)); sel.value = practiceLang(profile); };
 fillLocales($('wLocale')); fillLocales($('sLocale'));
 for (const [id, label] of GOALS) $('sGoal').add(new Option(label, id));
 $('sGoal').value = profile.goal || 'confianza';
@@ -166,7 +177,7 @@ if (firstRun) { $('welcome').classList.remove('hidden'); document.querySelectorA
 // Quien llega desde «Probar mis dispositivos» ve esa tarjeta aunque no haya terminado la bienvenida.
 if (location.hash === '#dispositivos') { $('dispositivos').classList.remove('hidden'); $('dispositivos').scrollIntoView(); }
 $('wDone').addEventListener('click', () => {
-  Object.assign(profile, { goal: wGoal, locale: $('wLocale').value, onboarded: true, startNerves: wNerves });
+  Object.assign(profile, { goal: wGoal, lang: $('wLocale').value, onboarded: true, startNerves: wNerves }); delete profile.locale;
   saveProfile(profile);
   // Estado inicial primero: el diagnóstico define las metas.
   location.href = 'diagnostico.html';
@@ -270,7 +281,8 @@ aiStatus().then(async (s) => {
 // ---------------------------------------------------------------- ajustes
 const saved = () => { saveProfile(profile); $('sSaved').textContent = 'Guardado.'; setTimeout(() => $('sSaved').textContent = '', 1500); };
 $('sGoal').addEventListener('change', () => { profile.goal = $('sGoal').value; saved(); });
-$('sLocale').addEventListener('change', () => { profile.locale = $('sLocale').value; saved(); });
+// Cambiar el idioma recarga la página: las reglas de análisis y la voz se eligen al abrir cada pantalla.
+$('sLocale').addEventListener('change', () => { profile.lang = $('sLocale').value; delete profile.locale; saved(); setTimeout(() => location.reload(), 600); });
 $('sText').value = profile.textSize || 'normal'; $('sContrast').checked = !!profile.highContrast;
 $('sText').addEventListener('change', () => { profile.textSize = $('sText').value; applyDisplayPrefs(profile); saved(); });
 $('sContrast').addEventListener('change', () => { profile.highContrast = $('sContrast').checked; applyDisplayPrefs(profile); saved(); });

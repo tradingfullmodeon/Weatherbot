@@ -213,7 +213,7 @@ export function eventHTML(ev, lessonTitle = () => '') {
   const routine = (key, title) => `<h3>${title}</h3><ul class="ladder">${DAY_ROUTINE[key].map((r, i) =>
     `<li><label><input type="checkbox" data-routine="${key}:${i}" ${ev.routine?.[`${key}:${i}`] ? 'checked' : ''}> <span>${esc(r)}</span></label></li>`).join('')}</ul>`;
   return `
-    <div class="score-big"><div class="ring" style="border:8px solid var(--accent);font-size:1.1rem;text-align:center">${t.icon}<br>${left >= 0 ? Math.max(0, left) : '✓'}</div>
+    <div class="score-big"><div class="ring" style="--p:100;--c:var(--accent);font-size:1.1rem">${t.icon}<br>${left >= 0 ? Math.max(0, left) : '✓'}</div>
       <div><div style="font-size:1.15rem;font-weight:700">${esc(ev.title || t.name)}</div>
       <div class="lead">${when} · ${fmtDate(ev.date)}</div>
       <div class="note">${ev.audience ? `Ante: ${esc(ev.audience)} · ` : ''}${doneCount} de ${(ev.plan || []).length} prácticas hechas</div></div></div>

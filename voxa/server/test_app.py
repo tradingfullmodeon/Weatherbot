@@ -350,3 +350,32 @@ def test_delete_my_server_data():
     with voxa.quotas._db() as con:
         assert con.execute("SELECT COUNT(*) FROM usage WHERE user = ?", ("dispositivo999",)).fetchone()[0] == 0
         assert con.execute("SELECT COUNT(*) FROM plans WHERE user = ?", ("dispositivo999",)).fetchone()[0] == 0
+
+
+def test_practice_language_reaches_every_prompt(monkeypatch):
+    messages = fake_client(monkeypatch, FEEDBACK)
+    r = api.post("/api/feedback", json={"scenario": "Interview", "method": "STAR", "prompt": "Tell me about an achievement",
+                                         "transcript": "In my last job I had to cut delays, so I built a shared board and we reduced them by forty percent in two months.",
+                                         "language": "en", "locale": "en-US"})
+    assert r.status_code == 200
+    system = messages.calls[-1]["system"]
+    system = system if isinstance(system, str) else " ".join(b["text"] for b in system)
+    assert "Idioma de práctica: inglés" in system and "explicaciones" in system
+    # Sin métricas de cámara, el coach no habla de lenguaje corporal.
+    assert "no los menciones ni los evalúes" in system
+
+
+def test_unknown_practice_language_is_rejected():
+    r = api.post("/api/feedback", json={"scenario": "x", "method": "STAR", "prompt": "x", "language": "xx"})
+    assert r.status_code == 422
+
+
+def test_roleplay_persona_speaks_the_practice_language(monkeypatch):
+    rp = fake_client(monkeypatch, {"reply": "Hello", "end": False, "coach_hint": "Sé concreto", "safety_note": ""})
+    pid = next(iter(voxa.PERSONAS))
+    r = api.post("/api/roleplay", json={"persona_id": pid, "language": "pt",
+                                         "history": [{"role": "persona", "text": "Olá"}, {"role": "user", "text": "Olá, tudo bem?"}]})
+    assert r.status_code == 200
+    system = rp.calls[-1]["system"]
+    system = system if isinstance(system, str) else " ".join(b["text"] for b in system)
+    assert "habla siempre en portugués de Brasil" in system

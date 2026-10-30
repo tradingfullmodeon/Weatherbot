@@ -132,13 +132,14 @@
 <script type="module">
 import {
   $, FILLER_RE, HEDGE_RE, countMatches, phraseCounts, wordCount, mean, std, esc, colorFor, highlight,
-  renderNav, saveSession, loadSessions, loadProfile, aiStatus, postJSON, AI_MIN_WORDS, waitMessages, WAIT_STEPS, GOALS, detectPitch, findFilledPauses, userLocale, LOCALES,
+  renderNav, saveSession, loadSessions, loadProfile, aiStatus, postJSON, AI_MIN_WORDS, waitMessages, WAIT_STEPS, GOALS, detectPitch, findFilledPauses, userLocale, PRACTICE_LANG, langInfo,
 } from './shared.js';
 import { SCENARIOS, GROUPS, IMPRO_TOPICS, methodHelp } from './scenarios.js';
 import { requestMedia, explainError } from './devices.js';
 import { upgradeHTML } from './plan-pro.js';
 import { LESSONS, LESSON_FOR_METRIC } from './lessons.js';
 import { guiraud, MIN_SPEECH_SECONDS, PITCH_MAX_HZ, scoreSpeech } from './audiofile.js';
+import { loadVision as loadPresence, analyzeFace, presenceSummary, presenceItems } from './presence.js';
 
 renderNav();
 const profile = loadProfile();
@@ -194,8 +195,7 @@ function renderPrompt() {
 }
 $('scenario').addEventListener('change', renderPrompt);
 renderPrompt();
-const localeName = LOCALES.find(([id]) => id === locale)?.[1] || locale;
-$('status').innerHTML += ` Español: ${esc(localeName)} (<a href="index.html#ajustes">cambiar</a>).`;
+$('status').innerHTML += ` Idioma: ${esc(langInfo(PRACTICE_LANG).label)} (<a href="index.html#ajustes">cambiar</a>).`;
 
 // ---------------------------------------------------------------- cámara, micrófono y visión
 let hasCamera = false;
@@ -233,21 +233,8 @@ async function ensureMedia() {
 }
 
 async function loadVision() {
-  try {
-    const base = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
-    const vision = await import(`${base}/vision_bundle.mjs`);
-    const fileset = await vision.FilesetResolver.forVisionTasks(`${base}/wasm`);
-    faceLandmarker = await vision.FaceLandmarker.createFromOptions(fileset, {
-      baseOptions: {
-        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
-        delegate: 'GPU',
-      },
-      runningMode: 'VIDEO', numFaces: 1, outputFaceBlendshapes: true,
-    });
-  } catch (e) {
-    console.warn('Visión no disponible', e);
-    $('lGaze').textContent = 'n/d';
-  }
+  faceLandmarker = await loadPresence();
+  if (!faceLandmarker) $('lGaze').textContent = 'n/d';
 }
 
 // ---------------------------------------------------------------- flujo: un solo botón, cuenta regresiva y fin automático
@@ -379,24 +366,6 @@ function loop() {
   rafId = requestAnimationFrame(loop);
 }
 
-// Conductas observables (no emociones): presencia, mirada aproximada a cámara, sonrisa, giro de cabeza.
-function analyzeFace(res) {
-  if (!res.faceLandmarks || !res.faceLandmarks.length) return { present: false, gaze: false, smile: 0, yaw: 0, pitch: 0 };
-  const lm = res.faceLandmarks[0];
-  const bs = Object.fromEntries((res.faceBlendshapes?.[0]?.categories || []).map(c => [c.categoryName, c.score]));
-  const left = lm[234], right = lm[454], nose = lm[1], top = lm[10], chin = lm[152];
-  const yaw = (nose.x - left.x) / (right.x - left.x + 1e-6) - 0.5;      // ~0 = de frente
-  const pitch = (nose.y - top.y) / (chin.y - top.y + 1e-6) - 0.55;       // ~0 = de frente
-  const eyeOff = Math.max(
-    ((bs.eyeLookOutLeft || 0) + (bs.eyeLookInRight || 0)) / 2,
-    ((bs.eyeLookInLeft || 0) + (bs.eyeLookOutRight || 0)) / 2,
-    ((bs.eyeLookUpLeft || 0) + (bs.eyeLookUpRight || 0)) / 2,
-    ((bs.eyeLookDownLeft || 0) + (bs.eyeLookDownRight || 0)) / 2);
-  const gaze = Math.abs(yaw) < 0.12 && Math.abs(pitch) < 0.15 && eyeOff < 0.45;
-  const smile = ((bs.mouthSmileLeft || 0) + (bs.mouthSmileRight || 0)) / 2;
-  return { present: true, gaze, smile, yaw, pitch };
-}
-
 // ---------------------------------------------------------------- audiencia virtual
 // La atención del público sube o baja con señales de entrega de los últimos segundos. Cada persona
 // tiene una sensibilidad distinta, así que el público se "apaga" de a poco y no todo a la vez.
@@ -468,14 +437,7 @@ function computeMetrics() {
   const volume = mean(speechRms);
   const volCv = volume ? std(speechRms) / volume : 0;
 
-  const faces = faceSamples;
-  const present = faces.filter(f => f.present);
-  const hasVision = faces.length > 5;
-  const facePct = hasVision ? present.length / faces.length : null;
-  const gazePct = hasVision && present.length ? present.filter(f => f.gaze).length / present.length : null;
-  const smilePct = hasVision && present.length ? present.filter(f => f.smile > 0.35).length / present.length : null;
-  const headMove = hasVision ? std(present.map(f => f.yaw)) + std(present.map(f => f.pitch)) : null;
-
+  const { hasVision, facePct, gazePct, smilePct, headMove } = presenceSummary(faceSamples);
   return {
     dur, words, text, wpm: words / minutes, fillers, fillersPerMin: fillers / minutes, hedges, hedgesPerMin: hedges / minutes,
     longPauses, speechRatio, humZones, humsPerMin: humZones.length / minutes, pitchVar, medF0, volume, volCv, hasText: words > 0,
@@ -484,19 +446,12 @@ function computeMetrics() {
   };
 }
 
-const level3 = (v, lo, hi) => v < lo ? 'poco' : v > hi ? 'mucho' : 'adecuado';
 function score(m) {
   const items = [];
-  const add = (dim, key, label, value, display, target, s) => items.push({ dim, key, label, value, display, target, s: Math.round(s) });
   // Voz y lenguaje con el mismo motor que la versión publicada (audiofile.js): estructura por método, variedad,
   // duración, «eeh» y demás; aquí se suma la presencia medida en vivo.
   items.push(...scoreSpeech(m, true, scenario().seconds, scenario().method).items);
-  if (m.hasVision) {
-    add('presencia', 'face', 'Rostro en cuadro', m.facePct, `${Math.round(m.facePct * 100)}% del tiempo`, '90% o más', band(m.facePct * 100, 90, 100, 50));
-    add('presencia', 'gaze', 'Mirada a cámara', m.gazePct, `${Math.round(m.gazePct * 100)}% del tiempo`, '60% o más', band(m.gazePct * 100, 60, 100, 50));
-    add('presencia', 'smile', 'Sonrisa', m.smilePct, `${Math.round(m.smilePct * 100)}% del tiempo`, '10–60%', band(m.smilePct * 100, 10, 60, 15));
-    add('presencia', 'head', 'Movimiento de cabeza', m.headMove, level3(m.headMove, 0.01, 0.08), 'adecuado', band(m.headMove, 0.01, 0.08, 0.08));
-  }
+  items.push(...presenceItems(m));
   const dims = {};
   for (const d of ['voz', 'lenguaje', 'presencia']) {
     const xs = items.filter(i => i.dim === d);
@@ -567,7 +522,7 @@ function buildReport() {
   const prev = loadSessions().filter(s => s.type === 'evaluacion' && s.scenario === scenario().id).pop()?.total;
   $('report').style.display = 'block';
   $('ring').textContent = r.total;
-  $('ring').style.border = `8px solid ${colorFor(r.total)}`;
+  $('ring').style.setProperty('--p', r.total); $('ring').style.setProperty('--c', colorFor(r.total));
   $('levelTxt').textContent = levelFor(r.total);
   $('encourage').textContent = encouragement(r.total, prev);
   $('scoreSub').textContent = `${scenario().name} · ${Math.round(m.dur)} s${m.attention != null ? ` · atención del público ${Math.round(m.attention * 100)}%` : ''}${m.hasVision ? '' : ' · sin análisis visual'}`;
@@ -680,7 +635,7 @@ function drawChart(m) {
   ctx.globalAlpha = 1;
   // Tono en semitonos relativos a la mediana.
   if (m.medF0) {
-    ctx.strokeStyle = css.getPropertyValue('--text'); ctx.lineWidth = 2; ctx.beginPath();
+    ctx.strokeStyle = css.getPropertyValue('--text'); ctx.lineWidth = 5; ctx.lineJoin = 'round'; ctx.beginPath();
     let started = false;
     bucket.forEach((b, i) => {
       const p = b.filter(s => s.pitch > 0).map(s => 12 * Math.log2(s.pitch / m.medF0));

@@ -1,6 +1,7 @@
 // Revisión de textos (correos, mensajes, publicaciones) en el dispositivo. La usan escritura.html y la
 // versión publicada; también la prueban los tests de voxa/tests.
-import { HEDGE_RE, countMatches, wordCount } from './shared.js';
+import { countMatches, wordCount, PRACTICE_LANG, hedgeReFor } from './shared.js';
+import { WRITING_BY_LANG } from './lang.js';
 
 // Tipos de texto: método sugerido, extensión ideal en palabras y si necesitan pedido explícito o plazo.
 export const KINDS = [
@@ -49,18 +50,32 @@ export const INDIRECT_ASK_RE = /\b(podr[ií]an?|ser[ií]a posible|quer[ií]a (sa
 export const APOLOGY_RE = /\b(perd[oó]n por (molestar|la molestia)|disculpa (la molestia|que te moleste)|siento molestarte|no s[eé] si es posible)\b/giu;
 export const VAGUE_OPEN_RE = /^(hola[,!.]?\s*)?(¿tienes un minuto\??|¿tienes un momento\??|espero que est[eé]s bien[.!]?|ojal[aá] est[eé]s bien[.!]?)\s*$/iu;
 
+// Reglas del idioma: el español con las de arriba; los demás, con las de lang.js (pedido, plazo, disculpas y legibilidad).
+function rulesFor(lang) {
+  const L = WRITING_BY_LANG[lang];
+  if (!L) return { ask: ASK_RE, deadline: DEADLINE_RE, indirect: INDIRECT_ASK_RE, apology: APOLOGY_RE, vague: VAGUE_OPEN_RE, hedge: hedgeReFor('es'),
+    read: fernandezHuerta, spanishMarks: true };
+  const vowels = new RegExp(`[${L.vowels}]+`, 'giu');
+  const syl = (w) => Math.max(1, ((lang === 'en' ? w.toLowerCase().replace(/e$/, '') : w.toLowerCase()).match(vowels) || []).length);
+  return { ask: new RegExp(L.ask, 'iu'), deadline: new RegExp(L.deadline, 'iu'), indirect: new RegExp(L.indirect, 'iu'), apology: new RegExp(L.apology, 'giu'),
+    vague: new RegExp(L.vague, 'iu'), hedge: hedgeReFor(lang), spanishMarks: false,
+    read: (words, sentences) => !words.length || !sentences ? 0 : Math.round(L.read(words.length / sentences, words.reduce((a, w) => a + syl(w), 0) / words.length)) };
+}
+
 // Revisión instantánea de un texto según su tipo: devuelve las comprobaciones, un puntaje y estadísticas.
-export function analyzeWriting(text, k) {
+export function analyzeWriting(text, k, lang = PRACTICE_LANG) {
+  const R = rulesFor(lang);
+  const ASK_RE = R.ask, DEADLINE_RE = R.deadline, INDIRECT_ASK_RE = R.indirect, APOLOGY_RE = R.apology, VAGUE_OPEN_RE = R.vague, HEDGE_RE = R.hedge;
   const words = (text.match(/\p{L}+/gu) || []);
   const sents = sentencesOf(text);
   const lens = sents.map(s => wordCount(s));
   const avg = lens.length ? words.length / lens.length : 0;
   const longest = Math.max(0, ...lens);
-  const read = fernandezHuerta(words, sents.length);
+  const read = R.read(words, sents.length);
   const hedges = countMatches(text.replace(APOLOGY_RE, ''), HEDGE_RE);   // las disculpas innecesarias se revisan aparte
   const apologies = (text.match(APOLOGY_RE) || []).length;
   const shouting = (text.match(/\b[A-ZÁÉÍÓÚÑ]{4,}\b/g) || []).length + (text.match(/!{2,}/g) || []).length;
-  const noOpening = /!/.test(text) && !/¡/.test(text);
+  const noOpening = R.spanishMarks && /!/.test(text) && !/¡/.test(text);
   const askIdx = sents.findIndex(s => ASK_RE.test(s) || INDIRECT_ASK_RE.test(s));
   const indirect = askIdx >= 0 && !ASK_RE.test(sents[askIdx]);
   const checks = [];
@@ -87,7 +102,8 @@ export function analyzeWriting(text, k) {
 }
 
 // Asertividad de un mensaje (0–100): pedido directo, sin atenuadores ni disculpas por escribir.
-export function assertivenessOf(text) {
+export function assertivenessOf(text, lang = PRACTICE_LANG) {
+  const { ask: ASK_RE, indirect: INDIRECT_ASK_RE, apology: APOLOGY_RE, hedge: HEDGE_RE } = rulesFor(lang);
   const hedges = countMatches(text.replace(APOLOGY_RE, ''), HEDGE_RE), apologies = (text.match(APOLOGY_RE) || []).length;
   const direct = ASK_RE.test(text), indirect = INDIRECT_ASK_RE.test(text);
   const v = 100 - 20 * hedges - 30 * Math.min(apologies, 1) - (direct ? 0 : indirect ? 20 : 35);

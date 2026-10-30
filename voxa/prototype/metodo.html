@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Talkride Método</title>
+<link rel="stylesheet" href="voxa.css">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#0b6e66">
+</head>
+<body>
+<header>
+  <h1>El método RIDE</h1>
+  <p>Cómo entrenas con Talkride: cuatro pasos que se repiten en cada práctica, basados en lo que la investigación muestra que funciona.</p>
+</header>
+
+<main>
+  <section class="card full hero">
+    <h2>Reconoce · Intención · Dilo · Evalúa y repite</h2>
+    <p class="lead" id="promise"></p>
+    <p>Comunicarse bien no es un talento que se tiene o no: es una habilidad que se entrena como cualquier otra, con práctica real, feedback concreto y repetición.</p>
+  </section>
+
+  <div id="steps" style="display:contents"></div>
+
+  <section class="card full">
+    <h2>Lo que no hacemos</h2>
+    <ul>
+      <li>No te damos trucos sin evidencia: ni «posturas de poder», ni la regla del 7-38-55 fuera de contexto, ni «detectar mentiras» por los gestos.</li>
+      <li>No te llenamos de correcciones: un foco a la vez, porque es lo que se puede cambiar en la próxima práctica.</li>
+      <li>No interpretamos tus emociones ni tu personalidad: hablamos de lo que se ve y se escucha.</li>
+      <li>No reemplazamos a un profesional de la salud: si los nervios te paralizan, te mostramos dónde pedir ayuda.</li>
+    </ul>
+  </section>
+
+  <section class="card full">
+    <h2>En qué se basa</h2>
+    <ul class="note">
+      <li><strong>Práctica deliberada:</strong> tareas con una meta clara, feedback inmediato y repetición (Ericsson, Krampe y Tesch-Römer, 1993).</li>
+      <li><strong>Feedback que funciona:</strong> responde a dónde voy, cómo voy y qué sigue; los elogios genéricos no mejoran el desempeño (Hattie y Timperley, 2007).</li>
+      <li><strong>Metas específicas con plan:</strong> metas concretas y desafiantes (Locke y Latham) y planes «si pasa X, hago Y» (Gollwitzer y Sheeran, 2006).</li>
+      <li><strong>Estructuras probadas:</strong> lo importante primero (Pirámide de Minto, BLUF), PREP, STAR para entrevistas y SBI del Center for Creative Leadership para el feedback.</li>
+      <li><strong>Exposición gradual:</strong> practicar ante un público, aunque sea virtual, reduce el miedo a hablar en público.</li>
+      <li><strong>Práctica espaciada:</strong> repetir en días distintos retiene mejor que practicar todo de una vez.</li>
+    </ul>
+  </section>
+
+  <section class="card full">
+    <div class="btns"><a class="btn-link cta" href="index.html">Empezar la práctica de hoy</a><a class="btn-link" href="aprender.html">Ver las lecciones</a></div>
+  </section>
+</main>
+
+<script type="module">
+import { $, renderNav } from './shared.js';
+import { methodFullHTML, METHOD_PROMISE } from './method.js';
+renderNav();
+$('promise').textContent = METHOD_PROMISE;
+$('steps').innerHTML = methodFullHTML();
+</script>
+</body>
+</html>

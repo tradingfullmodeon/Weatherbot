@@ -314,13 +314,13 @@ function draw(t) {
   const from = Math.max(0, t - 10), win = samples.filter(s => s.t >= from);
   const x = (s) => (s.t - from) / 10 * Wd;
   g.fillStyle = css.getPropertyValue('--accent'); g.globalAlpha = .35;
-  for (const s of win) { const h = Math.max(0, Math.min(1, (db(s.rms) + 60) / 60)) * H; g.fillRect(x(s), H - h, 3, h); }  // −60 a 0 dBFS
+  for (const s of win) { const h = Math.max(0, Math.min(1, (db(s.rms) + 60) / 60)) * H; g.fillRect(x(s), H - h, 5, h); }  // −60 a 0 dBFS
   g.globalAlpha = 1;
   const p = win.filter(s => s.pitch);
   if (p.length) {
     const lo = 12 * Math.log2(70), hi = 12 * Math.log2(ex.id === 'sirena' ? 1000 : 400);
     g.fillStyle = css.getPropertyValue('--text');
-    for (const s of p) { const y = H - (12 * Math.log2(s.pitch) - lo) / (hi - lo) * H; g.fillRect(x(s), y - 2, 3, 4); }
+    for (const s of p) { const y = H - (12 * Math.log2(s.pitch) - lo) / (hi - lo) * H; g.fillRect(x(s), y - 4, 7, 8); }
   }
 }
 </script>

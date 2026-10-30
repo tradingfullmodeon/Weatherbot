@@ -1,6 +1,7 @@
 // Análisis de grabaciones (archivo o micrófono): voz, tono, pausas y sonidos de duda, y puntaje del habla.
 // Lo usan la versión publicada (artifact/app.js) y diagnostico.html.
-import { detectPitch, rmsOf, findFilledPauses, wordCount, countMatches, FILLER_RE, HEDGE_RE, mean, std } from './shared.js';
+import { detectPitch, rmsOf, findFilledPauses, wordCount, countMatches, FILLER_RE, HEDGE_RE, mean, std, PRACTICE_LANG } from './shared.js';
+import { FILLER_EXAMPLES } from './lang.js';
 import { checkStructure } from './structure.js';
 
 export const band = (v, lo, hi, soft) => v >= lo && v <= hi ? 100 : Math.max(0, 100 - 100 * (v < lo ? lo - v : v - hi) / soft);
@@ -138,7 +139,7 @@ export function scoreSpeech(m, isAudio, seconds, method = '') {
     // Con un texto parcial (la persona escribió sólo una parte de lo que dijo) el ritmo saldría falso.
     m.partialText = isAudio && m.wpm < 70;
     if (isAudio && !m.partialText) add('voz', 'wpm', 'Ritmo', `${Math.round(m.wpm)} palabras/min`, '120–165', band(m.wpm, 120, 165, 60));
-    add('voz', 'fillers', 'Muletillas («este», «o sea»…)', `${m.fillers}`, isAudio ? 'menos de 3 por min' : 'ninguna', isAudio ? band(m.fillers / minutes, 0, 3, 7) : band(m.fillers, 0, 0, 4));
+    add('voz', 'fillers', `Muletillas (${FILLER_EXAMPLES[PRACTICE_LANG] || FILLER_EXAMPLES.es}…)`, `${m.fillers}`, isAudio ? 'menos de 3 por min' : 'ninguna', isAudio ? band(m.fillers / minutes, 0, 3, 7) : band(m.fillers, 0, 0, 4));
     add('lenguaje', 'hedges', 'Frases que restan seguridad', `${m.hedges}`, 'pocas', band(m.hedges / minutes, 0, 1.5, 4));
     const target = s.seconds * (isAudio ? 1.7 : 2);
     const variety = m.variety ?? guiraud(m.text || '');

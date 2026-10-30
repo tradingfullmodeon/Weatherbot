@@ -67,8 +67,13 @@
   mark.hedge { background: #bfdbfe; color: #111; border-radius: 3px; padding: 0 2px; }
   .note { font-size: .8rem; color: var(--muted); }
   .score-big { display: flex; align-items: center; gap: 16px; }
-  .ring { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center;
-          font-size: 1.8rem; font-weight: 700; }
+  /* Anillo de puntaje: el arco muestra el valor (--p, 0–100) en su color (--c). No se deforma en pantallas angostas. */
+  .ring { flex: none; width: 96px; height: 96px; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+          font-size: 1.8rem; font-weight: 800; font-variant-numeric: tabular-nums; text-align: center; line-height: 1.1;
+          background: radial-gradient(closest-side, var(--card) 80%, transparent 81%), conic-gradient(var(--c, var(--accent)) calc(var(--p, 100) * 1%), var(--line) 0); }
+  .chart-svg { display: block; width: 100%; height: auto; margin: 8px auto; overflow: visible; font-family: inherit; }
+  .chart-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: center; font-size: .8rem; color: var(--muted); }
+  .chart-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
   .dims { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 14px; }
   .dim .bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; margin-top: 4px; }
   .dim .bar > div { height: 100%; }
@@ -232,6 +237,15 @@
   /* Íconos de línea propios junto a títulos y accesos (reemplazan los emojis). */
   [data-icon]:not(strong) { display: inline-flex; align-items: center; }
   [data-icon] > svg { flex: none; color: var(--accent); margin-inline-end: 8px; vertical-align: -4px; }
+  .dg-video { width: 100%; max-width: 320px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; background: #000; transform: scaleX(-1); margin: 8px 0; }
+  /* Método RIDE: cuatro pasos con su letra; en columna en el celular y en fila en pantallas anchas. */
+  .ride-steps { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .ride-steps li { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+  .ride-steps li small { display: block; color: var(--muted); font-size: .8rem; }
+  .ride-l { flex: none; width: 32px; height: 32px; border-radius: 10px; display: inline-grid; place-items: center; font-weight: 800;
+            background: var(--accent); color: var(--on-accent); margin-inline-end: 10px; }
+  .ride-steps li .ride-l { margin-inline-end: 0; }
+  .ride-step h2 { display: flex; align-items: center; }
   /* Versión publicable: complementa prototype/voxa.css. Una sola página con vistas. */
   :root[data-theme="dark"] {
     --bg: #0f1117; --card: #181b24; --text: #e8eaf0; --muted: #9aa1b2;
@@ -712,8 +726,214 @@
 
 <script>
 (() => {
+// Idiomas de práctica de Talkride: en qué idioma habla y escribe la persona. Cada idioma trae su reconocimiento de voz,
+// sus muletillas y atenuadores, los marcadores de estructura (PREP, STAR, BLUF, SBI) y las reglas de escritura.
+// El español tiene además las reglas finas de shared.js y structure.js; los demás usan las listas de este archivo.
+// Elegidos por demanda (los idiomas más estudiados y los mercados de habla y entrevistas) y porque el reconocimiento
+// de voz de Chrome, Safari, iOS y Android los soporta bien.
+
+const PRACTICE_LANGS = [
+  { id: 'es', label: 'Español (Latinoamérica)', name: 'español', speech: 'es-MX' },
+  { id: 'en', label: 'English', name: 'inglés', speech: 'en-US' },
+  { id: 'pt', label: 'Português (Brasil)', name: 'portugués de Brasil', speech: 'pt-BR' },
+  { id: 'fr', label: 'Français', name: 'francés', speech: 'fr-FR' },
+  { id: 'de', label: 'Deutsch', name: 'alemán', speech: 'de-DE' },
+  { id: 'it', label: 'Italiano', name: 'italiano', speech: 'it-IT' },
+];
+const langInfo = (id) => PRACTICE_LANGS.find(l => l.id === id) || PRACTICE_LANGS[0];
+
+// Español latinoamericano: el reconocimiento usa el país del dispositivo cuando es de la región (mejor precisión con
+// modismos locales); si no, México, la variante con más soporte. El código «es-419» no lo aceptan todos los motores.
+const LATAM = ['AR', 'BO', 'CL', 'CO', 'CR', 'CU', 'DO', 'EC', 'GT', 'HN', 'MX', 'NI', 'PA', 'PE', 'PR', 'PY', 'SV', 'US', 'UY', 'VE'];
+
+// Idioma de práctica guardado; los perfiles anteriores sólo tenían la variante de español («es-CL»).
+function practiceLangOf(profile = {}) {
+  if (PRACTICE_LANGS.some(l => l.id === profile.lang)) return profile.lang;
+  return 'es';
+}
+
+// Código para el reconocimiento de voz del idioma elegido, según el dispositivo.
+function speechLocaleFor(lang, deviceLangs = (typeof navigator !== 'undefined' ? navigator.languages || [navigator.language] : [])) {
+  const info = langInfo(lang);
+  for (const d of deviceLangs || []) {
+    const [l, region] = String(d || '').split('-');
+    if (l?.toLowerCase() !== info.id || !region) continue;
+    const r = region.toUpperCase();
+    if (info.id === 'es' && !LATAM.includes(r)) continue;
+    if (info.id === 'pt' && r !== 'BR') continue;
+    return `${info.id}-${r}`;
+  }
+  return info.speech;
+}
+
+// ---------------------------------------------------------------- muletillas y atenuadores (fuera del español)
+// Patrones (fuentes de RegExp). Las palabras que también son normales sólo cuentan junto a una pausa (coma).
+const LANG_PAUSE = String.raw`(?=\s*[,.…?!]|\s*$)`;
+const FILLERS_BY_LANG = {
+  en: ['u+m+', 'u+h+', 'e+r+m*', 'h?m{2,}', String.raw`like(?=\s*,)`, String.raw`(?<=,\s)like`, 'you know', 'i mean', 'basically', 'literally',
+    String.raw`actually(?=\s*,)`, String.raw`(?<=(?:^|[.!?]\s*))so(?=\s*,)`, String.raw`(?<=(?:^|[.!?]\s*))well(?=\s*,)`, String.raw`right(?=\s*\?)`, 'kind of like', 'sort of like'],
+  pt: ['é{2,}', 'a+h+n+', 'h?u+m+', String.raw`tipo(?=\s*,)`, 'tipo assim', String.raw`né${LANG_PAUSE}`, String.raw`(?<=(?:^|[.!?]\s*))então(?=\s*,)`,
+    String.raw`assim(?=\s*,)`, String.raw`sabe(?=\s*[?,])`, 'basicamente', 'literalmente', 'meio que', String.raw`tá${LANG_PAUSE}`],
+  fr: ['eu+h+', String.raw`(?<=(?:^|[.!?]\s*))(?:bah|ben)`, String.raw`genre(?=\s*,)`, 'en fait', 'du coup', String.raw`voilà${LANG_PAUSE}`, String.raw`quoi${LANG_PAUSE}`,
+    'tu vois', String.raw`bref(?=\s*,)`, String.raw`(?<=(?:^|[.!?]\s*))enfin(?=\s*,)`, 'tu sais'],
+  de: ['ä+h+m*', 'ö+h+m*', 'h?m{2,}', String.raw`(?<=(?:^|[.!?]\s*))also(?=\s*,)`, 'halt', 'quasi', 'sozusagen', 'irgendwie', String.raw`ne(?=\s*\?)`, 'weißt du',
+    String.raw`(?<=(?:^|[.!?]\s*))naja`],
+  it: ['e+h+m+', String.raw`e{2,}h*`, String.raw`cioè(?=\s*,)`, String.raw`tipo(?=\s*,)`, 'praticamente', 'diciamo', String.raw`insomma(?=\s*,)`,
+    String.raw`(?<=(?:^|[.!?]\s*))allora(?=\s*,)`, String.raw`niente(?=\s*,)`, 'boh', String.raw`sai(?=\s*[?,])`],
+};
+const HEDGES_BY_LANG = {
+  en: ['i think', 'maybe', 'perhaps', 'kind of', 'sort of', 'a little bit', 'just wanted', 'i just wanted', 'i guess', 'sorry to bother',
+    'not sure if', 'i was wondering if', "if it's not too much trouble", 'whenever you can', 'i feel like'],
+  pt: ['acho que', 'talvez', 'um pouquinho', 'desculpa incomodar', 'desculpe incomodar', 'não sei se', 'mais ou menos', 'de certa forma',
+    'só queria', 'quando puder', 'se não for incômodo', 'queria saber se'],
+  fr: ['je pense que', 'peut-être', 'un peu', 'désolé de vous déranger', 'désolée de vous déranger', 'je ne sais pas si', 'plus ou moins',
+    'en quelque sorte', 'je voulais juste', 'quand vous pourrez', 'je me demandais si', 'si ce n’est pas trop demander'],
+  de: ['ich glaube', 'vielleicht', 'ein bisschen', 'eigentlich', 'sorry für die störung', 'ich weiß nicht ob', 'mehr oder weniger',
+    'ich wollte nur', 'wenn du zeit hast', 'wenn sie zeit haben', 'ich wollte fragen ob'],
+  it: ['penso che', 'credo che', 'forse', 'un pochino', 'scusa il disturbo', 'scusi il disturbo', 'non so se', 'più o meno', 'in qualche modo',
+    'volevo solo', 'quando puoi', 'volevo sapere se'],
+};
+// Ejemplos para las etiquetas de los reportes.
+const FILLER_EXAMPLES = { es: '«este», «o sea»', en: '«um», «you know»', pt: '«tipo», «né»', fr: '«euh», «du coup»', de: '«äh», «halt»', it: '«ehm», «cioè»' };
+
+// ---------------------------------------------------------------- marcadores de estructura (fuera del español)
+const STRUCTURE_BY_LANG = {
+  en: {
+    fillerStart: '(so|well|um+|uh+|like)', reason: "because|since|the reason|that's why|due to|so that",
+    example: 'for example|for instance|once|last year|in my (job|role|experience|case)|when i', close: "in summary|that's why|in conclusion|to wrap up|bottom line|so that's",
+    result: 'achieved|increased|reduced|grew|improved|saved|won|cut|resulted|went from|delivered|doubled|halved',
+    situation: 'when|at my (job|company|previous|last)|in my (team|last role|previous role|internship)|during|last (year|semester)|in \\d{4}|once|at university|on a project',
+    task: 'i had to|we had to|my (goal|task|role|responsibility) was|i was asked|the challenge was|the problem was',
+    action: "i \\p{L}{2,}ed|i (led|built|made|wrote|ran|took|spoke|met|set|chose|found|began|drove|brought|gave|sent|did|proposed|created)", we: 'we \\p{L}{2,}ed|we (led|built|made|did)',
+    ask: 'i propose|i need|i am asking|i recommend|i suggest|we decided|my proposal|can you|could you|could we|would you',
+    impact: 'impact|affected|caused|led to|resulted in|which meant|that made', behavior: 'you said|you did|you sent|you arrived|you presented|you interrupted|you delivered|i noticed|i saw that',
+    situationTime: 'yesterday|today|in the meeting|on monday|on tuesday|on wednesday|on thursday|on friday',
+    stop: ['because', 'really', 'think', 'would', 'could', 'there', 'about', 'thanks', 'which'],
+  },
+  pt: {
+    fillerStart: '(então|bom|tipo|ahn+|é{2,})', reason: 'porque|já que|a razão|por isso|devido a|uma vez que',
+    example: 'por exemplo|uma vez|quando|no ano passado|no meu (trabalho|caso)', close: 'em resumo|por isso|em conclusão|para fechar|resumindo|então',
+    result: 'consegui|conseguimos|aumentei|aumentamos|reduzi|reduzimos|melhorei|melhoramos|economizei|ganhei|resultado|passou de|cresceu|cresceram|dobrou',
+    situation: 'quando|no meu (trabalho|emprego|time|último|estágio)|na (empresa|faculdade|universidade)|durante|no ano passado|em \\d{4}|num projeto|em um projeto',
+    task: 'eu tinha que|tínhamos que|meu (objetivo|papel|desafio)|minha (tarefa|função)|me pediram|o desafio era|o problema era',
+    action: '\\p{L}{3,}ei|fiz|disse|tive|pus|trouxe|soube|quis|pude|fui|dei|estive|propus', we: '\\p{L}{3,}(amos|emos|imos)',
+    ask: 'proponho|preciso|peço|recomendo|sugiro|decidimos|minha proposta|você pode|podemos|poderia', impact: 'impacto|afetou|fez com que|causou|gerou|o resultado foi',
+    behavior: 'você disse|você fez|você enviou|você chegou|você interrompeu|você entregou|percebi que|notei que',
+    situationTime: 'ontem|hoje|na reunião|na segunda|na terça|na quarta|na quinta|na sexta',
+    stop: ['porque', 'quando', 'também', 'quero', 'tenho', 'posso', 'estou', 'obrigado', 'obrigada'],
+  },
+  fr: {
+    fillerStart: '(euh+|bon|ben|alors|bah)', reason: "parce que|puisque|la raison|c'est pourquoi|grâce à|car",
+    example: "par exemple|une fois|quand|l'année dernière|dans mon (travail|poste|cas)", close: "en résumé|c'est pourquoi|en conclusion|pour conclure|bref|donc",
+    result: "j'ai (réussi|augmenté|réduit|amélioré|gagné|économisé|obtenu)|nous avons (réussi|augmenté|réduit|amélioré)|résultat|est passé de|a augmenté|ont augmenté|a doublé",
+    situation: "quand|lorsque|dans mon (travail|poste|équipe|ancien)|chez|pendant|l'année dernière|en \\d{4}|sur un projet|à l'université",
+    task: "je devais|nous devions|mon (objectif|rôle|défi)|ma (mission|tâche)|on m'a demandé|le défi était|le problème était",
+    action: "j'ai \\p{L}{3,}|je suis \\p{L}{3,}", we: 'nous avons \\p{L}{3,}|on a \\p{L}{3,}',
+    ask: "je propose|j'ai besoin|je vous demande|je recommande|je suggère|nous avons décidé|ma proposition|pouvez-vous|pourriez-vous|peux-tu",
+    impact: 'impact|a affecté|a fait que|a provoqué|a entraîné|le résultat a été', behavior: "tu as dit|vous avez dit|tu as fait|tu as envoyé|tu es arrivé|tu as interrompu|j'ai remarqué que|j'ai vu que",
+    situationTime: 'hier|aujourd’hui|en réunion|lundi|mardi|mercredi|jeudi|vendredi',
+    stop: ['parce', 'quand', 'aussi', 'merci', 'comme', 'alors', 'cette'],
+  },
+  de: {
+    fillerStart: '(also|äh+m*|ja|naja)', reason: 'weil|da|der grund|deshalb|deswegen|aufgrund',
+    example: 'zum beispiel|beispielsweise|einmal|als ich|letztes jahr|in meinem (job|team|fall)', close: 'zusammenfassend|deshalb|abschließend|kurz gesagt|fazit|unterm strich',
+    result: 'erreicht|gesteigert|erhöht|reduziert|gesenkt|verbessert|gespart|gewonnen|ergebnis|verdoppelt|halbiert',
+    situation: 'als|in meinem (job|team|letzten|früheren|praktikum)|bei meinem|während|letztes jahr|im jahr \\d{4}|in einem projekt|an der uni',
+    task: 'ich musste|wir mussten|mein (ziel|auftrag)|meine (aufgabe|rolle)|ich sollte|die herausforderung war|das problem war',
+    action: 'ich habe|ich (hatte|machte|führte|baute|schrieb|sprach|entschied|organisierte|schlug)', we: 'wir haben',
+    ask: 'ich schlage vor|ich brauche|ich bitte|ich empfehle|wir haben entschieden|mein vorschlag|kannst du|können sie|könnten wir',
+    impact: 'auswirkung|hat dazu geführt|führte dazu|hat bewirkt|das ergebnis war', behavior: 'du hast gesagt|sie haben gesagt|du hast|du bist zu spät|mir ist aufgefallen|ich habe bemerkt',
+    situationTime: 'gestern|heute|im meeting|am montag|am dienstag|am mittwoch|am donnerstag|am freitag',
+    stop: ['weil', 'wirklich', 'denke', 'würde', 'könnte', 'danke', 'haben'],
+  },
+  it: {
+    fillerStart: '(allora|ehm+|eh+|cioè|dunque)', reason: 'perché|poiché|il motivo|per questo|dato che|grazie a',
+    example: "per esempio|ad esempio|una volta|quando|l'anno scorso|nel mio (lavoro|caso)", close: 'in sintesi|per questo|in conclusione|per chiudere|insomma|quindi',
+    result: 'ho (ottenuto|aumentato|ridotto|migliorato|risparmiato|vinto)|abbiamo (ottenuto|aumentato|ridotto|migliorato)|risultato|è passato da|sono aumentat\\p{L}|raddoppiato',
+    situation: "quando|nel mio (lavoro|team|precedente|tirocinio)|in azienda|durante|l'anno scorso|nel \\d{4}|in un progetto|all'università",
+    task: 'dovevo|dovevamo|il mio (obiettivo|ruolo|compito)|mi hanno chiesto|la sfida era|il problema era',
+    action: 'ho \\p{L}{3,}|sono \\p{L}{3,}(ato|ata)', we: 'abbiamo \\p{L}{3,}',
+    ask: 'propongo|ho bisogno|ti chiedo|vi chiedo|raccomando|suggerisco|abbiamo deciso|la mia proposta|puoi|potresti|possiamo',
+    impact: 'impatto|ha causato|ha fatto sì che|ha portato a|il risultato è stato', behavior: 'hai detto|hai fatto|hai inviato|sei arrivato|hai interrotto|ho notato che|ho visto che',
+    situationTime: 'ieri|oggi|in riunione|lunedì|martedì|mercoledì|giovedì|venerdì',
+    stop: ['perché', 'quando', 'anche', 'voglio', 'grazie', 'questo', 'questa'],
+  },
+};
+
+// ---------------------------------------------------------------- escritura (fuera del español)
+const WRITING_BY_LANG = {
+  en: {
+    ask: "\\?|\\b(can you|could you|would you|i need|we need|please|i'm asking|i request|i'd appreciate|let me know|confirm|send|i propose)\\b",
+    indirect: "\\b(could|would it be possible|i was wondering if|i wanted to (see|ask|know) if|i'd like to (know|ask))\\b",
+    apology: "\\b(sorry to bother( you)?|sorry for the (bother|trouble)|i hate to bother you|not sure if (this|it) is possible)\\b",
+    vague: "^(hi[,!.]?\\s*)?(do you have a (minute|second)\\??|hope you('re| are) (well|doing well)[.!]?|hope this finds you well[.!]?)\\s*$",
+    deadline: '\\b(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday|this week|next week|by|before|deadline|due|eod|\\d{1,2}(:\\d{2})?\\s?(am|pm|h)|\\d{1,2}\\/\\d{1,2}|(january|february|march|april|may|june|july|august|september|october|november|december) \\d{1,2})\\b',
+    vowels: 'aeiouy', read: (asl, asw) => 206.835 - 1.015 * asl - 84.6 * asw,    // Flesch Reading Ease
+  },
+  pt: {
+    ask: '\\?|\\b(você pode|pode|poderia|preciso|precisamos|por favor|peço|solicito|agradeceria|me confirma|confirme|envie|proponho)\\b',
+    indirect: '\\b(poderia|seria possível|queria (saber|ver|perguntar) se|gostaria de (saber|pedir))\\b',
+    apology: '\\b(desculpa(e)? (incomodar|o incômodo)|perdão pelo incômodo|não sei se é possível)\\b',
+    vague: '^(oi|olá)?[,!.]?\\s*(tem um minuto\\??|tem um minutinho\\??|espero que esteja bem[.!]?)\\s*$',
+    deadline: '\\b(hoje|amanhã|segunda|terça|quarta|quinta|sexta|sábado|domingo|esta semana|próxima semana|até|antes de|prazo|data|\\d{1,2}(:\\d{2})?\\s?h|\\d{1,2}\\/\\d{1,2}|\\d{1,2} de (janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro))\\b',
+    vowels: 'aeiouáéíóúâêôãõà', read: (asl, asw) => 248.835 - 1.015 * asl - 84.6 * asw,   // Flesch adaptado (Martins et al.)
+  },
+  fr: {
+    ask: "\\?|\\b(pouvez-vous|pourriez-vous|peux-tu|pourrais-tu|j'ai besoin|nous avons besoin|merci de|s'il vous plaît|s'il te plaît|je vous demande|confirmez|envoyez|je propose)\\b",
+    indirect: "\\b(serait-il possible|je voulais (savoir|voir|demander) si|j'aimerais (savoir|demander))\\b",
+    apology: '\\b(désolée? de (vous|te) déranger|pardon pour le dérangement|je ne sais pas si c.est possible)\\b',
+    vague: "^(bonjour|salut)?[,!.]?\\s*(tu as une minute\\s?\\??|vous avez une minute\\s?\\??|j'espère que (tu vas|vous allez) bien[.!]?)\\s*$",
+    deadline: "\\b(aujourd'hui|demain|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|cette semaine|la semaine prochaine|avant|d'ici|date limite|échéance|\\d{1,2}\\s?h(\\d{2})?|\\d{1,2}\\/\\d{1,2}|\\d{1,2} (janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre))\\b",
+    vowels: 'aeiouyàâéèêëîïôûùü', read: (asl, asw) => 207 - 1.015 * asl - 73.6 * asw,   // Kandel y Moles
+  },
+  de: {
+    ask: '\\?|\\b(kannst du|können sie|könnten sie|könntest du|ich brauche|wir brauchen|bitte|ich bitte|ich wäre dankbar|bestätige|schick|ich schlage vor)\\b',
+    indirect: '\\b(wäre es möglich|ich wollte (fragen|wissen) ob|ich würde gern (wissen|fragen))\\b',
+    apology: '\\b(entschuldige(n sie)? die störung|sorry für die störung|ich weiß nicht ob das möglich ist)\\b',
+    vague: '^(hallo|hi)?[,!.]?\\s*(hast du (kurz )?(eine minute|zeit)\\??|haben sie (kurz )?(eine minute|zeit)\\??|ich hoffe, (es geht dir|es geht ihnen) gut[.!]?)\\s*$',
+    deadline: '\\b(heute|morgen|montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|diese woche|nächste woche|bis|vor|frist|termin|deadline|\\d{1,2}(:\\d{2})?\\s?uhr|\\d{1,2}\\.\\d{1,2}\\.)\\b',
+    vowels: 'aeiouyäöü', read: (asl, asw) => 180 - asl - 58.5 * asw,   // Amstad
+  },
+  it: {
+    ask: '\\?|\\b(puoi|potresti|può|potrebbe|ho bisogno|abbiamo bisogno|per favore|ti chiedo|le chiedo|ti sarei grato|confermi|invia|propongo)\\b',
+    indirect: '\\b(sarebbe possibile|volevo (sapere|vedere|chiedere) se|vorrei (sapere|chiedere))\\b',
+    apology: '\\b(scusa(mi)? il disturbo|scusi il disturbo|non so se è possibile)\\b',
+    vague: '^(ciao|salve)?[,!.]?\\s*(hai un minuto\\??|ha un minuto\\??|spero (tu stia|che tu stia|stia) bene[.!]?)\\s*$',
+    deadline: '\\b(oggi|domani|lunedì|martedì|mercoledì|giovedì|venerdì|sabato|domenica|questa settimana|la prossima settimana|entro|prima di|scadenza|\\d{1,2}:\\d{2}|\\d{1,2}\\/\\d{1,2}|\\d{1,2} (gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre))\\b',
+    vowels: 'aeiouàèéìòù', read: (asl, asw) => 217 - 1.3 * asl - 60 * asw,   // Flesch-Vacca
+  },
+};
+
+// Frases de ejemplo para los consejos de estructura, en el idioma de práctica (la explicación queda en español).
+const STRUCTURE_EXAMPLES = {
+  es: { fillers: '«bueno» ni «este»', reason: '«porque…», «la razón es…»', close: '«por eso…»', situation: '«En mi trabajo anterior, cuando…» o «En un proyecto de la universidad, cuando…»',
+    task: '«Tenía que…», «Mi objetivo era…»', action: '«Armé», «Propuse», «Hablé con…»', result: '«Las ventas subieron un 30%»', when: '«En la reunión del lunes…»',
+    behavior: '«Interrumpiste dos veces», no «eres irrespetuoso»', impact: '«Eso hizo que el cliente no pudiera terminar»' },
+  en: { fillers: '«so» or «um»', reason: '«because…», «the reason is…»', close: '«that’s why…»', situation: '«In my last job, when…» or «On a university project, when…»',
+    task: '«I had to…», «My goal was…»', action: '«I built», «I proposed», «I spoke with…»', result: '«Sales grew 30%»', when: '«In Monday’s meeting…»',
+    behavior: '«You interrupted twice», not «you are rude»', impact: '«That meant the client couldn’t finish»' },
+  pt: { fillers: '«então» ou «tipo»', reason: '«porque…», «a razão é…»', close: '«por isso…»', situation: '«No meu último emprego, quando…» ou «Num projeto da faculdade, quando…»',
+    task: '«Eu tinha que…», «Meu objetivo era…»', action: '«Criei», «Propus», «Falei com…»', result: '«As vendas cresceram 30%»', when: '«Na reunião de segunda…»',
+    behavior: '«Você interrompeu duas vezes», não «você é grosseiro»', impact: '«Isso fez com que o cliente não terminasse»' },
+  fr: { fillers: '«euh» ou «bon»', reason: '«parce que…», «la raison est…»', close: '«c’est pourquoi…»', situation: '«Dans mon ancien poste, quand…» ou «Sur un projet à l’université, quand…»',
+    task: '«Je devais…», «Mon objectif était…»', action: '«J’ai créé», «J’ai proposé», «J’ai parlé avec…»', result: '«Les ventes ont augmenté de 30 %»', when: '«À la réunion de lundi…»',
+    behavior: '«Tu as interrompu deux fois», pas «tu es impoli»', impact: '«Le client n’a pas pu terminer»' },
+  de: { fillers: '«also» oder «äh»', reason: '«weil…», «der Grund ist…»', close: '«deshalb…»', situation: '«In meinem letzten Job, als…» oder «In einem Uni-Projekt, als…»',
+    task: '«Ich musste…», «Mein Ziel war…»', action: '«Ich habe aufgebaut», «Ich habe vorgeschlagen», «Ich habe mit … gesprochen»', result: '«Der Umsatz stieg um 30 %»',
+    when: '«Im Meeting am Montag…»', behavior: '«Du hast zweimal unterbrochen», nicht «du bist unhöflich»', impact: '«Dadurch konnte der Kunde nicht fertig werden»' },
+  it: { fillers: '«allora» o «ehm»', reason: '«perché…», «il motivo è…»', close: '«per questo…»', situation: '«Nel mio lavoro precedente, quando…» o «In un progetto all’università, quando…»',
+    task: '«Dovevo…», «Il mio obiettivo era…»', action: '«Ho creato», «Ho proposto», «Ho parlato con…»', result: '«Le vendite sono aumentate del 30%»', when: '«Nella riunione di lunedì…»',
+    behavior: '«Hai interrotto due volte», non «sei maleducato»', impact: '«Il cliente non ha potuto finire»' },
+};
+
 // Utilidades compartidas por las páginas de Talkride: diccionarios, métricas de texto,
 // historial local de sesiones y acceso a la API del coach IA.
+
+{ PRACTICE_LANGS, langInfo };
+
+// Idioma en que practica la persona (es, en, pt, fr, de, it). Cada página lo lee al cargar: las reglas de análisis,
+// el reconocimiento de voz y el coach IA usan este idioma.
+const PRACTICE_LANG = (() => { try { return practiceLangOf(JSON.parse(localStorage.getItem('voxa.profile.v1') || '{}')); } catch { return 'es'; } })();
 
 // Muletillas frecuentes en español (incluye variantes regionales).
 const FILLERS = ['eh+', 'em+', 'ehm+', 'mm+', 'este', 'o sea', 'bueno', 'pues', 'como que', 'digamos',
@@ -755,8 +975,13 @@ const CONTEXTUAL = {
   viste: String.raw`viste(?=\s*[?,]|\s*$)`,
   po: String.raw`po(?=${PAUSE})`,
 };
-const FILLER_RE = wordRe(FILLERS.map(w => CONTEXTUAL[w] ?? asPattern(w)));
-const HEDGE_RE = wordRe(HEDGES.map(asPattern));
+const ES_FILLER_RE = wordRe(FILLERS.map(w => CONTEXTUAL[w] ?? asPattern(w)));
+const ES_HEDGE_RE = wordRe(HEDGES.map(asPattern));
+// Muletillas y atenuadores de un idioma (el español con sus reglas de contexto; los demás, con las de lang.js).
+const fillerReFor = (lang) => lang === 'es' || !FILLERS_BY_LANG[lang] ? ES_FILLER_RE : wordRe(FILLERS_BY_LANG[lang]);
+const hedgeReFor = (lang) => lang === 'es' || !HEDGES_BY_LANG[lang] ? ES_HEDGE_RE : wordRe(HEDGES_BY_LANG[lang].map(asPattern));
+const FILLER_RE = fillerReFor(PRACTICE_LANG);
+const HEDGE_RE = hedgeReFor(PRACTICE_LANG);
 
 
 const $ = (id) => document.getElementById(id);
@@ -905,15 +1130,12 @@ function renderNav() {
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
-const LOCALES = [
-  ['es-419', 'Latinoamérica'], ['es-AR', 'Argentina'], ['es-CL', 'Chile'], ['es-CO', 'Colombia'],
-  ['es-MX', 'México'], ['es-PE', 'Perú'], ['es-ES', 'España'], ['es-US', 'Estados Unidos'],
-];
-// Variante de español del perfil o, si no hay, la del navegador.
+// Idiomas de práctica para los selectores: [id, nombre].
+const LOCALES = PRACTICE_LANGS.map(l => [l.id, l.label]);
+const practiceLang = (profile = loadProfile()) => practiceLangOf(profile);
+// Código del reconocimiento de voz para el idioma de práctica (en español, el país del dispositivo si es de Latinoamérica).
 function userLocale(profile = loadProfile()) {
-  if (profile.locale) return profile.locale;
-  const nav = (navigator.language || '').toLowerCase();
-  return LOCALES.find(([id]) => id.toLowerCase() === nav)?.[0] || 'es-419';
+  return speechLocaleFor(practiceLangOf(profile));
 }
 
 // ---------------------------------------------------------------- historial local
@@ -967,7 +1189,9 @@ function deviceId() {
   } catch { return ''; }
 }
 async function api(method, path, body) {
-  const r = await fetch(API_BASE + path, { method, headers: { 'Content-Type': 'application/json', 'X-VOXA-User': deviceId() }, body: body && JSON.stringify(body) });
+  // Toda llamada al coach lleva el idioma de práctica: el coach explica en español y cita y reescribe en ese idioma.
+  const payload = body && typeof body === 'object' && !Array.isArray(body) && !('language' in body) ? { ...body, language: PRACTICE_LANG } : body;
+  const r = await fetch(API_BASE + path, { method, headers: { 'Content-Type': 'application/json', 'X-VOXA-User': deviceId() }, body: payload && JSON.stringify(payload) });
   if (!r.ok) {
     let detail = `Error ${r.status}`;
     try { detail = (await r.json()).detail || detail; } catch {}
@@ -1387,18 +1611,32 @@ const INDIRECT_ASK_RE = /\b(podr[ií]an?|ser[ií]a posible|quer[ií]a (saber|ver
 const APOLOGY_RE = /\b(perd[oó]n por (molestar|la molestia)|disculpa (la molestia|que te moleste)|siento molestarte|no s[eé] si es posible)\b/giu;
 const VAGUE_OPEN_RE = /^(hola[,!.]?\s*)?(¿tienes un minuto\??|¿tienes un momento\??|espero que est[eé]s bien[.!]?|ojal[aá] est[eé]s bien[.!]?)\s*$/iu;
 
+// Reglas del idioma: el español con las de arriba; los demás, con las de lang.js (pedido, plazo, disculpas y legibilidad).
+function rulesFor(lang) {
+  const L = WRITING_BY_LANG[lang];
+  if (!L) return { ask: ASK_RE, deadline: DEADLINE_RE, indirect: INDIRECT_ASK_RE, apology: APOLOGY_RE, vague: VAGUE_OPEN_RE, hedge: hedgeReFor('es'),
+    read: fernandezHuerta, spanishMarks: true };
+  const vowels = new RegExp(`[${L.vowels}]+`, 'giu');
+  const syl = (w) => Math.max(1, ((lang === 'en' ? w.toLowerCase().replace(/e$/, '') : w.toLowerCase()).match(vowels) || []).length);
+  return { ask: new RegExp(L.ask, 'iu'), deadline: new RegExp(L.deadline, 'iu'), indirect: new RegExp(L.indirect, 'iu'), apology: new RegExp(L.apology, 'giu'),
+    vague: new RegExp(L.vague, 'iu'), hedge: hedgeReFor(lang), spanishMarks: false,
+    read: (words, sentences) => !words.length || !sentences ? 0 : Math.round(L.read(words.length / sentences, words.reduce((a, w) => a + syl(w), 0) / words.length)) };
+}
+
 // Revisión instantánea de un texto según su tipo: devuelve las comprobaciones, un puntaje y estadísticas.
-function analyzeWriting(text, k) {
+function analyzeWriting(text, k, lang = PRACTICE_LANG) {
+  const R = rulesFor(lang);
+  const ASK_RE = R.ask, DEADLINE_RE = R.deadline, INDIRECT_ASK_RE = R.indirect, APOLOGY_RE = R.apology, VAGUE_OPEN_RE = R.vague, HEDGE_RE = R.hedge;
   const words = (text.match(/\p{L}+/gu) || []);
   const sents = sentencesOf(text);
   const lens = sents.map(s => wordCount(s));
   const avg = lens.length ? words.length / lens.length : 0;
   const longest = Math.max(0, ...lens);
-  const read = fernandezHuerta(words, sents.length);
+  const read = R.read(words, sents.length);
   const hedges = countMatches(text.replace(APOLOGY_RE, ''), HEDGE_RE);   // las disculpas innecesarias se revisan aparte
   const apologies = (text.match(APOLOGY_RE) || []).length;
   const shouting = (text.match(/\b[A-ZÁÉÍÓÚÑ]{4,}\b/g) || []).length + (text.match(/!{2,}/g) || []).length;
-  const noOpening = /!/.test(text) && !/¡/.test(text);
+  const noOpening = R.spanishMarks && /!/.test(text) && !/¡/.test(text);
   const askIdx = sents.findIndex(s => ASK_RE.test(s) || INDIRECT_ASK_RE.test(s));
   const indirect = askIdx >= 0 && !ASK_RE.test(sents[askIdx]);
   const checks = [];
@@ -1425,7 +1663,8 @@ function analyzeWriting(text, k) {
 }
 
 // Asertividad de un mensaje (0–100): pedido directo, sin atenuadores ni disculpas por escribir.
-function assertivenessOf(text) {
+function assertivenessOf(text, lang = PRACTICE_LANG) {
+  const { ask: ASK_RE, indirect: INDIRECT_ASK_RE, apology: APOLOGY_RE, hedge: HEDGE_RE } = rulesFor(lang);
   const hedges = countMatches(text.replace(APOLOGY_RE, ''), HEDGE_RE), apologies = (text.match(APOLOGY_RE) || []).length;
   const direct = ASK_RE.test(text), indirect = INDIRECT_ASK_RE.test(text);
   const v = 100 - 20 * hedges - 30 * Math.min(apologies, 1) - (direct ? 0 : indirect ? 20 : 35);
@@ -1646,7 +1885,7 @@ function eventHTML(ev, lessonTitle = () => '') {
   const routine = (key, title) => `<h3>${title}</h3><ul class="ladder">${DAY_ROUTINE[key].map((r, i) =>
     `<li><label><input type="checkbox" data-routine="${key}:${i}" ${ev.routine?.[`${key}:${i}`] ? 'checked' : ''}> <span>${esc(r)}</span></label></li>`).join('')}</ul>`;
   return `
-    <div class="score-big"><div class="ring" style="border:8px solid var(--accent);font-size:1.1rem;text-align:center">${t.icon}<br>${left >= 0 ? Math.max(0, left) : '✓'}</div>
+    <div class="score-big"><div class="ring" style="--p:100;--c:var(--accent);font-size:1.1rem">${t.icon}<br>${left >= 0 ? Math.max(0, left) : '✓'}</div>
       <div><div style="font-size:1.15rem;font-weight:700">${esc(ev.title || t.name)}</div>
       <div class="lead">${when} · ${fmtDate(ev.date)}</div>
       <div class="note">${ev.audience ? `Ante: ${esc(ev.audience)} · ` : ''}${doneCount} de ${(ev.plan || []).length} prácticas hechas</div></div></div>
@@ -1687,6 +1926,85 @@ ${(ev.context || '').slice(0, 6000)}
 
 Genera las 6 preguntas u objeciones más probables y difíciles para ESTE evento concreto (no genéricas), en español, ordenadas de más a menos probable. Para cada una: por qué la harían y cómo responderla en 1–2 frases con una técnica concreta (STAR, BLUF, reformular, dato, etc.). No inventes datos de la persona: si falta algo, sugiere qué preparar.
 Responde SÓLO con JSON: {"questions":[{"q":"...","why":"...","tip":"..."}]}`;
+}
+
+// Gráficos de Talkride en SVG: nítidos en cualquier pantalla, con texto legible en el celular y con los colores del
+// tema (claro, oscuro y alto contraste). Sin dependencias.
+
+const f1 = (n) => Math.round(n * 10) / 10;
+const escT = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const scoreColor = (v) => v >= 75 ? 'var(--good)' : v >= 50 ? 'var(--mid)' : 'var(--accent)';
+
+// Radar del perfil: axes = [{id, name}], values = {id: 0–100}; measured = {id: número|null} marca qué se midió
+// (punto lleno) y qué viene sólo de cómo se ve la persona (punto hueco); previous = perfil anterior, en línea punteada.
+function radarSVG(axes, values, { measured = null, previous = null, title = 'Perfil de comunicación' } = {}) {
+  const W = 370, H = 330, cx = W / 2, cy = 165, R = 108;
+  const n = axes.length;
+  const pt = (i, v) => { const a = -Math.PI / 2 + i * 2 * Math.PI / n; return [cx + Math.cos(a) * R * v / 100, cy + Math.sin(a) * R * v / 100]; };
+  const poly = (vals) => axes.map((a, i) => pt(i, vals[a.id] ?? 0).map(f1).join(',')).join(' ');
+  const rings = [25, 50, 75, 100].map(l => `<polygon points="${axes.map((_, i) => pt(i, l).map(f1).join(',')).join(' ')}" style="fill:none;stroke:var(--line);stroke-width:1"/>`).join('');
+  const spokes = axes.map((_, i) => { const [x, y] = pt(i, 100); return `<line x1="${cx}" y1="${cy}" x2="${f1(x)}" y2="${f1(y)}" style="stroke:var(--line);stroke-width:1"/>`; }).join('');
+  const scale = [50, 100].map(l => `<text x="${cx + 4}" y="${f1(cy - R * l / 100 + 11)}" style="fill:var(--muted);font-size:9px">${l}</text>`).join('');
+  const prev = previous ? `<polygon points="${poly(previous)}" style="fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:4 3"/>` : '';
+  const dots = axes.map((a, i) => {
+    const [x, y] = pt(i, values[a.id] ?? 0), self = measured && measured[a.id] == null;
+    return `<circle cx="${f1(x)}" cy="${f1(y)}" r="4.5" style="fill:${self ? 'var(--card)' : 'var(--accent)'};stroke:var(--accent);stroke-width:2"/>`;
+  }).join('');
+  const labels = axes.map((a, i) => {
+    const [x, y] = pt(i, 100), dx = x - cx, anchor = Math.abs(dx) < 8 ? 'middle' : dx > 0 ? 'start' : 'end';
+    const lx = x + (anchor === 'start' ? 8 : anchor === 'end' ? -8 : 0), ly = y + (y < cy - 8 ? -18 : y > cy + 8 ? 16 : -2);
+    const v = values[a.id];
+    return `<text x="${f1(lx)}" y="${f1(ly)}" text-anchor="${anchor}" style="font-size:13px;font-weight:600;fill:var(--text)">${escT(a.name)}</text>
+      <text x="${f1(lx)}" y="${f1(ly + 16)}" text-anchor="${anchor}" style="font-size:14px;font-weight:800;fill:${scoreColor(v ?? 0)}">${v ?? '–'}</text>`;
+  }).join('');
+  const desc = axes.map(a => `${a.name} ${values[a.id] ?? 'sin dato'}`).join(', ');
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escT(title)}: ${escT(desc)}" class="chart-svg" style="max-width:460px">
+    ${rings}${spokes}${scale}${prev}
+    <polygon points="${poly(values)}" style="fill:var(--accent);fill-opacity:.16;stroke:var(--accent);stroke-width:2.5;stroke-linejoin:round"/>
+    ${dots}${labels}</svg>`;
+}
+
+// Líneas en el tiempo: series = [{label, color, values: [número|null], width}]; la primera es la principal.
+function lineChartSVG(series, { max = 100, title = 'Evolución' } = {}) {
+  const W = 360, H = 190, L = 30, Rp = 14, T = 14, B = 24;
+  const len = Math.max(...series.map(s => s.values.length), 1);
+  const x = (i) => L + (len === 1 ? (W - L - Rp) / 2 : i / (len - 1) * (W - L - Rp));
+  const y = (v) => T + (1 - v / max) * (H - T - B);
+  const grid = [0, max / 2, max].map(v => `<line x1="${L}" x2="${W - Rp}" y1="${f1(y(v))}" y2="${f1(y(v))}" style="stroke:var(--line)"/>
+    <text x="${L - 6}" y="${f1(y(v) + 4)}" text-anchor="end" style="fill:var(--muted);font-size:10px">${v}</text>`).join('');
+  const lines = [...series].reverse().map((s) => {
+    const pts = s.values.map((v, i) => v == null ? null : [x(i), y(v)]).filter(Boolean);
+    if (!pts.length) return '';
+    const main = s === series[0];
+    const path = pts.map(([px, py], i) => `${i ? 'L' : 'M'}${f1(px)} ${f1(py)}`).join(' ');
+    const last = pts[pts.length - 1], lastV = s.values.filter(v => v != null).at(-1);
+    return `<path d="${path}" style="fill:none;stroke:${s.color};stroke-width:${s.width || (main ? 3 : 1.75)};stroke-linecap:round;stroke-linejoin:round"/>
+      ${pts.map(([px, py]) => `<circle cx="${f1(px)}" cy="${f1(py)}" r="${main ? 3.5 : 2.5}" style="fill:${s.color}"/>`).join('')}
+      ${main ? `<text x="${f1(Math.min(last[0], W - Rp - 2))}" y="${f1(last[1] - 9)}" text-anchor="end" style="fill:${s.color};font-size:12px;font-weight:800">${lastV}</text>` : ''}`;
+  }).join('');
+  const xl = len > 1 ? `<text x="${L}" y="${H - 6}" style="fill:var(--muted);font-size:10px">1.ª práctica</text>
+    <text x="${W - Rp}" y="${H - 6}" text-anchor="end" style="fill:var(--muted);font-size:10px">${len}.ª</text>` : '';
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escT(title)}" class="chart-svg">${grid}${lines}${xl}</svg>`;
+}
+
+// Pares de barras (antes y después) en escala de 0 a max.
+function pairBarsSVG(pairs, { max = 5, colors = ['var(--bad)', 'var(--good)'], title = 'Antes y después' } = {}) {
+  const W = 360, H = 170, L = 24, T = 10, B = 20, n = Math.max(pairs.length, 1);
+  const bw = (W - L - 6) / n, h = (v) => v / max * (H - T - B), y0 = H - B;
+  const grid = [0, max / 2, max].map(v => `<line x1="${L}" x2="${W - 6}" y1="${f1(y0 - h(v))}" y2="${f1(y0 - h(v))}" style="stroke:var(--line)"/>
+    <text x="${L - 5}" y="${f1(y0 - h(v) + 4)}" text-anchor="end" style="fill:var(--muted);font-size:10px">${v}</text>`).join('');
+  const bars = pairs.map(([a, b], i) => {
+    const x0 = L + i * bw + bw * 0.12, w = bw * 0.36;
+    return `<rect x="${f1(x0)}" y="${f1(y0 - h(a))}" width="${f1(w)}" height="${f1(h(a))}" rx="2" style="fill:${colors[0]}"/>
+      <rect x="${f1(x0 + w + 2)}" y="${f1(y0 - h(b))}" width="${f1(w)}" height="${f1(h(b))}" rx="2" style="fill:${colors[1]}"/>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escT(title)}" class="chart-svg">${grid}${bars}</svg>`;
+}
+
+// Anillo de puntaje (0–100) en el color que corresponde; el texto va dentro.
+function ringHTML(value, { color = null, label = null, pct = null } = {}) {
+  const p = pct ?? (typeof value === 'number' ? Math.max(0, Math.min(100, value)) : 100);
+  return `<div class="ring" style="--p:${p};--c:${color || (typeof value === 'number' ? scoreColor(value) : 'var(--accent)')}">${label ?? value}</div>`;
 }
 
 // Diagnóstico inicial y metas. Estado inicial (autoevaluación + prueba real) → perfil por dimensión →
@@ -1866,42 +2184,36 @@ function selfAssessmentHTML(answers = {}) {
 }
 
 // Gráfico de radar con el perfil (y, opcional, un perfil anterior para comparar).
-function drawRadar(canvas, profile, previous = null) {
-  const ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height, cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 58;
-  const css = getComputedStyle(document.documentElement);
-  const dims = DIMENSIONS.filter(d => profile[d.id] != null);
-  if (dims.length < 3) return;
-  ctx.clearRect(0, 0, W, H);
-  const pt = (i, v) => { const a = -Math.PI / 2 + i * 2 * Math.PI / dims.length; return [cx + Math.cos(a) * R * v / 100, cy + Math.sin(a) * R * v / 100]; };
-  ctx.strokeStyle = css.getPropertyValue('--line'); ctx.lineWidth = 1;
-  for (const lvl of [25, 50, 75, 100]) { ctx.beginPath(); dims.forEach((_, i) => { const [x, y] = pt(i, lvl); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.closePath(); ctx.stroke(); }
-  ctx.fillStyle = css.getPropertyValue('--muted'); ctx.font = '13px system-ui'; ctx.textAlign = 'center';
-  dims.forEach((d, i) => { const [x, y] = pt(i, 122); ctx.fillText(`${d.icon} ${d.name.split(' ')[0]}`, x, y + 4); });
-  const shape = (p, color, alpha) => {
-    ctx.beginPath(); dims.forEach((d, i) => { const [x, y] = pt(i, p[d.id] ?? 0); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.closePath();
-    ctx.globalAlpha = alpha; ctx.fillStyle = color; ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
-  };
-  if (previous) shape(previous, css.getPropertyValue('--muted'), 0.12);
-  shape(profile, css.getPropertyValue('--accent'), 0.25);
+// Radar del perfil en SVG dentro de un contenedor (#radar). measured marca qué dimensiones se midieron en una prueba.
+function drawRadar(el, profile, previous = null, measured = null) {
+  if (!el) return;
+  const axes = DIMENSIONS.filter(d => profile[d.id] != null).map(d => ({ id: d.id, name: SHORT[d.id] || d.name }));
+  if (axes.length < 3) { el.innerHTML = ''; return; }
+  const self = measured && axes.some(a => measured[a.id] == null);
+  el.innerHTML = radarSVG(axes, profile, { measured, previous }) +
+    `<div class="chart-legend"><span><i style="background:var(--accent)"></i>Medido en tus pruebas</span>` +
+    (self ? `<span><i style="border:2px solid var(--accent);background:var(--card)"></i>Según cómo te ves</span>` : '') +
+    (previous ? `<span><i style="border:2px dashed var(--muted);background:none"></i>Tu diagnóstico anterior</span>` : '') + '</div>';
 }
+const SHORT = { estructura: 'Estructura', presencia: 'Presencia' };
 
 function diagnosisHTML(r, previous = null) {
   const src = (d) => r.measured[d] == null ? ' <small class="note">(según cómo te ves)</small>' : '';
   const rows = DIMENSIONS.filter(d => r.profile[d.id] != null).map(d => {
     const v = r.profile[d.id], prev = previous?.profile?.[d.id];
     const delta = prev != null ? v - prev : null;
-    return `<tr><td>${d.icon} ${esc(d.name)}</td><td class="num">${r.self[d.id] ?? '–'}</td><td class="num">${r.measured[d.id] ?? '–'}</td>
+    return `<tr><td>${esc(d.name)}</td><td class="num">${r.self[d.id] ?? '–'}</td><td class="num">${r.measured[d.id] ?? '–'}</td>
       <td><span class="pill" style="color:${colorFor(v)}">${v}</span>${delta != null ? ` <small style="color:${delta >= 0 ? 'var(--good)' : 'var(--bad)'}">${delta >= 0 ? '+' : ''}${delta}</small>` : ''}</td></tr>`;
   }).join('');
   const gaps = r.gaps.map(g => g.kind === 'sobre'
     ? `<li>En <strong>${esc(dimName(g.dim))}</strong> te ves mejor (${g.self}) de lo que medimos (${g.measured}): es un punto ciego que vale la pena practicar.</li>`
     : `<li>En <strong>${esc(dimName(g.dim))}</strong> eres más exigente contigo (${g.self}) de lo que medimos (${g.measured}): lo haces mejor de lo que crees.</li>`).join('');
   return `
-    <div class="score-big"><div class="ring" style="border:8px solid ${colorFor(r.total)}">${r.total}</div>
+    <div class="score-big">${ringHTML(r.total)}
       <div><div style="font-size:1.15rem;font-weight:700">Índice Talkride ${r.total} · nivel ${esc(r.level)}</div>
       <div class="lead">${previous ? `Antes: ${previous.total} (nivel ${esc(previous.level)}). ${r.total - previous.total >= 0 ? '+' : ''}${r.total - previous.total} puntos.` : 'Este es tu punto de partida.'}</div>
       <div class="note">Tu índice de comunicación de 0 a 100: combina cómo te ves (40%) con lo que medimos en tus pruebas (60%). Vuelve a medirlo cada 4 semanas.</div></div></div>
-    <canvas id="radar" width="520" height="420" aria-label="Perfil de comunicación por dimensión" style="width:100%;max-width:520px;height:auto;margin:8px auto;display:block"></canvas>
+    <div id="radar"></div>
     <div class="fb">
       <div><h3 style="color:var(--good)">Tus fortalezas</h3><ul>${r.strengths.map(d => `<li>${esc(dimName(d))}${src(d)}</li>`).join('')}</ul></div>
       <div><h3 style="color:var(--mid)">Tus prioridades</h3><ul>${r.priorities.map(d => `<li>${esc(dimName(d))}${src(d)}</li>`).join('')}</ul></div>
@@ -2002,54 +2314,72 @@ const ST_ASK = /(?<!\p{L})(propongo|necesito|te pido|les pido|recomiendo|sugiero
 const ST_IMPACT = stRe(String.raw`(impact(o|ó)|afect(a|ó)|hizo que|provoc(a|ó)|gener(a|ó)|el resultado fue|eso hace que)`);
 const ST_BEHAVIOR = stRe(String.raw`(dijiste|hiciste|enviaste|llegaste|presentaste|interrumpiste|entregaste|vi que|noté que)`);
 
-// Palabras de contenido (5+ letras) de una frase, para ver si el cierre vuelve a la idea del inicio.
-const stContent = (s) => new Set((s.toLowerCase().match(/\p{L}{5,}/gu) || []).filter(w => !['porque', 'cuando', 'también', 'quiero', 'tengo', 'puedo', 'estoy', 'gracias'].includes(w)));
+const ES_STOP = ['porque', 'cuando', 'también', 'quiero', 'tengo', 'puedo', 'estoy', 'gracias'];
+// Marcadores del idioma: el español con sus reglas finas (arriba); los demás, armados con las listas de lang.js.
+function markersFor(lang) {
+  return { ...markersOnly(lang), ex: STRUCTURE_EXAMPLES[lang] || STRUCTURE_EXAMPLES.es };
+}
+function markersOnly(lang) {
+  const L = STRUCTURE_BY_LANG[lang];
+  if (!L) {
+    return { fillerStart: ST_FILLER_START, result: ST_RESULT, situation: ST_SITUATION, task: ST_TASK, reason: ST_REASON, example: ST_EXAMPLE,
+      close: ST_CLOSE, ask: ST_ASK, impact: ST_IMPACT, behavior: ST_BEHAVIOR, sitTime: /\b(ayer|hoy|en la reunión|el lunes|el martes|el miércoles|el jueves|el viernes)\b/i,
+      actions: (t) => (t.match(ST_ACTION) || []).filter(w => !ST_NOT_VERB.has(w.toLowerCase())).length + (t.match(ST_ACTION_IRREG) || []).length,
+      we: (t) => (t.match(ST_ACTION_WE) || []).length, stop: ES_STOP };
+  }
+  const action = stRe(L.action, 'giu'), we = stRe(L.we, 'giu');
+  return { fillerStart: new RegExp(`^${L.fillerStart}(?!\\p{L})`, 'iu'), result: stRe(L.result), situation: stRe(L.situation), task: stRe(L.task),
+    reason: stRe(L.reason), example: stRe(L.example), close: stRe(L.close), ask: stRe(L.ask), impact: stRe(L.impact), behavior: stRe(L.behavior),
+    sitTime: stRe(L.situationTime), actions: (t) => (t.match(action) || []).length, we: (t) => (t.match(we) || []).length, stop: L.stop };
+}
 
-function stPrep(text) {
+// Palabras de contenido (5+ letras) de una frase, para ver si el cierre vuelve a la idea del inicio.
+const stContent = (s, stop = ES_STOP) => new Set((s.toLowerCase().match(/\p{L}{5,}/gu) || []).filter(w => !stop.includes(w)));
+
+function stPrep(text, M) {
   const ss = stSentences(text), first = ss[0] || '', last = ss[ss.length - 1] || '';
-  const overlap = [...stContent(first)].some(w => stContent(last).has(w));
+  const overlap = [...stContent(first, M.stop)].some(w => stContent(last, M.stop).has(w));
   return [
-    { part: 'Punto', ok: wordCount(first) > 0 && wordCount(first) <= 30 && !ST_FILLER_START.test(first), tip: 'Empieza con tu idea principal en una frase corta, sin «bueno» ni «este».' },
-    { part: 'Razón', ok: stHas(ST_REASON, text), tip: 'Di por qué: «porque…», «la razón es…».' },
-    { part: 'Ejemplo', ok: stHas(ST_EXAMPLE, text) || ST_NUMBER.test(text), tip: 'Agrega un ejemplo concreto o un dato.' },
-    { part: 'Punto (cierre)', ok: ss.length > 1 && (overlap || stHas(ST_CLOSE, last)), tip: 'Cierra volviendo a tu idea principal («por eso…»).' },
+    { part: 'Punto', ok: wordCount(first) > 0 && wordCount(first) <= 30 && !M.fillerStart.test(first), tip: `Empieza con tu idea principal en una frase corta, sin ${M.ex.fillers}.` },
+    { part: 'Razón', ok: stHas(M.reason, text), tip: `Di por qué: ${M.ex.reason}.` },
+    { part: 'Ejemplo', ok: stHas(M.example, text) || ST_NUMBER.test(text), tip: 'Agrega un ejemplo concreto o un dato.' },
+    { part: 'Punto (cierre)', ok: ss.length > 1 && (overlap || stHas(M.close, last)), tip: `Cierra volviendo a tu idea principal (${M.ex.close}).` },
   ];
 }
-function stStar(text) {
-  const actions = (text.match(ST_ACTION) || []).filter(w => !ST_NOT_VERB.has(w.toLowerCase())).length + (text.match(ST_ACTION_IRREG) || []).length;
-  const we = (text.match(ST_ACTION_WE) || []).length;
+function stStar(text, M) {
+  const actions = M.actions(text), we = M.we(text);
   return [
-    { part: 'Situación', ok: stHas(ST_SITUATION, text), tip: 'Ubica el contexto: «En mi trabajo anterior, cuando…» o «En un proyecto de la universidad, cuando…».' },
-    { part: 'Tarea', ok: stHas(ST_TASK, text), tip: 'Di cuál era tu reto: «Tenía que…», «Mi objetivo era…».' },
+    { part: 'Situación', ok: stHas(M.situation, text), tip: `Ubica el contexto: ${M.ex.situation}.` },
+    { part: 'Tarea', ok: stHas(M.task, text), tip: `Di cuál era tu reto: ${M.ex.task}.` },
     // En STAR la acción es tuya: si domina el «nosotros», no se da por cumplida.
-    { part: 'Acción', ok: (actions >= 2 || (actions >= 1 && we >= 1)) && actions >= we, tip: 'Cuenta qué hiciste TÚ, en primera persona: «Armé», «Propuse», «Hablé con…».' },
-    { part: 'Resultado', ok: stHas(ST_RESULT, text) || ST_NUMBER.test(text), tip: 'Cierra con un resultado medible: «Las ventas subieron un 30%».' },
+    { part: 'Acción', ok: (actions >= 2 || (actions >= 1 && we >= 1)) && actions >= we, tip: `Cuenta qué hiciste TÚ, en primera persona: ${M.ex.action}.` },
+    { part: 'Resultado', ok: stHas(M.result, text) || ST_NUMBER.test(text), tip: `Cierra con un resultado medible: ${M.ex.result}.` },
   ];
 }
-function stBluf(text) {
+function stBluf(text, M) {
   const ss = stSentences(text), opening = ss.slice(0, 2).join(' ');
   return [
-    { part: 'Conclusión o pedido al inicio', ok: stHas(ST_ASK, opening), tip: 'Di en la primera frase qué propones o qué necesitas.' },
-    { part: 'Evidencia', ok: ST_NUMBER.test(text) || stHas(ST_REASON, text), tip: 'Respalda con un dato o una razón.' },
+    { part: 'Conclusión o pedido al inicio', ok: stHas(M.ask, opening), tip: 'Di en la primera frase qué propones o qué necesitas.' },
+    { part: 'Evidencia', ok: ST_NUMBER.test(text) || stHas(M.reason, text), tip: 'Respalda con un dato o una razón.' },
     { part: 'Breve', ok: ss.length <= 8, tip: 'Recorta: lo esencial en pocas frases.' },
   ];
 }
-function stSbi(text) {
+function stSbi(text, M) {
   return [
-    { part: 'Situación', ok: stHas(ST_SITUATION, text) || /\b(ayer|hoy|en la reunión|el lunes|el martes|el miércoles|el jueves|el viernes)\b/i.test(text), tip: 'Ubica cuándo y dónde: «En la reunión del lunes…».' },
-    { part: 'Conducta observable', ok: stHas(ST_BEHAVIOR, text), tip: 'Describe lo que hizo, no cómo es: «Interrumpiste dos veces», no «eres irrespetuoso».' },
-    { part: 'Impacto', ok: stHas(ST_IMPACT, text), tip: 'Explica el efecto: «Eso hizo que el cliente no pudiera terminar».' },
+    { part: 'Situación', ok: stHas(M.situation, text) || M.sitTime.test(text), tip: `Ubica cuándo y dónde: ${M.ex.when}.` },
+    { part: 'Conducta observable', ok: stHas(M.behavior, text), tip: `Describe lo que hizo, no cómo es: ${M.ex.behavior}.` },
+    { part: 'Impacto', ok: stHas(M.impact, text), tip: `Explica el efecto: ${M.ex.impact}.` },
   ];
 }
 
 const ST_CHECKERS = [[/^PREP/, stPrep], [/^STAR/, stStar], [/^BLUF/, stBluf], [/^SBI/, stSbi]];
 
 // Devuelve { method, parts: [{part, ok, tip}], score } o null si el método no tiene revisión local.
-function checkStructure(text, method = '', { minWords = 15 } = {}) {
+function checkStructure(text, method = '', { minWords = 15, lang = PRACTICE_LANG } = {}) {
   if (wordCount(text) < minWords) return null;
   const fn = ST_CHECKERS.find(([re]) => re.test(method))?.[1];
   if (!fn) return null;
-  const parts = fn(text);
+  const parts = fn(text, markersFor(lang));
   return { method: method.split(/[ /(]/)[0], parts, score: Math.round(100 * parts.filter(p => p.ok).length / parts.length) };
 }
 
@@ -2282,7 +2612,7 @@ function scoreSpeech(m, isAudio, seconds, method = '') {
     // Con un texto parcial (la persona escribió sólo una parte de lo que dijo) el ritmo saldría falso.
     m.partialText = isAudio && m.wpm < 70;
     if (isAudio && !m.partialText) add('voz', 'wpm', 'Ritmo', `${Math.round(m.wpm)} palabras/min`, '120–165', band(m.wpm, 120, 165, 60));
-    add('voz', 'fillers', 'Muletillas («este», «o sea»…)', `${m.fillers}`, isAudio ? 'menos de 3 por min' : 'ninguna', isAudio ? band(m.fillers / minutes, 0, 3, 7) : band(m.fillers, 0, 0, 4));
+    add('voz', 'fillers', `Muletillas (${FILLER_EXAMPLES[PRACTICE_LANG] || FILLER_EXAMPLES.es}…)`, `${m.fillers}`, isAudio ? 'menos de 3 por min' : 'ninguna', isAudio ? band(m.fillers / minutes, 0, 3, 7) : band(m.fillers, 0, 0, 4));
     add('lenguaje', 'hedges', 'Frases que restan seguridad', `${m.hedges}`, 'pocas', band(m.hedges / minutes, 0, 1.5, 4));
     const target = s.seconds * (isAudio ? 1.7 : 2);
     const variety = m.variety ?? guiraud(m.text || '');
@@ -3319,7 +3649,7 @@ Responde SÓLO con JSON: {"summary":"...","scores":{"escucha":0,"empatia":0,"cla
   saveSession(rpSession);
   if (markEventPractice(profile.event, rpSession)) saveProfile(profile);
   const calm = calmNow();
-  const head = `<div class="score-big"><div class="ring" style="border:8px solid ${calm ? 'var(--good)' : colorFor(total)}">${calm ? '✓' : total}</div>
+  const head = `<div class="score-big">${ringHTML(total, calm ? { color: 'var(--good)', label: '✓' } : {})}
     <div><div style="font-weight:700">${esc(persona.name)}${persona.id === 'offline' ? '' : ` · dificultad ${$('difficulty').value}/3`}</div>
     <div class="note">Aportaste el ${Math.round(c.talkRatio * 100)}% de las palabras · ${c.questions} ${c.questions === 1 ? 'intervención' : 'intervenciones'} con preguntas · ${c.fillers} muletillas</div></div></div>
     <div class="dims">${dimBars(scores)}</div>`;
@@ -3674,7 +4004,7 @@ $('dgRun').addEventListener('click', async () => {
     words: wordCount(said) || null, writingAssertiveness: wordCount(w) >= 5 ? assertivenessOf(w) : null }));
   const prev = profile.diagnoses?.at(-1) || null;
   $('dgOut').innerHTML = diagnosisHTML(dgResult, prev);
-  drawRadar($('dgOut').querySelector('#radar'), dgResult.profile, prev?.profile);
+  drawRadar($('dgOut').querySelector('#radar'), dgResult.profile, prev?.profile, dgResult.measured);
   $('dgGoals').innerHTML = goalPickerHTML(suggestGoals(dgResult, caps()))
     + (validEvent(profile.event) ? `<p class="note">Además, tu plan para «${esc(profile.event.title || EVENT_TYPES[profile.event.type].name)}» sigue en Hoy: es tu prioridad hasta esa fecha.</p>`
       : ['entrevista', 'presentaciones', 'conversaciones', 'ventas'].includes(profile.goal) ? '<p class="note">¿Tu situación ya tiene fecha? Después de guardar, prepárala en «📅 Evento real» desde Hoy.</p>' : '');
@@ -3721,9 +4051,9 @@ function renderProgressDiagnosis(sessions) {
   } else {
     const first = ds[0], latest = ds[ds.length - 1];
     $('pDiagOut').innerHTML = diagnosisHTML(latest, ds.length > 1 ? first : null)
-      + `<p class="note">${ds.length > 1 ? `Comparado con tu primer diagnóstico (${new Date(first.date).toLocaleDateString('es')}). El área gris es tu punto de partida.` : 'Repite el diagnóstico en unas 4 semanas para ver tu avance.'}</p>
+      + `<p class="note">${ds.length > 1 ? `Comparado con tu primer diagnóstico (${new Date(first.date).toLocaleDateString('es')}). La línea punteada es tu punto de partida.` : 'Repite el diagnóstico en unas 4 semanas para ver tu avance.'}</p>
       <div class="btns"><button data-go="diagnostico">Repetir el diagnóstico</button></div>`;
-    drawRadar($('pDiagOut').querySelector('#radar'), latest.profile, ds.length > 1 ? first.profile : null);
+    drawRadar($('pDiagOut').querySelector('#radar'), latest.profile, ds.length > 1 ? first.profile : null, latest.measured);
   }
   $('pGoals').innerHTML = goalsHTML(profile.goals, sessions);
 }

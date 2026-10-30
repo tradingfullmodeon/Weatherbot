@@ -83,6 +83,12 @@ async function shoot(page, name) {
 
   // 2. Diagnóstico por pasos, con la presentación escrita.
   await go('diagnostico.html');
+  // La presentación se graba con cámara: la presencia se mide en el diagnóstico, no sólo con lo que la persona cree.
+  ok(await page.isChecked('#dgCam'), 'Diagnóstico: cámara activada para medir la presencia');
+  await page.click('#btnRec'); await page.waitForTimeout(4000);
+  ok(await page.isVisible('#dgVideo'), 'Diagnóstico: vista previa de la cámara mientras habla');
+  await page.click('#btnRec'); await page.waitForTimeout(800);
+  ok(!(await page.isVisible('#dgVideo')), 'Diagnóstico: la cámara se apaga al terminar');
   await page.fill('#dgSaid', 'Hola, soy Ana y trabajo en análisis de datos en una aseguradora. Me apasiona convertir números en decisiones simples para los equipos. El año pasado reduje los reclamos atrasados a la mitad con un tablero nuevo. Quiero que cada dato cuente una historia que la gente recuerde.');
   await page.click('#dgWinBtn'); await page.waitForTimeout(500);
   ok((await page.textContent('#dgWin')).includes('primera fortaleza'), 'Diagnóstico: primera fortaleza al terminar de hablar');
@@ -176,10 +182,18 @@ async function shoot(page, name) {
   ok(await page.evaluate(() => document.documentElement.dataset.text) === 'lg', 'Ajustes: la letra grande sigue en otras pantallas');
   ok(await page.isVisible('#btnShare'), 'Progreso: compartir mi avance');
   await go('index.html'); await page.selectOption('#sText', 'normal');
+  // Idiomas de práctica: el español es uno solo (Latinoamérica) y se puede practicar en otros cinco.
+  const langs = await page.$$eval('#sLocale option', os => os.map(o => o.textContent));
+  ok(langs.length === 6 && langs[0] === 'Español (Latinoamérica)' && !langs.some(l => /Estados Unidos/.test(l)), `Ajustes: 6 idiomas de práctica (${langs.join(', ')})`);
+  await page.selectOption('#sLocale', 'en'); await page.waitForTimeout(1500);
+  await go('evaluar.html');
+  ok((await page.textContent('#status')).includes('Idioma: English'), 'Evaluar: practica en inglés después de elegirlo');
+  await go('index.html'); await page.selectOption('#sLocale', 'es'); await page.waitForTimeout(1500);
+  ok(await page.isVisible('#methodBox .ride-steps'), 'Hoy: el método RIDE');
   steps.push(`· Hecho para ti en Hoy: ${await page.isVisible('#forYouCard') ? 'visible' : 'sin ejercicios (las métricas salieron bien)'}`);
 
   // 9. El resto de las pantallas.
-  for (const [p, name] of [['gimnasio.html', '14-gimnasio'], ['aprender.html', '15-aprender'], ['progreso.html', '16-progreso'], ['pro.html', '17-plan'], ['privacidad.html', '18-privacidad']]) {
+  for (const [p, name] of [['gimnasio.html', '14-gimnasio'], ['aprender.html', '15-aprender'], ['progreso.html', '16-progreso'], ['pro.html', '17-plan'], ['privacidad.html', '18-privacidad'], ['metodo.html', '19-metodo']]) {
     await go(p); await shoot(page, name); await audit(page, name.slice(3));
   }
 

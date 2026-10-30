@@ -751,7 +751,7 @@ Responde SÓLO con JSON: {"summary":"...","scores":{"escucha":0,"empatia":0,"cla
   saveSession(rpSession);
   if (markEventPractice(profile.event, rpSession)) saveProfile(profile);
   const calm = calmNow();
-  const head = `<div class="score-big"><div class="ring" style="border:8px solid ${calm ? 'var(--good)' : colorFor(total)}">${calm ? '✓' : total}</div>
+  const head = `<div class="score-big">${ringHTML(total, calm ? { color: 'var(--good)', label: '✓' } : {})}
     <div><div style="font-weight:700">${esc(persona.name)}${persona.id === 'offline' ? '' : ` · dificultad ${$('difficulty').value}/3`}</div>
     <div class="note">Aportaste el ${Math.round(c.talkRatio * 100)}% de las palabras · ${c.questions} ${c.questions === 1 ? 'intervención' : 'intervenciones'} con preguntas · ${c.fillers} muletillas</div></div></div>
     <div class="dims">${dimBars(scores)}</div>`;
@@ -1106,7 +1106,7 @@ $('dgRun').addEventListener('click', async () => {
     words: wordCount(said) || null, writingAssertiveness: wordCount(w) >= 5 ? assertivenessOf(w) : null }));
   const prev = profile.diagnoses?.at(-1) || null;
   $('dgOut').innerHTML = diagnosisHTML(dgResult, prev);
-  drawRadar($('dgOut').querySelector('#radar'), dgResult.profile, prev?.profile);
+  drawRadar($('dgOut').querySelector('#radar'), dgResult.profile, prev?.profile, dgResult.measured);
   $('dgGoals').innerHTML = goalPickerHTML(suggestGoals(dgResult, caps()))
     + (validEvent(profile.event) ? `<p class="note">Además, tu plan para «${esc(profile.event.title || EVENT_TYPES[profile.event.type].name)}» sigue en Hoy: es tu prioridad hasta esa fecha.</p>`
       : ['entrevista', 'presentaciones', 'conversaciones', 'ventas'].includes(profile.goal) ? '<p class="note">¿Tu situación ya tiene fecha? Después de guardar, prepárala en «📅 Evento real» desde Hoy.</p>' : '');
@@ -1153,9 +1153,9 @@ function renderProgressDiagnosis(sessions) {
   } else {
     const first = ds[0], latest = ds[ds.length - 1];
     $('pDiagOut').innerHTML = diagnosisHTML(latest, ds.length > 1 ? first : null)
-      + `<p class="note">${ds.length > 1 ? `Comparado con tu primer diagnóstico (${new Date(first.date).toLocaleDateString('es')}). El área gris es tu punto de partida.` : 'Repite el diagnóstico en unas 4 semanas para ver tu avance.'}</p>
+      + `<p class="note">${ds.length > 1 ? `Comparado con tu primer diagnóstico (${new Date(first.date).toLocaleDateString('es')}). La línea punteada es tu punto de partida.` : 'Repite el diagnóstico en unas 4 semanas para ver tu avance.'}</p>
       <div class="btns"><button data-go="diagnostico">Repetir el diagnóstico</button></div>`;
-    drawRadar($('pDiagOut').querySelector('#radar'), latest.profile, ds.length > 1 ? first.profile : null);
+    drawRadar($('pDiagOut').querySelector('#radar'), latest.profile, ds.length > 1 ? first.profile : null, latest.measured);
   }
   $('pGoals').innerHTML = goalsHTML(profile.goals, sessions);
 }

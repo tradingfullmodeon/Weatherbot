@@ -28,11 +28,13 @@ def main() -> None:
     app = (HERE / "app.js").read_text(encoding="utf-8").replace("{{PERSONAS}}", json.dumps(PERSONAS, ensure_ascii=False, indent=1))
     js = "\n".join([
         "(() => {",
+        as_script(ROOT / "prototype" / "lang.js"),
         as_script(ROOT / "prototype" / "shared.js"),
         as_script(ROOT / "prototype" / "scenarios.js"),
         as_script(ROOT / "prototype" / "lessons.js"),
         as_script(ROOT / "prototype" / "writing.js"),
         as_script(ROOT / "prototype" / "events.js"),
+        as_script(ROOT / "prototype" / "charts.js"),
         as_script(ROOT / "prototype" / "goals.js"),
         as_script(ROOT / "prototype" / "structure.js"),
         as_script(ROOT / "prototype" / "interview.js"),

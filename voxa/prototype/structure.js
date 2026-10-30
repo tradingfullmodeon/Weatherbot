@@ -1,6 +1,7 @@
 // Revisión local de la estructura según el método (sin IA): ¿están las partes de PREP, STAR, BLUF o SBI?
 // Son marcadores de lenguaje simples; no reemplazan al coach, pero dan feedback concreto siempre.
-import { wordCount } from './shared.js';
+import { wordCount, PRACTICE_LANG } from './shared.js';
+import { STRUCTURE_BY_LANG, STRUCTURE_EXAMPLES } from './lang.js';
 
 // Frases; si el texto viene de la transcripción de voz (sin puntos), se corta en bloques de ~20 palabras.
 function stSentences(t) {
@@ -33,53 +34,71 @@ const ST_ASK = /(?<!\p{L})(propongo|necesito|te pido|les pido|recomiendo|sugiero
 const ST_IMPACT = stRe(String.raw`(impact(o|ó)|afect(a|ó)|hizo que|provoc(a|ó)|gener(a|ó)|el resultado fue|eso hace que)`);
 const ST_BEHAVIOR = stRe(String.raw`(dijiste|hiciste|enviaste|llegaste|presentaste|interrumpiste|entregaste|vi que|noté que)`);
 
-// Palabras de contenido (5+ letras) de una frase, para ver si el cierre vuelve a la idea del inicio.
-const stContent = (s) => new Set((s.toLowerCase().match(/\p{L}{5,}/gu) || []).filter(w => !['porque', 'cuando', 'también', 'quiero', 'tengo', 'puedo', 'estoy', 'gracias'].includes(w)));
+const ES_STOP = ['porque', 'cuando', 'también', 'quiero', 'tengo', 'puedo', 'estoy', 'gracias'];
+// Marcadores del idioma: el español con sus reglas finas (arriba); los demás, armados con las listas de lang.js.
+function markersFor(lang) {
+  return { ...markersOnly(lang), ex: STRUCTURE_EXAMPLES[lang] || STRUCTURE_EXAMPLES.es };
+}
+function markersOnly(lang) {
+  const L = STRUCTURE_BY_LANG[lang];
+  if (!L) {
+    return { fillerStart: ST_FILLER_START, result: ST_RESULT, situation: ST_SITUATION, task: ST_TASK, reason: ST_REASON, example: ST_EXAMPLE,
+      close: ST_CLOSE, ask: ST_ASK, impact: ST_IMPACT, behavior: ST_BEHAVIOR, sitTime: /\b(ayer|hoy|en la reunión|el lunes|el martes|el miércoles|el jueves|el viernes)\b/i,
+      actions: (t) => (t.match(ST_ACTION) || []).filter(w => !ST_NOT_VERB.has(w.toLowerCase())).length + (t.match(ST_ACTION_IRREG) || []).length,
+      we: (t) => (t.match(ST_ACTION_WE) || []).length, stop: ES_STOP };
+  }
+  const action = stRe(L.action, 'giu'), we = stRe(L.we, 'giu');
+  return { fillerStart: new RegExp(`^${L.fillerStart}(?!\\p{L})`, 'iu'), result: stRe(L.result), situation: stRe(L.situation), task: stRe(L.task),
+    reason: stRe(L.reason), example: stRe(L.example), close: stRe(L.close), ask: stRe(L.ask), impact: stRe(L.impact), behavior: stRe(L.behavior),
+    sitTime: stRe(L.situationTime), actions: (t) => (t.match(action) || []).length, we: (t) => (t.match(we) || []).length, stop: L.stop };
+}
 
-function stPrep(text) {
+// Palabras de contenido (5+ letras) de una frase, para ver si el cierre vuelve a la idea del inicio.
+const stContent = (s, stop = ES_STOP) => new Set((s.toLowerCase().match(/\p{L}{5,}/gu) || []).filter(w => !stop.includes(w)));
+
+function stPrep(text, M) {
   const ss = stSentences(text), first = ss[0] || '', last = ss[ss.length - 1] || '';
-  const overlap = [...stContent(first)].some(w => stContent(last).has(w));
+  const overlap = [...stContent(first, M.stop)].some(w => stContent(last, M.stop).has(w));
   return [
-    { part: 'Punto', ok: wordCount(first) > 0 && wordCount(first) <= 30 && !ST_FILLER_START.test(first), tip: 'Empieza con tu idea principal en una frase corta, sin «bueno» ni «este».' },
-    { part: 'Razón', ok: stHas(ST_REASON, text), tip: 'Di por qué: «porque…», «la razón es…».' },
-    { part: 'Ejemplo', ok: stHas(ST_EXAMPLE, text) || ST_NUMBER.test(text), tip: 'Agrega un ejemplo concreto o un dato.' },
-    { part: 'Punto (cierre)', ok: ss.length > 1 && (overlap || stHas(ST_CLOSE, last)), tip: 'Cierra volviendo a tu idea principal («por eso…»).' },
+    { part: 'Punto', ok: wordCount(first) > 0 && wordCount(first) <= 30 && !M.fillerStart.test(first), tip: `Empieza con tu idea principal en una frase corta, sin ${M.ex.fillers}.` },
+    { part: 'Razón', ok: stHas(M.reason, text), tip: `Di por qué: ${M.ex.reason}.` },
+    { part: 'Ejemplo', ok: stHas(M.example, text) || ST_NUMBER.test(text), tip: 'Agrega un ejemplo concreto o un dato.' },
+    { part: 'Punto (cierre)', ok: ss.length > 1 && (overlap || stHas(M.close, last)), tip: `Cierra volviendo a tu idea principal (${M.ex.close}).` },
   ];
 }
-function stStar(text) {
-  const actions = (text.match(ST_ACTION) || []).filter(w => !ST_NOT_VERB.has(w.toLowerCase())).length + (text.match(ST_ACTION_IRREG) || []).length;
-  const we = (text.match(ST_ACTION_WE) || []).length;
+function stStar(text, M) {
+  const actions = M.actions(text), we = M.we(text);
   return [
-    { part: 'Situación', ok: stHas(ST_SITUATION, text), tip: 'Ubica el contexto: «En mi trabajo anterior, cuando…» o «En un proyecto de la universidad, cuando…».' },
-    { part: 'Tarea', ok: stHas(ST_TASK, text), tip: 'Di cuál era tu reto: «Tenía que…», «Mi objetivo era…».' },
+    { part: 'Situación', ok: stHas(M.situation, text), tip: `Ubica el contexto: ${M.ex.situation}.` },
+    { part: 'Tarea', ok: stHas(M.task, text), tip: `Di cuál era tu reto: ${M.ex.task}.` },
     // En STAR la acción es tuya: si domina el «nosotros», no se da por cumplida.
-    { part: 'Acción', ok: (actions >= 2 || (actions >= 1 && we >= 1)) && actions >= we, tip: 'Cuenta qué hiciste TÚ, en primera persona: «Armé», «Propuse», «Hablé con…».' },
-    { part: 'Resultado', ok: stHas(ST_RESULT, text) || ST_NUMBER.test(text), tip: 'Cierra con un resultado medible: «Las ventas subieron un 30%».' },
+    { part: 'Acción', ok: (actions >= 2 || (actions >= 1 && we >= 1)) && actions >= we, tip: `Cuenta qué hiciste TÚ, en primera persona: ${M.ex.action}.` },
+    { part: 'Resultado', ok: stHas(M.result, text) || ST_NUMBER.test(text), tip: `Cierra con un resultado medible: ${M.ex.result}.` },
   ];
 }
-function stBluf(text) {
+function stBluf(text, M) {
   const ss = stSentences(text), opening = ss.slice(0, 2).join(' ');
   return [
-    { part: 'Conclusión o pedido al inicio', ok: stHas(ST_ASK, opening), tip: 'Di en la primera frase qué propones o qué necesitas.' },
-    { part: 'Evidencia', ok: ST_NUMBER.test(text) || stHas(ST_REASON, text), tip: 'Respalda con un dato o una razón.' },
+    { part: 'Conclusión o pedido al inicio', ok: stHas(M.ask, opening), tip: 'Di en la primera frase qué propones o qué necesitas.' },
+    { part: 'Evidencia', ok: ST_NUMBER.test(text) || stHas(M.reason, text), tip: 'Respalda con un dato o una razón.' },
     { part: 'Breve', ok: ss.length <= 8, tip: 'Recorta: lo esencial en pocas frases.' },
   ];
 }
-function stSbi(text) {
+function stSbi(text, M) {
   return [
-    { part: 'Situación', ok: stHas(ST_SITUATION, text) || /\b(ayer|hoy|en la reunión|el lunes|el martes|el miércoles|el jueves|el viernes)\b/i.test(text), tip: 'Ubica cuándo y dónde: «En la reunión del lunes…».' },
-    { part: 'Conducta observable', ok: stHas(ST_BEHAVIOR, text), tip: 'Describe lo que hizo, no cómo es: «Interrumpiste dos veces», no «eres irrespetuoso».' },
-    { part: 'Impacto', ok: stHas(ST_IMPACT, text), tip: 'Explica el efecto: «Eso hizo que el cliente no pudiera terminar».' },
+    { part: 'Situación', ok: stHas(M.situation, text) || M.sitTime.test(text), tip: `Ubica cuándo y dónde: ${M.ex.when}.` },
+    { part: 'Conducta observable', ok: stHas(M.behavior, text), tip: `Describe lo que hizo, no cómo es: ${M.ex.behavior}.` },
+    { part: 'Impacto', ok: stHas(M.impact, text), tip: `Explica el efecto: ${M.ex.impact}.` },
   ];
 }
 
 const ST_CHECKERS = [[/^PREP/, stPrep], [/^STAR/, stStar], [/^BLUF/, stBluf], [/^SBI/, stSbi]];
 
 // Devuelve { method, parts: [{part, ok, tip}], score } o null si el método no tiene revisión local.
-export function checkStructure(text, method = '', { minWords = 15 } = {}) {
+export function checkStructure(text, method = '', { minWords = 15, lang = PRACTICE_LANG } = {}) {
   if (wordCount(text) < minWords) return null;
   const fn = ST_CHECKERS.find(([re]) => re.test(method))?.[1];
   if (!fn) return null;
-  const parts = fn(text);
+  const parts = fn(text, markersFor(lang));
   return { method: method.split(/[ /(]/)[0], parts, score: Math.round(100 * parts.filter(p => p.ok).length / parts.length) };
 }
