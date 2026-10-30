@@ -83,3 +83,8 @@ Ahorra un 28% y el roleplay se siente más fluido.
 **Para aplicarla:** en Render → servicio voxa → Environment, agregar:
 - `VOXA_MODEL_ROLEPLAY=claude-haiku-5-5`
 - `VOXA_MODEL_WRITING=claude-haiku-5-5`
+
+**Decisión aplicada (30/10/2026).** El responsable del producto aprobó la combinación y la configuró en Render. La verificación en producción salió bien:
+- Un turno de roleplay respondió en 2,7 s, en personaje y con la pista del coach.
+- Un correo se revisó en 3,9 s, con citas textuales y el plazo faltante detectado.
+- El coach, la evaluación del roleplay y las preguntas del evento siguen en Opus 5.5.

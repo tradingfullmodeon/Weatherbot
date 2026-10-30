@@ -59,7 +59,7 @@ Revisé función por función qué se puede **automatizar con reglas** en vez de
   - `foundry` (Microsoft Foundry).
 
   Cambiar de nube es cambiar variables de entorno. Sirve para usar créditos de una nube, facturar por AWS o Google, o tener un respaldo.
-- **Modelo por función:** `VOXA_MODEL_FEEDBACK`, `VOXA_MODEL_ROLEPLAY`, `VOXA_MODEL_EVALUATE`, `VOXA_MODEL_WRITING` y `VOXA_MODEL_EVENT`. Si no se definen, todas usan `VOXA_MODEL`, que hoy es Opus 5.5, el de mayor calidad.
+- **Modelo por función:** `VOXA_MODEL_FEEDBACK`, `VOXA_MODEL_ROLEPLAY`, `VOXA_MODEL_EVALUATE`, `VOXA_MODEL_WRITING` y `VOXA_MODEL_EVENT`. Si no se definen, todas usan `VOXA_MODEL`, que hoy es Opus 5.5, el de mayor calidad. En producción, el roleplay y la escritura usan Haiku 5.5 desde el 30/10/2026 (ver `evals/RESULTADOS.md`).
 
 `server/providers.py` resuelve las diferencias entre plataformas:
 - **Nombre del modelo:** Bedrock exige el prefijo `anthropic.`.
