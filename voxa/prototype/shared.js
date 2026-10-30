@@ -248,6 +248,22 @@ async function api(method, path, body) {
   return r.json();
 }
 export const postJSON = (path, body) => api('POST', path, body);
+
+// Mientras el coach IA trabaja (10–25 s), mensajes que cuentan qué está haciendo: la espera se siente más corta.
+// Devuelve una función para detenerlos.
+export const WAIT_STEPS = {
+  feedback: ['Leyendo tu práctica…', 'Buscando tu mejor frase…', 'Revisando la estructura de tu respuesta…', 'Eligiendo un solo foco para mejorar…', 'Escribiendo cómo podría sonar…'],
+  evaluate: ['Releyendo la conversación…', 'Buscando tu mejor momento…', 'Revisando cómo manejaste las objeciones…', 'Preparando tu siguiente paso…'],
+  writing: ['Leyendo tu texto…', 'Poniendo lo importante primero…', 'Quitando rodeos y disculpas…', 'Revisando el tono…'],
+  event: ['Pensando en quién estará frente a ti…', 'Buscando las preguntas más difíciles…', 'Preparando cómo responder cada una…'],
+};
+export function waitMessages(el, steps, every = 3500) {
+  let i = 0;
+  const show = () => { el.innerHTML = `<p class="note wait" role="status"><span class="spinner" aria-hidden="true"></span>${esc(steps[Math.min(i++, steps.length - 1)])}</p>`; };
+  show();
+  const t = setInterval(show, every);
+  return () => clearInterval(t);
+}
 // Plan y cupos de esta persona; syncMe confirma una compra recién hecha sin esperar al aviso de la tienda.
 export const getMe = () => api('GET', 'api/me');
 export const syncMe = () => api('POST', 'api/me/sync', {});

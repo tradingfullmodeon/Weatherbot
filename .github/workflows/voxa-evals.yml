@@ -38,8 +38,10 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           MODELS: ${{ inputs.models || 'claude-opus-5-5,claude-sonnet-5-5,claude-haiku-5-5' }}
-          REPEAT: ${{ inputs.repeat || '1' }}
+          REPEAT_INPUT: ${{ inputs.repeat }}
         run: |
+          # A mano se elige en el formulario; desde la rama, con «repeticiones=N» en evals/ejecutar.txt (máximo 3).
+          REPEAT="${REPEAT_INPUT:-$(sed -n 's/^repeticiones=//p' evals/ejecutar.txt)}"; REPEAT="${REPEAT:-1}"; [ "$REPEAT" -gt 3 ] && REPEAT=3
           python -m evals.run --models "$MODELS" --repeat "$REPEAT" --out "$RUNNER_TEMP/evals/RESULTADOS.md"
           cat "$RUNNER_TEMP/evals/RESULTADOS.md" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4

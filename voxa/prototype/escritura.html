@@ -49,7 +49,7 @@
 </main>
 
 <script type="module">
-import { $, esc, renderNav, saveSession, aiStatus, postJSON, userLocale, wordCount, AI_MIN_WORDS } from './shared.js';
+import { $, esc, renderNav, saveSession, aiStatus, postJSON, userLocale, wordCount, AI_MIN_WORDS, waitMessages, WAIT_STEPS } from './shared.js';
 import { KINDS, analyzeWriting } from './writing.js';
 import { upgradeHTML } from './plan-pro.js';
 
@@ -92,7 +92,7 @@ $('btnAI').addEventListener('click', async () => {
     return;
   }
   $('btnAI').disabled = true;
-  $('aiOut').innerHTML = '<p class="note">Mejorando tu texto…</p>';
+  const stopWait = waitMessages($('aiOut'), WAIT_STEPS.writing);
   try {
     const out = await postJSON('api/writing', {
       kind: kind().name, method: kind().method, recipient: $('recipient').value, locale: userLocale(), text: $('text').value,
@@ -110,7 +110,7 @@ $('btnAI').addEventListener('click', async () => {
     $('btnUse').addEventListener('click', () => { $('text').value = out.rewrite; newDraft(true); update(); $('text').focus(); });
   } catch (e) {
     $('aiOut').innerHTML = `<p class="note">No se pudo mejorar el texto: ${esc(e.message)}${upgradeHTML(e)}</p>`;
-  } finally { $('btnAI').disabled = false; }
+  } finally { stopWait(); $('btnAI').disabled = false; }
 });
 </script>
 </body>

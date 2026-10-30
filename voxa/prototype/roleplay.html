@@ -90,7 +90,7 @@
 
 <script type="module">
 import {
-  $, FILLER_RE, countMatches, wordCount, mean, esc, colorFor, highlight, renderNav, saveSession, aiStatus, postJSON, AI_MIN_WORDS, userLocale, loadProfile, saveProfile,
+  $, FILLER_RE, countMatches, wordCount, mean, esc, colorFor, highlight, renderNav, saveSession, aiStatus, postJSON, AI_MIN_WORDS, waitMessages, WAIT_STEPS, userLocale, loadProfile, saveProfile,
 } from './shared.js';
 import { unblockHelp } from './devices.js';
 import { INTERVIEW_PERSONA, createInterview, currentQuestion, interviewNext, interviewHint, interviewProgress, interviewScore, interviewReportHTML, quoteSaid } from './interview.js';
@@ -295,7 +295,8 @@ async function endRoleplay() {
   if (!c.userTurns) { $('status').textContent = 'Responde al menos una vez antes de evaluar.'; return; }
   speechSynthesis?.cancel();
   $('report').style.display = 'block';
-  $('evalOut').innerHTML = '<p class="note">Evaluando…</p>';
+  const stopWait = ai ? waitMessages($('evalOut'), WAIT_STEPS.evaluate) : () => {};
+  if (!ai) $('evalOut').innerHTML = '<p class="note">Evaluando…</p>';
   $('report').scrollIntoView({ behavior: 'smooth' });
   const local = localScores(c);
   let ev = null;
@@ -308,6 +309,7 @@ async function endRoleplay() {
       });
     } catch (e) { $('status').innerHTML = esc('Evaluación IA no disponible: ' + e.message + '. Te mostramos la evaluación por métricas.') + upgradeHTML(e); }
   }
+  stopWait();
   let scores = ev ? ev.scores : local, total;
   // Con IA, lograr el objetivo de la conversación pesa 40%; el simulacro sin IA pondera la estructura STAR.
   if (ev) { const { logro_objetivo: goalScore = 0, ...rest } = scores; total = Math.round(0.4 * goalScore + 0.6 * mean(Object.values(rest))); }

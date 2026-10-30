@@ -49,6 +49,8 @@ def run(models: list[str], provider: str, repeat: int, simulate: bool) -> dict:
                        "VOXA_DB": str(Path(tempfile.mkdtemp()) / "evals.db")})
     os.environ.pop("VOXA_MONTHLY_BUDGET_USD", None)
     import app as voxa
+    # En las pruebas cada llamada debe llegar al modelo: la caché de respuestas idénticas falsearía las repeticiones.
+    voxa.quotas.cached_answer = lambda key: None
     from fastapi.testclient import TestClient
     from evals.cases import CASES, DISCRIMINATION
 
@@ -64,8 +66,6 @@ def run(models: list[str], provider: str, repeat: int, simulate: bool) -> dict:
         for case in CASES:
             for i in range(repeat):
                 body = json.loads(json.dumps(case["body"]))
-                if repeat > 1 and case["route"] == "feedback":
-                    body["prompt"] += " " * i   # evita la caché de respuestas idénticas entre repeticiones
                 usd_before = voxa.USAGE[case["route"]]["usd"]
                 t0 = time.perf_counter()
                 r = api.post(case["path"], json=body, headers={"X-VOXA-User": f"evals_{model}"[:64].replace(".", "_")})

@@ -46,7 +46,7 @@
 </main>
 
 <script type="module">
-import { $, esc, renderNav, loadProfile, saveProfile, aiStatus, postJSON, localDay, wordCount, AI_MIN_WORDS } from './shared.js';
+import { $, esc, renderNav, loadProfile, saveProfile, aiStatus, postJSON, localDay, wordCount, AI_MIN_WORDS, waitMessages, WAIT_STEPS } from './shared.js';
 import { EVENT_TYPES, createEvent, eventHTML, eventTypeOptions, validEvent, daysUntil } from './events.js';
 import { LESSONS } from './lessons.js';
 import { upgradeHTML } from './plan-pro.js';
@@ -109,13 +109,13 @@ $('evQuestionsAI').addEventListener('click', async () => {
     return;
   }
   $('evQuestionsAI').disabled = true;
-  $('evAI').innerHTML = '<p class="note">Pensando en las preguntas más probables para tu evento…</p>';
+  const stopWait = waitMessages($('evAI'), WAIT_STEPS.event);
   try {
     const out = await postJSON('api/event-questions', { kind: EVENT_TYPES[ev.type].name, title: ev.title, audience: ev.audience, message: ev.message, concern: ev.concern, context: ev.context });
     ev.aiQuestions = out.questions; save(); renderAIQuestions(out.questions);
   } catch (e) {
     $('evAI').innerHTML = `<p class="note">No se pudieron generar las preguntas: ${esc(e.message)}${upgradeHTML(e)}</p>`;
-  } finally { $('evQuestionsAI').disabled = false; }
+  } finally { stopWait(); $('evQuestionsAI').disabled = false; }
 });
 function renderAIQuestions(qs) {
   $('evAI').innerHTML = `<h3>✨ Preguntas para tu caso</h3>` + qs.map(x => `<details><summary>${esc(x.q)}</summary><p class="note">${esc(x.why)}</p><p><strong>Cómo responder:</strong> ${esc(x.tip)}</p></details>`).join('');

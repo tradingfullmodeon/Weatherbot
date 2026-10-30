@@ -130,7 +130,7 @@
 <script type="module">
 import {
   $, FILLER_RE, HEDGE_RE, countMatches, phraseCounts, wordCount, mean, std, esc, colorFor, highlight,
-  renderNav, saveSession, loadSessions, loadProfile, aiStatus, postJSON, AI_MIN_WORDS, GOALS, detectPitch, findFilledPauses, userLocale, LOCALES,
+  renderNav, saveSession, loadSessions, loadProfile, aiStatus, postJSON, AI_MIN_WORDS, waitMessages, WAIT_STEPS, GOALS, detectPitch, findFilledPauses, userLocale, LOCALES,
 } from './shared.js';
 import { SCENARIOS, GROUPS, IMPRO_TOPICS, methodHelp } from './scenarios.js';
 import { requestMedia, explainError } from './devices.js';
@@ -624,7 +624,7 @@ $('btnCoach').addEventListener('click', async () => {
     return;
   }
   $('btnCoach').disabled = true;
-  $('aiResult').innerHTML = '<p class="note">El coach está analizando tu práctica…</p>';
+  const stopWait = waitMessages($('aiResult'), WAIT_STEPS.feedback);
   try {
     const fb = await postJSON('api/feedback', {
       scenario: scenario().name, method: scenario().method, prompt: currentPrompt,
@@ -638,7 +638,7 @@ $('btnCoach').addEventListener('click', async () => {
     $('aiResult').innerHTML = renderCoach(fb);
   } catch (e) {
     $('aiResult').innerHTML = `<p class="note">No se pudo obtener el consejo: ${esc(e.message)}${upgradeHTML(e)}</p>`;
-  } finally { $('btnCoach').disabled = false; }
+  } finally { stopWait(); $('btnCoach').disabled = false; }
 });
 
 function renderCoach(fb) {

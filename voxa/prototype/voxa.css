@@ -145,6 +145,10 @@
   .hero .muted, .hero .note { color: #e0e7ff; }
   .hero .btn-link.cta { background: #fff; color: #312e81; border-color: #fff; }
   .hero a:not(.btn-link) { color: #fff; text-decoration: underline; text-underline-offset: 2px; }
+  .wait { display: flex; align-items: center; gap: 8px; }
+  .spinner { width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .9s linear infinite; flex: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
   .check { display: flex; gap: 8px; align-items: center; color: var(--text); min-height: 44px; }
   .foryou { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
   .fy { border: 1px solid var(--line); border-radius: 12px; padding: 12px; }

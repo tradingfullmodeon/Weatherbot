@@ -148,6 +148,10 @@
   .hero .muted, .hero .note { color: #e0e7ff; }
   .hero .btn-link.cta { background: #fff; color: #312e81; border-color: #fff; }
   .hero a:not(.btn-link) { color: #fff; text-decoration: underline; text-underline-offset: 2px; }
+  .wait { display: flex; align-items: center; gap: 8px; }
+  .spinner { width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .9s linear infinite; flex: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
   .check { display: flex; gap: 8px; align-items: center; color: var(--text); min-height: 44px; }
   .foryou { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
   .fy { border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
@@ -952,6 +956,22 @@ async function api(method, path, body) {
   return r.json();
 }
 const postJSON = (path, body) => api('POST', path, body);
+
+// Mientras el coach IA trabaja (10–25 s), mensajes que cuentan qué está haciendo: la espera se siente más corta.
+// Devuelve una función para detenerlos.
+const WAIT_STEPS = {
+  feedback: ['Leyendo tu práctica…', 'Buscando tu mejor frase…', 'Revisando la estructura de tu respuesta…', 'Eligiendo un solo foco para mejorar…', 'Escribiendo cómo podría sonar…'],
+  evaluate: ['Releyendo la conversación…', 'Buscando tu mejor momento…', 'Revisando cómo manejaste las objeciones…', 'Preparando tu siguiente paso…'],
+  writing: ['Leyendo tu texto…', 'Poniendo lo importante primero…', 'Quitando rodeos y disculpas…', 'Revisando el tono…'],
+  event: ['Pensando en quién estará frente a ti…', 'Buscando las preguntas más difíciles…', 'Preparando cómo responder cada una…'],
+};
+function waitMessages(el, steps, every = 3500) {
+  let i = 0;
+  const show = () => { el.innerHTML = `<p class="note wait" role="status"><span class="spinner" aria-hidden="true"></span>${esc(steps[Math.min(i++, steps.length - 1)])}</p>`; };
+  show();
+  const t = setInterval(show, every);
+  return () => clearInterval(t);
+}
 // Plan y cupos de esta persona; syncMe confirma una compra recién hecha sin esperar al aviso de la tienda.
 const getMe = () => api('GET', 'api/me');
 const syncMe = () => api('POST', 'api/me/sync', {});
