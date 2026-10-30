@@ -287,3 +287,83 @@ Los tres finalistas representan **tres personalidades de marca distintas**:
 | **Amable y moderna**, como app de hábito diario | **Habli** | «Habla mejor cada día» |
 
 Antes de confirmar cualquiera, sigue en pie lo de §6 (búsqueda legal, dominio y redes) y la prueba con la beta (§7), usando estos tres finalistas.
+
+---
+
+# Cuarta ronda: análisis de los 11 nombres propuestos por el fundador
+
+## 17. ¿Están en uso? (búsqueda web del 30 de octubre de 2026)
+
+| Nombre | Lo que ya existe | Estado |
+|---|---|---|
+| **Spoken** | **Spoken - Tap to Talk AAC**, app de comunicación por voz para personas con afasia y autismo no verbal (Spoken Inc., iOS y Android, desde 2019) ([Wikipedia](https://en.wikipedia.org/wiki/Spoken_(app)), [App Store](https://apps.apple.com/app/id1034487817)) | ❌ En uso, en el mismo campo: comunicación y voz |
+| **ClearSpeak** | **ClearSpeak**, app de iOS de refinamiento de acento con IA, en Educación, lanzada en enero de 2026 ([mwm.ai](https://mwm.ai/apps/clearspeak/6756326436)). Hay marcas parecidas ya canceladas ([Justia](https://trademarks.justia.com/746/24/clearspeak-74624527.html)) | ❌ En uso, **competidor directo** |
+| **Speakboom** | No existe con ese nombre. Hay nombres parecidos: **Speakaboo** (asistente con IA para personas ciegas) y **Speakaboos** (cuentos para niños) ([App Store](https://apps.apple.com/us/app/-/id6480101099), [Collab Fund](https://kidtech.collabfund.com/posts/speakaboos/)) | ✅ Libre en apps; parecido moderado |
+| **Storycraft** | Juego multijugador **Storycraft** (Montreal, con inversión de US$3–5 millones) y varias apps de cuentos con IA para niños ([CB Insights](https://www.cbinsights.com/company/storycraft), [App Store](https://apps.apple.com/app/id6468678097)) | ❌ En uso, varias veces |
+| **Talkride** | No existe. Los resultados son apps de transporte y de comunicación entre motociclistas ([Cycle News](https://www.cyclenews.com/2017/01/article/sena-releases-ride-connected-app/)) | ✅ Libre |
+| **Voiceboom** | **Voice Boom**, red social de voz y video en Android ([FileHippo](https://filehippo.com/android/download_voice-boom/)), y **VoiceBloom**, app de práctica del habla con informes para fonoaudiólogos ([mwm.ai](https://mwm.ai/es/apps/voicebloom/6775802949)) | ❌ En uso, y un competidor con nombre casi igual |
+| **Vebaloom** | No existe, tampoco «Verbaloom». Termina en «-loom», como **Loom**, la plataforma de mensajes en video, muy conocida en comunicación ([Loom](https://www.loom.com/products/voice-screen-recorder)) | ✅ Libre; riesgo por parecido con Loom |
+| **iTalk** | Muchas apps: **iTalk**, compañero de conversación con IA; **iTalkuTalk**, corrección de pronunciación con IA; **iTalk English** e **iTalkSpanish**; **iTalking**, traductor de voz ([App Store](https://apps.apple.com/app/id1263409577), [App Store](https://apps.apple.com/us/app/-/id738313845)) | ❌ Muy usado |
+| **iSpeak** | **iSpeak: Public Speaking for Contemporary Life**, libro y plataforma de oratoria de McGraw-Hill, ya en su 5.ª edición ([McGraw-Hill](https://www.mheducation.com/highered/product/ispeak-public-speaking-contemporary-life/M9780078036880.html)); además, apps de idiomas iSpeak y un programa de oratoria juvenil ([App Store](https://apps.apple.com/app/id6476919764), [iUrbanTeen](https://iurbanteen.org/?p=880)) | ❌ En uso, **en oratoria** |
+| **Fluentis** | No apareció con ese nombre exacto. El campo «Fluent» está saturado: FluentU, Fluent Forever, y las marcas Fluentigo y FluentFlow para apps de idiomas ([Justia](https://trademark.justia.com/owners/fluentigo-llc-5996938), [Justia](https://trademarks.justia.com/owners/fluentflow-llc-5622760)). Hay que confirmar si existe un software de gestión empresarial italiano llamado Fluentis: lo recuerdo, pero esta búsqueda no lo mostró | ⚠️ Probablemente libre en apps; campo saturado |
+| **Speakflow** | **Speakflow**, teleprompter para hablar en cámara (speakflow.com, CG3 Media), en web y escritorio, y **Teleprompter by SpeakFlow** en iOS ([speakflow.com](https://speakflow.com/guide), [App Store](https://apps.apple.com/app/id6779942959)) | ❌ En uso, **en la misma categoría** |
+
+**Resultado:** **7 de 11 ya están en uso** (Spoken, ClearSpeak, Storycraft, Voiceboom, iTalk, iSpeak y Speakflow). Cuatro de ellos son de comunicación u oratoria, lo que es riesgo legal y confusión segura. Quedan **4 posibles**: Speakboom, Talkride, Vebaloom y Fluentis.
+
+## 18. Los paneles
+
+Para esta ronda trabajaron cuatro paneles simulados. Cada uno tiene una sola mirada, para que nadie mezcle criterios:
+
+| Panel | Integrantes | Mide |
+|---|---|---|
+| **1. Legal y disponibilidad** | Abogado de marcas, especialista en tiendas de apps (ASO) | Si el nombre está libre, si es registrable y si se encuentra al buscarlo |
+| **2. Lingüístico y cultural** | Lingüista de inglés y español, especialistas en Asia y Europa | Pronunciación por país, ortografía y dobles sentidos |
+| **3. Marca y creatividad** | Estratega de marca, director de identidad visual, experto en sonido de marca | Recordación, asociación con la promesa, autoridad y modernidad |
+| **4. Usuarios** | Cuatro personas de Latinoamérica (estudiante, líder, vendedora, persona con miedo escénico) y dos angloparlantes | Si lo recuerdan, qué creen que hace la app y si la bajarían |
+
+## 19. Análisis nombre por nombre
+
+**Speakboom** (*speak* + *boom*, «hablar» + «explosión, despegue»)
+- *Marca:* energía, impacto y crecimiento rápido; *boom* sugiere «tu comunicación despega». Es memorable y fácil de dibujar, con una onda que se expande.
+- *Lingüística:* en Latinoamérica se dice «spik-bum», sin dificultad. En inglés, *boom* también connota auge.
+- *Contra:* *boom* suena juguetón y a efecto de sonido, y resta autoridad para el uso profesional y de empresas. Además se parece a Speakaboo y Speakaboos.
+- *Usuarios:* la estudiante y la vendedora lo recordaron al día siguiente. El líder dijo «suena a app de juegos».
+
+**Fluentis** (de *fluent*, «fluido», con terminación latina *-is*)
+- *Marca:* el que suena **más experto y serio**, casi como una institución, y se entiende en inglés, español, italiano y portugués.
+- *Lingüística:* «flu-EN-tis», fácil en español.
+- *Contra:* «fluido» se asocia sobre todo a **aprender idiomas**, no a hablar con seguridad en tu propio idioma, y el campo «Fluent» está saturado. Hay que descartar el posible conflicto con el software italiano.
+- *Usuarios:* el líder lo eligió primero. La persona con miedo escénico lo sintió frío.
+
+**Talkride** (*talk* + *ride*, «hablar» + «viaje»)
+- *Marca:* la idea de «un viaje de práctica» es buena y está libre.
+- *Contra:* *ride* se asocia a transporte, apps de viajes y motos, como confirman los resultados de la búsqueda. Varios usuarios pensaron que era «una app para hablar mientras manejas».
+
+**Vebaloom** (de *verbal* + *bloom* o *loom*)
+- *Libre*, pero difícil de escribir: dos personas lo anotaron como «Verbaloom» y una como «Vebalum». Si nadie lo escribe bien, nadie lo encuentra en las tiendas.
+- *Contra:* el final «-loom» lo acerca a **Loom**, una marca grande de comunicación en video.
+
+**Los 7 en uso**, en breve:
+- **Spoken, ClearSpeak y Speakflow:** eran los más claros y profesionales, y justamente por eso ya los tomaron, en voz y oratoria.
+- **iTalk e iSpeak:** el prefijo «i» suena a 2008, Apple no permite marcas que imiten las suyas, e iSpeak ya es un libro de oratoria de McGraw-Hill.
+- **Storycraft:** solo cubre storytelling y lo usan un juego con inversión y apps de cuentos.
+- **Voiceboom:** existen Voice Boom y VoiceBloom, esta última de práctica del habla.
+
+## 20. Puntajes (de 1 a 5)
+
+| Criterio (peso) | Speakboom | Fluentis | Talkride | Vebaloom | Voiceboom | Spoken | Speakflow | ClearSpeak | iSpeak | iTalk | Storycraft |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Libre en apps y marcas (25%) | 4,0 | 3,0 | 4,5 | 4,0 | 2,0 | 1,0 | 1,0 | 1,0 | 1,0 | 1,0 | 1,0 |
+| Recordación (15%) | 4,0 | 3,5 | 3,0 | 2,5 | 4,0 | 4,5 | 4,0 | 3,5 | 4,0 | 4,0 | 3,5 |
+| Asociación con la promesa (15%) | 4,0 | 3,5 | 2,5 | 2,5 | 3,5 | 4,0 | 4,5 | 4,5 | 4,0 | 3,5 | 2,5 |
+| Pronunciación en español e inglés (15%) | 3,5 | 4,0 | 3,0 | 2,5 | 3,5 | 3,5 | 3,5 | 3,0 | 4,0 | 4,0 | 2,5 |
+| Autoridad y modernidad (15%) | 3,0 | 4,5 | 2,5 | 3,0 | 3,0 | 4,0 | 4,0 | 4,0 | 2,0 | 2,0 | 3,5 |
+| Registrable (15%) | 4,0 | 3,0 | 4,0 | 3,0 | 2,5 | 1,5 | 1,5 | 2,0 | 1,0 | 1,0 | 2,0 |
+| **Total** | **3,78** | **3,53** | 3,38 | 3,03 | 2,98 | 2,88 | 2,88 | 2,80 | 2,50 | 2,43 | 2,35 |
+
+## 21. Conclusión de la cuarta ronda
+
+1. **Ninguno de los 11 llega al nivel de los mejores de rondas anteriores** (4,0 o más). Los más claros (Spoken, ClearSpeak, Speakflow) ya los tomaron otros, en la misma categoría.
+2. **Los dos mejores de la lista son Speakboom (3,78) y Fluentis (3,53),** y son opuestos: Speakboom es energía y cercanía, con poca autoridad; Fluentis es autoridad y seriedad, con menos calidez y una asociación con idiomas.
+3. **Lo que revela la lista:** el fundador prefiere nombres **en inglés, compuestos, con «speak», «voice» o «fluent», y con energía.** Es una dirección válida, porque Speak, BoldVoice y Wellspoken están entre las mejor evaluadas. Pero es la zona más ocupada del mercado, así que cualquier nombre nuevo en esa línea debe verificarse antes de enamorarse de él.
+4. **Recomendación:** si eliges uno de esta lista, **Speakboom** es el más seguro y recordable. Para que gane autoridad, se puede acompañar de un subtítulo serio en la tienda: «Speakboom: AI Communication Coach».
