@@ -2,6 +2,8 @@
 
 **Talkride: habla con seguridad.** El nombre une *talk* (hablar) y *ride* (el recorrido). Talkride es el camino que haces practicando, desde tu primera grabación hasta hablar con seguridad.
 
+![Logo de Talkride en todos sus formatos](presentacion.png)
+
 ## El logo
 
 | Pieza | Archivo | Uso |
