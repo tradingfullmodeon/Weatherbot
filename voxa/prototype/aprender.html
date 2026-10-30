@@ -25,7 +25,7 @@
 </main>
 
 <script type="module">
-import { $, esc, renderNav, loadProfile, saveProfile, loadSessions } from './shared.js';
+import { $, esc, renderNav, loadProfile, saveProfile, loadSessions, usagePing } from './shared.js';
 import { currentLevel } from './levels.js';
 import { LESSONS, lessonListHTML, lessonHTML, bindQuiz } from './lessons.js';
 
@@ -62,7 +62,7 @@ $('lessonCard').addEventListener('click', (e) => {
   const p = e.target.closest('[data-practice]');
   if (p) location.href = practiceHref(LESSONS.find(x => x.id === p.dataset.practice).practice);
 });
-bindQuiz($('lessonCard'), (l) => { profile.lessons[l.id] = true; saveProfile(profile); });
+bindQuiz($('lessonCard'), (l) => { if (!profile.lessons[l.id]) usagePing('leccion'); profile.lessons[l.id] = true; saveProfile(profile); });
 
 const wanted = new URLSearchParams(location.search).get('leccion');
 wanted ? open(wanted) : renderList();

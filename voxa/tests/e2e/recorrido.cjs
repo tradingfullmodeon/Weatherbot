@@ -190,10 +190,18 @@ async function shoot(page, name) {
   ok((await page.textContent('#status')).includes('Idioma: English'), 'Evaluar: practica en inglés después de elegirlo');
   await go('index.html'); await page.selectOption('#sLocale', 'es'); await page.waitForTimeout(1500);
   ok(await page.isVisible('#methodBox .ride-steps'), 'Hoy: el método RIDE');
+  // Opinión de la prueba con usuarios: desde Ajustes, con estrellas obligatorias, llega al servidor.
+  await page.click('#rateOpen'); await page.waitForTimeout(300);
+  await page.click('#rateSend'); await page.waitForTimeout(200);
+  ok((await page.textContent('#rateMsg')).includes('estrellas'), 'Opinión: pide las estrellas antes de enviar');
+  await page.click('#rateBox [data-stars="5"]'); await page.click('#rateBox [data-nps="9"]');
+  await page.fill('#rateText', 'Me sirvió para preparar mi entrevista.');
+  await page.click('#rateSend'); await page.waitForTimeout(1200);
+  ok((await page.textContent('#rateMsg')).startsWith('Gracias'), 'Opinión: se envía y agradece');
   steps.push(`· Hecho para ti en Hoy: ${await page.isVisible('#forYouCard') ? 'visible' : 'sin ejercicios (las métricas salieron bien)'}`);
 
   // 9. El resto de las pantallas.
-  for (const [p, name] of [['gimnasio.html', '14-gimnasio'], ['aprender.html', '15-aprender'], ['progreso.html', '16-progreso'], ['pro.html', '17-plan'], ['privacidad.html', '18-privacidad'], ['metodo.html', '19-metodo']]) {
+  for (const [p, name] of [['gimnasio.html', '14-gimnasio'], ['aprender.html', '15-aprender'], ['progreso.html', '16-progreso'], ['pro.html', '17-plan'], ['privacidad.html', '18-privacidad'], ['metodo.html', '19-metodo'], ['prueba.html', '20-prueba']]) {
     await go(p); await shoot(page, name); await audit(page, name.slice(3));
   }
 

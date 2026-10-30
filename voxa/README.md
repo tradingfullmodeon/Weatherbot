@@ -11,6 +11,7 @@ Plataforma para mejorar cómo se comunica una persona (confianza, desarrollo pro
 | [`docs/marca/MARCA.md`](docs/marca/MARCA.md) | Marca Talkride: logo, ícono, colores, logotipo y cómo regenerar todos los íconos de las apps. |
 | [`docs/METODO.md`](docs/METODO.md) | El método RIDE de Talkride (Reconoce, Intención, Dilo, Evalúa y repite): barrido de metodologías probadas, evidencia y dónde aparece en la app. |
 | [`docs/IDIOMAS.md`](docs/IDIOMAS.md) | Idiomas de práctica (español latinoamericano, inglés, portugués, francés, alemán e italiano): por qué esos, qué cambia en cada uno y qué falta. |
+| [`docs/BETA.md`](docs/BETA.md) | Prueba con usuarios: a quién invitar, mensajes listos, métricas y metas, calendario de 3 semanas y respuestas para pedir producción en Google Play. Panel en `panel.html`. |
 | [`docs/BENCHMARK.md`](docs/BENCHMARK.md) | Benchmark global (Norteamérica, Europa, Asia, mundo hispanohablante), matriz de funcionalidades, necesidades de los usuarios, quejas recurrentes y 27 mejoras diferenciadoras, con fuentes. |
 | [`docs/CALIFICACIONES.md`](docs/CALIFICACIONES.md) | Calificaciones de usuarios de 25 apps de la competencia (App Store, Google Play, G2, Trustpilot), qué hace que una app tenga 4,7 o más y qué la hunde, cómo sale Talkride en esos criterios y plan de acción por brecha. |
 | [`docs/PANEL.md`](docs/PANEL.md) | Panel experto simulado (profesora de oratoria, coach ejecutivo, psicóloga, diseñadora de producto, investigador en voz e IA y una usuaria principiante): método, puntajes por ronda y qué se corrigió. |

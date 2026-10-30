@@ -111,6 +111,15 @@
     <div id="deviceCheck"></div>
   </section>
 
+  <!-- Opinión: se pide después de 3 prácticas en 2 días distintos (no al entrar) o cuando la persona quiere darla. -->
+  <section class="card full hidden" id="rateCard" aria-labelledby="rateTitle">
+    <p class="overline">Tu opinión</p>
+    <h2 id="rateTitle">¿Te está sirviendo Talkride?</h2>
+    <div id="rateBox"></div>
+    <p class="note" id="rateMsg" role="status"></p>
+    <div class="btns"><button id="rateSend" class="cta">Enviar mi opinión</button><button id="rateLater" class="link-btn">Ahora no</button></div>
+  </section>
+
   <section class="card" id="ajustes">
     <h2>Ajustes</h2>
     <label for="sGoal">Tu objetivo</label>
@@ -121,15 +130,17 @@
     <select id="sText"><option value="normal">Normal</option><option value="lg">Grande</option><option value="xl">Muy grande</option></select>
     <label class="check" style="margin-top:10px"><input type="checkbox" id="sContrast"> Alto contraste (textos más oscuros y bordes marcados)</label>
     <p class="note" id="sSaved" aria-live="polite"></p>
-    <p class="note"><a href="pro.html">Tu plan</a> · <a href="privacidad.html">Privacidad</a> · <a href="terminos.html">Términos de uso</a></p>
+    <p class="note"><button type="button" class="link-btn" id="rateOpen">Darte mi opinión o reportar un problema</button></p>
+    <p class="note"><a href="pro.html">Tu plan</a> · <a href="metodo.html">El método</a> · <a href="prueba.html">Prueba de Talkride</a> · <a href="privacidad.html">Privacidad</a> · <a href="terminos.html">Términos de uso</a> · versión <span id="appVersion"></span></p>
   </section>
 </main>
 
 <script type="module">
-import { $, esc, renderNav, loadProfile, saveProfile, loadSessions, GOALS, LOCALES, practiceLang, aiStatus, getMe, applyDisplayPrefs, fillIcons } from './shared.js';
+import { $, esc, renderNav, loadProfile, saveProfile, loadSessions, GOALS, LOCALES, practiceLang, aiStatus, getMe, applyDisplayPrefs, fillIcons, postJSON, APP_VERSION } from './shared.js';
 import { planLine } from './plan-pro.js';
 import { madeForYou, madeForYouHTML } from './foryou.js';
 import { methodStripHTML } from './method.js';
+import { shouldAskRating, ratingFormHTML, readRatingForm } from './feedback.js';
 import { currentLevel, levelCardHTML } from './levels.js';
 $('wMethod').innerHTML = methodStripHTML(); $('methodBox').innerHTML = methodStripHTML();
 import { todayTask, streak, streakInfo, practicedToday } from './plan.js';
@@ -302,6 +313,34 @@ $('sLocale').addEventListener('change', () => { profile.lang = $('sLocale').valu
 $('sText').value = profile.textSize || 'normal'; $('sContrast').checked = !!profile.highContrast;
 $('sText').addEventListener('change', () => { profile.textSize = $('sText').value; applyDisplayPrefs(profile); saved(); });
 $('sContrast').addEventListener('change', () => { profile.highContrast = $('sContrast').checked; applyDisplayPrefs(profile); saved(); });
+
+// ---------------------------------------------------------------- opinión (prueba con usuarios)
+function openRating() {
+  $('rateBox').innerHTML = ratingFormHTML(profile.rating || {});
+  $('rateMsg').textContent = '';
+  $('rateCard').classList.remove('hidden');
+}
+$('rateBox').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-stars], [data-nps]'); if (!b) return;
+  const attr = b.dataset.stars ? 'stars' : 'nps';
+  $('rateBox').querySelectorAll(`[data-${attr}]`).forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+});
+$('rateSend').addEventListener('click', async () => {
+  const r = readRatingForm($('rateBox'));
+  if (!r) { $('rateMsg').textContent = 'Elige de 1 a 5 estrellas para enviar.'; return; }
+  $('rateSend').disabled = true;
+  profile.rating = { ...r, date: new Date().toISOString() }; saveProfile(profile);
+  try {
+    await postJSON('api/opinion', { stars: r.stars, nps: r.nps, liked: r.features, comment: r.text, version: APP_VERSION });
+    $('rateMsg').textContent = 'Gracias. Lo leemos todo y nos ayuda a decidir qué mejorar.';
+    setTimeout(() => $('rateCard').classList.add('hidden'), 2500);
+  } catch (e) { $('rateMsg').textContent = 'Guardamos tu opinión en este teléfono, pero no pudimos enviarla: ' + e.message; }
+  finally { $('rateSend').disabled = false; }
+});
+$('rateLater').addEventListener('click', () => { profile.ratingDismissed = new Date().toISOString(); saveProfile(profile); $('rateCard').classList.add('hidden'); });
+$('rateOpen').addEventListener('click', () => { openRating(); $('rateCard').scrollIntoView({ behavior: 'smooth' }); });
+$('appVersion').textContent = APP_VERSION;
+if (!firstRun && shouldAskRating(profile, sessions)) openRating();
 </script>
 </body>
 </html>

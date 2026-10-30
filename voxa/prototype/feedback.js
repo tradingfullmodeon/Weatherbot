@@ -5,6 +5,7 @@ import { esc } from './shared.js';
 export const FEATURES = [
   ['diagnostico', 'Diagnóstico y metas'], ['ensayar', 'Ensayar con mi voz o video'], ['presencia', 'Lenguaje corporal'],
   ['roleplay', 'Roleplay con personajes'], ['escritura', 'Escritura'], ['aprender', 'Lecciones'], ['evento', 'Evento real'],
+  ['gimnasio', 'Gimnasio de voz'], ['niveles', 'Niveles y metas'],
 ];
 
 // Se pide en un buen momento (después de lograr algo), no al entrar: tras 3 prácticas y no más de una vez

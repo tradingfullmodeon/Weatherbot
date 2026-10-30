@@ -379,3 +379,20 @@ def test_roleplay_persona_speaks_the_practice_language(monkeypatch):
     system = rp.calls[-1]["system"]
     system = system if isinstance(system, str) else " ".join(b["text"] for b in system)
     assert "habla siempre en portugués de Brasil" in system
+
+
+def test_opinions_and_usage_feed_the_beta_panel(monkeypatch):
+    monkeypatch.setenv("VOXA_ADMIN_TOKEN", "secreto-admin")
+    h = {"X-VOXA-User": "tester00001"}
+    assert api.post("/api/opinion", json={"stars": 5, "nps": 9, "liked": ["roleplay", "inventado"], "comment": "Me ayudó en mi entrevista"}, headers=h).status_code == 200
+    assert api.post("/api/opinion", json={"stars": 9}, headers=h).status_code == 422          # fuera de escala
+    for kind in ("evaluacion", "evaluacion", "roleplay", "otra-cosa"):
+        api.post("/api/ping", json={"kind": kind}, headers=h)
+    panel = api.get("/api/admin/beta", headers={"Authorization": "Bearer secreto-admin"}).json()
+    assert panel["personas"] == 1 and panel["practicas_por_tipo"] == {"evaluacion": 2, "roleplay": 1}
+    assert panel["opiniones"]["estrellas_promedio"] == 5 and panel["opiniones"]["nps"] == 100
+    assert panel["opiniones"]["lo_que_mas_sirve"] == {"roleplay": 1}                         # sólo funciones conocidas
+    assert api.get("/api/admin/beta").status_code == 401
+    # «Borrar todos mis datos» también borra opiniones y uso.
+    api.post("/api/me/delete", headers=h)
+    assert api.get("/api/admin/beta", headers={"Authorization": "Bearer secreto-admin"}).json()["personas"] == 0

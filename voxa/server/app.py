@@ -26,6 +26,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+import beta
 import providers
 import quotas
 from personas import PERSONAS
@@ -574,6 +575,43 @@ PRO_EVENTS = {"INITIAL_PURCHASE", "RENEWAL", "PRODUCT_CHANGE", "UNCANCELLATION",
 END_EVENTS = {"EXPIRATION"}
 
 
+# --------------------------------------------------------------------------- prueba con usuarios (beta)
+FEATURE_IDS = {"diagnostico", "ensayar", "presencia", "roleplay", "escritura", "aprender", "evento", "gimnasio", "niveles"}
+
+
+class OpinionRequest(BaseModel):
+    stars: int = Field(ge=1, le=5)
+    nps: int | None = Field(None, ge=0, le=10)
+    liked: list[Annotated[str, Field(max_length=20)]] = Field(default_factory=list, max_length=10)
+    comment: str = Field("", max_length=1000)
+    version: str = Field("", max_length=20)
+    language: Language = "es"
+
+
+@app.post("/api/opinion")
+def opinion(req: OpinionRequest, user: str = Depends(quotas.user_id)) -> dict:
+    """Calificación desde la app (estrellas, recomendación, lo que más sirve y un comentario). No usa IA."""
+    beta.save_opinion(user, req.stars, req.nps, [f for f in req.liked if f in FEATURE_IDS], req.comment, req.language, req.version)
+    return {"ok": True}
+
+
+class PingRequest(BaseModel):
+    kind: str = Field(max_length=20)
+
+
+@app.post("/api/ping")
+def usage_ping(req: PingRequest, user: str = Depends(quotas.user_id)) -> dict:
+    """Uso anónimo: sólo el tipo de práctica y el día, para medir si la gente vuelve. Nunca el contenido."""
+    if req.kind in beta.KINDS:
+        beta.ping(user, req.kind)
+    return {"ok": True}
+
+
+@app.get("/api/admin/beta", dependencies=[Depends(require_admin)])
+def admin_beta(days: int = 30) -> dict:
+    return beta.summary(max(1, min(days, 365)))
+
+
 @app.post("/api/me/delete")
 def me_delete(user: str = Depends(quotas.user_id)) -> dict:
     """Borra lo que el servidor guarda de esta persona (plan y conteo de uso). Lo llama «Borrar todos mis datos».
@@ -581,6 +619,7 @@ def me_delete(user: str = Depends(quotas.user_id)) -> dict:
     Las respuestas guardadas en caché no tienen el id de nadie y se borran solas a los 7 días.
     """
     quotas.forget(user)
+    beta.forget(user)
     return {"ok": True}
 
 

@@ -245,8 +245,19 @@ export const loadSessions = () => read(KEY, []).filter(s => typeof s.date === 's
 export function saveSession(session) {
   const all = loadSessions();
   const i = all.findIndex(s => s.id === session.id);
+  if (i < 0) usagePing(session.type);   // una práctica nueva (no una actualización de la misma)
   i >= 0 ? (all[i] = session) : all.push(session);
   return write(KEY, all.slice(-300));
+}
+// Uso anónimo para la prueba con usuarios: sólo el tipo de práctica (nunca lo que se dijo o escribió).
+// Si no hay servidor o falla, no pasa nada.
+export function usagePing(kind) {
+  if (!kind || typeof fetch !== 'function' || typeof location === 'undefined') return;
+  if (!globalThis.VOXA_API_BASE && !/^https?:$/.test(location.protocol)) return;   // sin servidor (archivo local): nada
+  try {
+    fetch(API_BASE + 'api/ping', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json', 'X-VOXA-User': deviceId() },
+      body: JSON.stringify({ kind }) }).catch(() => {});
+  } catch {}
 }
 // Perfil con forma garantizada: diagnósticos y metas incompletos (datos dañados) se descartan.
 export function loadProfile() {
@@ -263,6 +274,7 @@ export const saveProfile = (p) => write(PROFILE_KEY, p);
 // ---------------------------------------------------------------- API del coach IA
 // En la web la API está en el mismo dominio; la app instalable define VOXA_API_BASE con la dirección del servidor.
 const API_BASE = globalThis.VOXA_API_BASE || '';
+export const APP_VERSION = '1.0.0-beta.1';
 // La IA sólo se pide cuando aporta algo que las reglas locales no dan (mismos mínimos que el servidor).
 export const AI_MIN_WORDS = { feedback: 15, writing: 8, event: 6, evaluateTurns: 2 };
 let statusPromise = null;

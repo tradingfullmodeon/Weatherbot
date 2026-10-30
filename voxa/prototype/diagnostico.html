@@ -71,7 +71,7 @@
 </main>
 
 <script type="module">
-import { $, renderNav, loadProfile, saveProfile, loadSessions, wordCount, countMatches, FILLER_RE, HEDGE_RE, userLocale } from './shared.js';
+import { $, renderNav, loadProfile, saveProfile, loadSessions, wordCount, countMatches, FILLER_RE, HEDGE_RE, userLocale, usagePing } from './shared.js';
 import { requestMedia, explainError } from './devices.js';
 import { loadVision, sampleVideo, presenceSummary, presenceItems } from './presence.js';
 import { SCENARIOS } from './scenarios.js';
@@ -282,6 +282,7 @@ $('dgSave').addEventListener('click', () => {
   profile.goals = [...(profile.goals || []).filter(g => !dims.includes(g.dim)), ...dims.map(d => createGoal(d, opts))];
   profile.onboarded = true;
   saveProfile(profile);
+  usagePing('diagnostico');
   location.href = 'index.html';
 });
 </script>

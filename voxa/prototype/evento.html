@@ -48,7 +48,7 @@
 </main>
 
 <script type="module">
-import { $, esc, renderNav, loadProfile, saveProfile, aiStatus, postJSON, localDay, wordCount, AI_MIN_WORDS, waitMessages, WAIT_STEPS } from './shared.js';
+import { $, esc, renderNav, loadProfile, saveProfile, aiStatus, postJSON, localDay, wordCount, AI_MIN_WORDS, waitMessages, WAIT_STEPS, usagePing } from './shared.js';
 import { EVENT_TYPES, createEvent, eventHTML, eventTypeOptions, validEvent, daysUntil } from './events.js';
 import { LESSONS } from './lessons.js';
 import { upgradeHTML } from './plan-pro.js';
@@ -80,6 +80,7 @@ function show() {
 }
 
 $('evCreate').addEventListener('click', () => {
+  usagePing('evento');
   const fields = { type: $('evType').value, date: $('evDate').value, title: $('evTitle').value.trim(), audience: $('evAudience').value.trim(),
     message: $('evMessage').value.trim(), concern: $('evConcern').value.trim(), context: $('evContext').value.trim() };
   if (!fields.date) { $('evErr').textContent = 'Elige la fecha del evento.'; return; }
