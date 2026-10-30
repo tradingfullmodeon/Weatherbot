@@ -1,8 +1,8 @@
 {
-  "name": "voxa-app",
+  "name": "talkride-app",
   "private": true,
   "type": "module",
-  "description": "VOXA para iOS y Android: la misma app web empaquetada con Capacitor, con micrófono, cámara y transcripción del teléfono.",
+  "description": "Talkride para iOS y Android: la misma app web empaquetada con Capacitor, con micrófono, cámara y transcripción del teléfono.",
   "scripts": {
     "sync": "node scripts/sync-web.mjs && cap sync",
     "android": "npm run sync && cap open android",

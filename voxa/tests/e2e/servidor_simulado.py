@@ -1,4 +1,4 @@
-"""Servidor de VOXA con un coach IA SIMULADO: respuestas fijas y realistas, sin clave y sin costo.
+"""Servidor de Talkride con un coach IA SIMULADO: respuestas fijas y realistas, sin clave y sin costo.
 
 Sirve para recorrer la app completa (incluidas las funciones con IA) en el navegador o en las pruebas
 de punta a punta. Nunca se usa en producción.

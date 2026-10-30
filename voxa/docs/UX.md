@@ -1,4 +1,4 @@
-# VOXA — Revisión de experiencia de usuario (UX)
+# Talkride — Revisión de experiencia de usuario (UX)
 
 > Auditoría de usabilidad del prototipo, principios de diseño y de comunicación aplicados, y comparación con los patrones de las apps de práctica y hábito mejor valoradas. Octubre de 2026.
 
@@ -49,7 +49,7 @@
 
 ### 3.1 Diseñadores y referentes de diseño
 
-| Referente | Principio | Dónde se aplica en VOXA |
+| Referente | Principio | Dónde se aplica en Talkride |
 |---|---|---|
 | **Jakob Nielsen** (Nielsen Norman Group) | 10 heurísticas de usabilidad. | Toda la auditoría de la sección 2. |
 | **Don Norman** (*The Design of Everyday Things*) | Señales claras de qué se puede hacer, feedback inmediato y correspondencia natural. | Cuenta regresiva, barra de tiempo, estado «Grabando», audiencia que reacciona en vivo y botones que muestran su estado (`aria-pressed`). |
@@ -63,7 +63,7 @@
 
 | Referente | Idea | Cómo se refleja en los textos |
 |---|---|---|
-| **Nancy Duarte** (*Resonate*) | La audiencia es la protagonista; el orador es el guía. | Los textos hablan de *ti* y de *tu* objetivo («Practica la conversación antes de tenerla»). VOXA guía y la persona protagoniza. |
+| **Nancy Duarte** (*Resonate*) | La audiencia es la protagonista; el orador es el guía. | Los textos hablan de *ti* y de *tu* objetivo («Practica la conversación antes de tenerla»). Talkride guía y la persona protagoniza. |
 | **Chris Anderson** (TED) | Una charla transmite una sola idea. | «Tu único foco»: el reporte nunca da una lista de errores. |
 | **Carmine Gallo** | La regla de tres hace los mensajes memorables. | Tres tarjetas: lo que hiciste bien → tu foco → tu ejercicio. |
 | **Garr Reynolds** (*Presentation Zen*) | Simplicidad y contención. | Detalle técnico oculto por defecto; un mensaje por pantalla. |
@@ -77,17 +77,17 @@
 
 > No fue posible verificar las calificaciones actuales de App Store o Google Play en fuente primaria. La única cifra encontrada (Orai, 4,6 con unas 3.700 reseñas en la App Store de EE. UU.) proviene de una comparativa de terceros, así que se cita como **no verificada**. Las conclusiones se basan en patrones de diseño documentados en análisis de UX y reseñas.
 
-| App | Patrón destacado (por qué la valoran) | Qué adoptó VOXA | Qué evitamos |
+| App | Patrón destacado (por qué la valoran) | Qué adoptó Talkride | Qué evitamos |
 |---|---|---|---|
-| **Duolingo** | *Compromiso gradual*: primero la lección y después la cuenta. Pregunta el objetivo y la motivación antes de empezar. Unos 4 clics hasta la primera lección. Racha y ruta visual. | Bienvenida de 3 preguntas **sin cuenta**, primera práctica en 4 toques, racha y plan diario. | La culpa o la presión con la racha (mascota que "culpa"): VOXA celebra sin castigar. |
+| **Duolingo** | *Compromiso gradual*: primero la lección y después la cuenta. Pregunta el objetivo y la motivación antes de empezar. Unos 4 clics hasta la primera lección. Racha y ruta visual. | Bienvenida de 3 preguntas **sin cuenta**, primera práctica en 4 toques, racha y plan diario. | La culpa o la presión con la racha (mascota que "culpa"): Talkride celebra sin castigar. |
 | **Headspace** | Bienvenida empática y breve (unas 3 preguntas sobre la intención), pantallas fáciles de saltar, tono calmado. Su métrica clave es la retención en la segunda semana. | Tono cálido, preguntas por intención (objetivo, nervios), registro de nervios antes y después, y respiración en los consejos. | Secuencias largas de introducción (en un análisis citado, el 38% abandonaba durante la bienvenida). |
-| **Speak** | Hablar en voz alta desde la primera sesión, feedback inmediato, conversación libre como espacio de práctica y métrica de fluidez. | El núcleo es hablar (evaluar y roleplay por voz), con feedback inmediato y nivel de comunicación. | Puntuar como correcto lo que estuvo mal (crítica frecuente a Speak): VOXA muestra métricas explicables y marca lo estimado como estimado. |
-| **ELSA Speak / BoldVoice** | Feedback muy específico (a nivel de sonido) y ejercicios breves. | Gimnasio de voz con métricas concretas (segundos, semitonos, dB) y mejores marcas. | Problemas de acceso y de reembolsos señalados en reseñas: VOXA no exige cuenta. |
-| **Orai** (4,6 no verificado) | Práctica corta y puntuada desde el móvil. | Puntaje de 0 a 100 en cada práctica y prácticas de 30 s a 2 min. | Feedback sólo de audio: VOXA suma presencia visual y contexto. |
+| **Speak** | Hablar en voz alta desde la primera sesión, feedback inmediato, conversación libre como espacio de práctica y métrica de fluidez. | El núcleo es hablar (evaluar y roleplay por voz), con feedback inmediato y nivel de comunicación. | Puntuar como correcto lo que estuvo mal (crítica frecuente a Speak): Talkride muestra métricas explicables y marca lo estimado como estimado. |
+| **ELSA Speak / BoldVoice** | Feedback muy específico (a nivel de sonido) y ejercicios breves. | Gimnasio de voz con métricas concretas (segundos, semitonos, dB) y mejores marcas. | Problemas de acceso y de reembolsos señalados en reseñas: Talkride no exige cuenta. |
+| **Orai** (4,6 no verificado) | Práctica corta y puntuada desde el móvil. | Puntaje de 0 a 100 en cada práctica y prácticas de 30 s a 2 min. | Feedback sólo de audio: Talkride suma presencia visual y contexto. |
 | **Strava / Whoop** | Comparación contigo mismo, tendencias y mejores marcas personales. | Punto de partida, mejores marcas, tendencia por dimensión y calma ganada. | Rankings públicos que desmotivan a quien empieza. |
-| **Yoodli** | Análisis de grabaciones y roleplay. | Roleplay con personajes y pistas en vivo. | Web solamente y sin app instalable: VOXA es una app web instalable y funciona sin conexión. |
+| **Yoodli** | Análisis de grabaciones y roleplay. | Roleplay con personajes y pistas en vivo. | Web solamente y sin app instalable: Talkride es una app web instalable y funciona sin conexión. |
 
-### Lo que VOXA hace distinto en experiencia
+### Lo que Talkride hace distinto en experiencia
 
 1. **Sin cuenta y sin muro de pago** para empezar: el valor llega antes que el registro.
 2. **Un solo foco por práctica**, cuando la mayoría de los coaches muestran todas las métricas al mismo nivel.
@@ -116,7 +116,7 @@
 | 2 | Evaluar mostraba un recuadro negro de cámara antes de empezar y, al terminar, la cámara y el reloj quedaban congelados sobre el reporte | Una sola cosa a la vez; estado visible del sistema (Nielsen 1) | La cámara aparece sólo mientras practicas; antes y después, la pantalla es de la consigna y del reporte |
 | 3 | Roleplay mostraba 9 personajes grandes y el botón «Comenzar» quedaba dos pantallas más abajo | Ley de Hick (menos opciones, decisión más rápida); revelación progresiva | Los **4 personajes que más sirven para tu meta** y «Ver los 9 personajes». El botón queda a la vista |
 | 4 | El gimnasio pedía «Activar micrófono» y después «Empezar» | Mínimo de pasos; un toque por intención | **Un solo botón** «Empezar»: la primera vez pide el micrófono y arranca. «Terminar» aparece sólo mientras grabas |
-| 5 | Títulos con tres estilos: «VOXA · Roleplay con IA», «Evaluar», «Prepara un evento real» | Consistencia y estándares (Nielsen 4) | Títulos cortos, iguales al menú: Roleplay, Gimnasio de voz, Evento real, Mi progreso, Tu plan |
+| 5 | Títulos con tres estilos: «Talkride · Roleplay con IA», «Evaluar», «Prepara un evento real» | Consistencia y estándares (Nielsen 4) | Títulos cortos, iguales al menú: Roleplay, Gimnasio de voz, Evento real, Mi progreso, Tu plan |
 | 6 | Sin tamaño de letra ajustable ni alto contraste (pendiente de la primera revisión) | Accesibilidad; usuarios mayores o con baja visión | **Ajustes → Tamaño de la letra** (normal, grande, muy grande) y **Alto contraste** (texto secundario a 16,5:1 y bordes marcados), en todas las pantallas |
 
 **Autoridad sin rigidez** (lo que se mantiene a propósito):

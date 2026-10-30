@@ -1,6 +1,6 @@
 # Panel experto de evaluación (simulado)
 
-VOXA todavía no tiene calificaciones de usuarios reales. Para medir y mejorar antes de la beta, se armó un **panel simulado de 6 perfiles**. Evaluaron la app como lo haría cada perfil y con los mismos criterios que usan los usuarios en las tiendas (ver [CALIFICACIONES.md](CALIFICACIONES.md)).
+Talkride todavía no tiene calificaciones de usuarios reales. Para medir y mejorar antes de la beta, se armó un **panel simulado de 6 perfiles**. Evaluaron la app como lo haría cada perfil y con los mismos criterios que usan los usuarios en las tiendas (ver [CALIFICACIONES.md](CALIFICACIONES.md)).
 
 > Los panelistas son simulaciones hechas con IA, no personas reales. Su valor está en revisar el producto desde 6 miradas distintas con exigencia de mercado y en verificar sus afirmaciones en la app y en el código. No reemplazan la beta con personas ([PLAN_ACCION.md](PLAN_ACCION.md)).
 

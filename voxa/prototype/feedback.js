@@ -20,9 +20,9 @@ export function ratingFormHTML(prev = {}) {
   const stars = [1, 2, 3, 4, 5].map(n => `<button type="button" data-stars="${n}" aria-pressed="${prev.stars === n}" aria-label="${n} ${n === 1 ? 'estrella' : 'estrellas'}">${n} ★</button>`).join('');
   const nps = Array.from({ length: 11 }, (_, n) => `<button type="button" data-nps="${n}" aria-pressed="${prev.nps === n}">${n}</button>`).join('');
   const feats = FEATURES.map(([id, label]) => `<label class="chk"><input type="checkbox" data-feat="${id}" ${prev.features?.includes(id) ? 'checked' : ''}> ${esc(label)}</label>`).join('');
-  return `<p class="lead">¿Cómo calificarías VOXA?</p>
+  return `<p class="lead">¿Cómo calificarías Talkride?</p>
     <div class="stars" role="group" aria-label="Calificación de 1 a 5 estrellas">${stars}</div>
-    <p style="margin-top:12px">¿Qué tan probable es que recomiendes VOXA a un amigo o colega? (0 = nada, 10 = totalmente)</p>
+    <p style="margin-top:12px">¿Qué tan probable es que recomiendes Talkride a un amigo o colega? (0 = nada, 10 = totalmente)</p>
     <div class="nps" role="group" aria-label="Recomendación de 0 a 10">${nps}</div>
     <p style="margin-top:12px">¿Qué te sirve más?</p><div class="feats">${feats}</div>
     <label for="rateText" style="margin-top:12px">¿Qué mejorarías o qué te falta? (opcional)</label>
@@ -51,7 +51,7 @@ export function ratingSummary(list) {
 }
 
 export function ratingSummaryHTML(s) {
-  if (!s.n) return '<p class="note">Todavía no hay calificaciones. Comparte VOXA con permiso de «Colaborador» para que otras personas puedan calificar.</p>';
+  if (!s.n) return '<p class="note">Todavía no hay calificaciones. Comparte Talkride con permiso de «Colaborador» para que otras personas puedan calificar.</p>';
   const bars = s.dist.map((c, i) => `<div class="dist-row"><span>${i + 1}★</span><div class="bar"><div style="width:${Math.round(100 * c / s.n)}%"></div></div><span class="note">${c}</span></div>`).reverse().join('');
   const top = FEATURES.map(([id, label]) => [label, s.feats[id]]).filter(x => x[1]).sort((a, b) => b[1] - a[1]).slice(0, 3);
   return `<div class="kpis">

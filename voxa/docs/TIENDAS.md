@@ -5,12 +5,12 @@ Octubre de 2026. Esta guía es para hacer en los paneles lo que el código ya es
 | Paso | Dónde | Tiempo | Estado |
 |---|---|---|---|
 | 1 | Render (servidor con la IA) | 20 min | Dio «Access denied»: ver §1 |
-| 2 | RevenueCat (suscripciones) | 30 min | Proyecto «VOXA» creado (paso 1 de 6) |
+| 2 | RevenueCat (suscripciones) | 30 min | Proyecto «Talkride» creado (paso 1 de 6) |
 | 3 | Google Play (Android) | 1–2 días con la verificación | Pendiente |
 | 4 | App Store (iPhone) | 1–3 días con la verificación | Pendiente |
 | 5 | Datos legales en privacidad y términos | 10 min | Pendiente: faltan nombre, país y correo |
 
-## 1. Render: el servidor con la IA de VOXA
+## 1. Render: el servidor con la IA de Talkride
 
 **Por qué aparece «Access denied — You don't have access to srv-…».** Render muestra ese mensaje cuando el servicio existe en otro espacio de trabajo, se creó con otra cuenta (por ejemplo, entrando una vez con GitHub y otra con Google) o fue borrado. Para salir de dudas:
 1. Arriba a la izquierda, abre el selector **«My Workspace»** y revisa si hay otro espacio de trabajo con el servicio.
@@ -19,7 +19,7 @@ Octubre de 2026. Esta guía es para hacer en los paneles lo que el código ya es
 **Crear el servicio (Blueprint):**
 1. Abre https://dashboard.render.com/blueprints y elige **New Blueprint Instance**.
 2. Conecta GitHub si te lo pide y elige el repositorio **Weatherbot**.
-3. **Branch:** `claude/kind-ptolemy-5yibyk`, mientras VOXA no esté en `main`. El archivo `render.yaml` ya está en la raíz del repositorio.
+3. **Branch:** `claude/kind-ptolemy-5yibyk`, mientras Talkride no esté en `main`. El archivo `render.yaml` ya está en la raíz del repositorio.
 4. Render pide los valores marcados como secretos. Completa estos:
 
    | Variable | Qué poner |
@@ -48,7 +48,7 @@ El código de la app y del servidor ya está listo. Estos nombres son los que es
 | Derecho (Entitlement) | `pro` | `VOXA_RC_ENTITLEMENT` en el servidor, `native-purchases.js` en la app |
 | Oferta (Offering) | `default`, marcada como **Current** | La app muestra los paquetes de la oferta actual |
 | Paquetes | `$rc_annual` (Anual) y `$rc_monthly` (Mensual) | La app muestra el anual primero |
-| App User ID | El id anónimo del dispositivo que genera VOXA | Igual en la app y en el servidor; no hay que configurarlo |
+| App User ID | El id anónimo del dispositivo que genera Talkride | Igual en la app y en el servidor; no hay que configurarlo |
 
 **Probar ya, sin Google Play ni App Store: la Test Store de RevenueCat.** Cada proyecto de RevenueCat trae una tienda de prueba que imita a una real, sin cobros ([guía de RevenueCat](https://www.revenuecat.com/docs/test-and-launch/sandbox/test-store)). Es lo que pide el correo «Create your first product»:
 1. En RevenueCat, **Apps → Test Store**: créala y copia su clave, que empieza con `test_`.
@@ -63,13 +63,13 @@ El paquete para la tienda **se niega a compilar con una clave `test_`**: nunca s
 | Tienda | Producto | Precio sugerido (caso de negocio) |
 |---|---|---|
 | Google Play | Suscripción `voxa_pro` con dos planes base: `mensual` y `anual` (RevenueCat los ve como `voxa_pro:mensual` y `voxa_pro:anual`) | LatAm US$6,99/mes y US$44,99/año; EE. UU. y España US$12,99/mes y US$69,99/año |
-| App Store | Grupo de suscripciones «VOXA Pro» con `voxa_pro_mensual` y `voxa_pro_anual` | Lo mismo, con los precios por país de Apple |
+| App Store | Grupo de suscripciones «Talkride Pro» con `voxa_pro_mensual` y `voxa_pro_anual` | Lo mismo, con los precios por país de Apple |
 
 **No crees una prueba gratis en la tienda:** la prueba de 7 días ya la da el servidor, sin pedir tarjeta. Si se suman las dos, la persona tendría dos pruebas y un primer cobro confuso.
 
 **Los 6 pasos del panel de RevenueCat** (la lista «Let's get you ready»):
 
-1. **Apps** (menú de abajo a la izquierda) → agrega **Play Store**, con el paquete `app.voxa.coach`, y **App Store**, con el bundle ID `app.voxa.coach`. Cada una pide conectar su tienda: para Google, una cuenta de servicio con acceso a Play Console; para Apple, la clave de compras dentro de la app (In-App Purchase Key) de App Store Connect. El asistente de RevenueCat lo explica en cada caso.
+1. **Apps** (menú de abajo a la izquierda) → agrega **Play Store**, con el paquete `app.talkride.coach`, y **App Store**, con el bundle ID `app.talkride.coach`. Cada una pide conectar su tienda: para Google, una cuenta de servicio con acceso a Play Console; para Apple, la clave de compras dentro de la app (In-App Purchase Key) de App Store Connect. El asistente de RevenueCat lo explica en cada caso.
 2. **Product catalog → Entitlements →** crea `pro`.
 3. **Product catalog → Products →** importa los productos de cada tienda y asígnalos al derecho `pro`.
 4. **Product catalog → Offerings →** crea `default` con los paquetes Anual y Mensual de cada tienda, y márcala como **Current**.
@@ -84,7 +84,7 @@ Las tarjetas «Install SDK» y «Create your first paywall» se pueden marcar co
 ## 3. Google Play (Android)
 
 1. **Cuenta:** https://play.google.com/console (US$25, una sola vez). Las cuentas personales nuevas deben hacer una **prueba cerrada con 12 personas durante 14 días** antes de publicar. La beta de 30 personas del plan de acción sirve para eso.
-2. **Crear la app:** nombre «VOXA: habla con seguridad», idioma español (Latinoamérica), app gratuita con compras.
+2. **Crear la app:** nombre «Talkride: habla con seguridad», idioma español (Latinoamérica), app gratuita con compras.
 3. **Clave de subida** (una vez, en tu computadora; guárdala con su contraseña en un lugar seguro):
    - Instala un JDK gratis (por ejemplo Temurin) o usa el de Android Studio.
    - Ejecuta: `keytool -genkeypair -v -keystore voxa-upload.jks -alias voxa -keyalg RSA -keysize 2048 -validity 10000`
@@ -95,8 +95,8 @@ Las tarjetas «Install SDK» y «Create your first paywall» se pueden marcar co
      - `VOXA_KEY_ALIAS`: `voxa`;
      - `VOXA_KEY_PASSWORD`.
    - Activa **Play App Signing**: Google guarda la clave final, y si pierdes la de subida, se puede reemplazar.
-4. **Compilar para la tienda:** Actions → «VOXA Android para Google Play» → Run workflow. Descarga `voxa-android-play` (el `.aab`) y súbelo a **Prueba interna**. Las compras reales sólo funcionan con la app instalada desde Play: para probarlas sin pagar, agrega tu correo en **Configuración → Pruebas de licencias**.
-5. **Seguridad de los datos** (formulario obligatorio). Respuestas según cómo funciona VOXA:
+4. **Compilar para la tienda:** Actions → «Talkride Android para Google Play» → Run workflow. Descarga `voxa-android-play` (el `.aab`) y súbelo a **Prueba interna**. Las compras reales sólo funcionan con la app instalada desde Play: para probarlas sin pagar, agrega tu correo en **Configuración → Pruebas de licencias**.
+5. **Seguridad de los datos** (formulario obligatorio). Respuestas según cómo funciona Talkride:
 
    | Pregunta | Respuesta |
    |---|---|
@@ -104,7 +104,7 @@ Las tarjetas «Install SDK» y «Create your first paywall» se pueden marcar co
    | Audio | No se recopila: se analiza en el teléfono |
    | Fotos y videos | No se recopila: se analiza en el teléfono |
    | Otro contenido generado por el usuario | Sí: el texto que se envía al coach IA. Propósito: funcionalidad de la app. Opcional. Se conserva hasta 7 días |
-   | ID de dispositivo u otros identificadores | Sí: el id anónimo de VOXA. Propósito: funcionalidad de la app (cupos y compras) |
+   | ID de dispositivo u otros identificadores | Sí: el id anónimo de Talkride. Propósito: funcionalidad de la app (cupos y compras) |
    | Historial de compras | Sí, a través de RevenueCat. Propósito: funcionalidad de la app |
    | ¿Se cifran en tránsito? | Sí (https) |
    | ¿Se pueden borrar? | Sí: Progreso → «Borrar todos mis datos» |
@@ -115,8 +115,8 @@ Las tarjetas «Install SDK» y «Create your first paywall» se pueden marcar co
 ## 4. App Store (iPhone)
 
 1. **Cuenta:** https://developer.apple.com/programs (US$99 al año). Como persona o como empresa; como empresa se necesita un número D-U-N-S.
-2. **App Store Connect → Apps → +:** nombre «VOXA: habla con seguridad», bundle ID `app.voxa.coach`, SKU `voxa`.
-3. **Suscripciones:** el grupo «VOXA Pro» con `voxa_pro_mensual` y `voxa_pro_anual` (§2).
+2. **App Store Connect → Apps → +:** nombre «Talkride: habla con seguridad», bundle ID `app.talkride.coach`, SKU `talkride`.
+3. **Suscripciones:** el grupo «Talkride Pro» con `voxa_pro_mensual` y `voxa_pro_anual` (§2).
 4. **Privacidad de la app:**
    - Datos no vinculados a la identidad: contenido del usuario, identificadores (id de dispositivo) y compras, todos para funcionalidad de la app.
    - **Sin rastreo.**
@@ -134,7 +134,7 @@ Dímelos y los reemplazo. Antes de publicar, conviene que alguien con conocimien
 
 ## 6. Fichas de las tiendas (textos listos)
 
-**Nombre:** VOXA: habla con seguridad
+**Nombre:** Talkride: habla con seguridad
 
 **Subtítulo (App Store, 30 caracteres):** Coach de comunicación con IA
 
@@ -142,7 +142,7 @@ Dímelos y los reemplazo. Antes de publicar, conviene que alguien con conocimien
 
 **Descripción larga:**
 
-> Habla con seguridad en entrevistas, presentaciones, reuniones y conversaciones difíciles. VOXA es tu entrenador de comunicación en español: practicas unos minutos al día y ves cómo mejoras.
+> Habla con seguridad en entrevistas, presentaciones, reuniones y conversaciones difíciles. Talkride es tu entrenador de comunicación en español: practicas unos minutos al día y ves cómo mejoras.
 >
 > EMPIEZA SABIENDO DÓNDE ESTÁS
 > Un diagnóstico de 6 minutos mide tu voz, tu estructura y tu escritura en 8 dimensiones. En el primer minuto ya ves tu primera fortaleza.
@@ -177,4 +177,4 @@ Dímelos y los reemplazo. Antes de publicar, conviene que alguien con conocimien
 3. «Te dice qué falta en tu respuesta» (estructura STAR).
 4. «Ensaya con personajes que reaccionan a cómo hablas» (roleplay).
 5. «Tu plan hasta el día de tu entrevista» (evento real).
-6. «Te comparas contigo» (progreso e Índice VOXA).
+6. «Te comparas contigo» (progreso e Índice Talkride).

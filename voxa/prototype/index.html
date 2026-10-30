@@ -3,21 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>VOXA Hoy</title>
+<title>Talkride Hoy</title>
 <link rel="stylesheet" href="voxa.css">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#4f46e5">
 </head>
 <body>
 <header>
-  <h1>VOXA</h1>
+  <h1 class="brand"><img src="icon.svg" alt="" width="40" height="40"><span>talk<span class="ride">ride</span></span></h1>
   <p>Practica la conversación antes de tenerla.</p>
 </header>
 
 <main>
   <!-- Bienvenida: 3 preguntas, sin registro (patrón de "compromiso gradual"). -->
   <section class="card full hidden" id="welcome" aria-labelledby="wTitle">
-    <h2 id="wTitle">Bienvenido a VOXA 👋</h2>
+    <h2 id="wTitle">Bienvenido a Talkride 👋</h2>
     <p class="lead">En 7 minutos al día vas a hablar con más claridad y confianza. Primero, tres preguntas rápidas.</p>
 
     <h3>1. ¿Para qué quieres mejorar?</h3>
@@ -236,7 +238,7 @@ const nativeReminder = window.VOXA_NATIVE_REMINDER;
 async function setNativeReminder() {
   const ok = await nativeReminder.set($('remindTime').value || '08:30');
   profile.remindNative = ok; saveProfile(profile);
-  $('remindNativeMsg').textContent = ok ? `Listo: te avisaremos todos los días a las ${$('remindTime').value || '08:30'}.` : 'Para avisarte, permite las notificaciones de VOXA en los ajustes del teléfono.';
+  $('remindNativeMsg').textContent = ok ? `Listo: te avisaremos todos los días a las ${$('remindTime').value || '08:30'}.` : 'Para avisarte, permite las notificaciones de Talkride en los ajustes del teléfono.';
 }
 if (nativeReminder) {
   $('remindNativeBox').classList.remove('hidden'); $('remindCalBox').classList.add('hidden');
@@ -246,7 +248,7 @@ if (nativeReminder) {
 updateRemind();
 $('remindIcs').addEventListener('click', () => {
   const url = URL.createObjectURL(new Blob([icsReminder($('remindTime').value || '08:30', appUrl)], { type: 'text/calendar' }));
-  const a = Object.assign(document.createElement('a'), { href: url, download: 'voxa-recordatorio.ics' });
+  const a = Object.assign(document.createElement('a'), { href: url, download: 'talkride-recordatorio.ics' });
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000);
 });
 

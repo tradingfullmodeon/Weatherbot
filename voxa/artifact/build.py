@@ -1,4 +1,4 @@
-"""Genera dist/voxa.html: la versión de VOXA publicable como Artifact de claude.ai.
+"""Genera dist/voxa.html: la versión de Talkride publicable como Artifact de claude.ai.
 
 Toma los módulos del prototipo (prototype/shared.js, prototype/scenarios.js, prototype/lessons.js, prototype/writing.js, prototype/voxa.css) y los
 personajes del servidor (server/personas.py) para que la versión publicada no se desincronice del resto.

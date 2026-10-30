@@ -1,10 +1,10 @@
-# VOXA frente a las apps mejor calificadas: valoraciones de usuarios, brechas y plan de acción
+# Talkride frente a las apps mejor calificadas: valoraciones de usuarios, brechas y plan de acción
 
-Octubre de 2026. Complementa [`BENCHMARK.md`](BENCHMARK.md) (mapa competitivo y funcionalidades) con lo que dicen los usuarios: cifras de las tiendas, qué elogian y de qué se quejan, cómo sale VOXA en esos mismos criterios y qué haremos al respecto.
+Octubre de 2026. Complementa [`BENCHMARK.md`](BENCHMARK.md) (mapa competitivo y funcionalidades) con lo que dicen los usuarios: cifras de las tiendas, qué elogian y de qué se quejan, cómo sale Talkride en esos mismos criterios y qué haremos al respecto.
 
 > **Cómo leer las cifras.** Las cifras de tiendas son las indexadas por los buscadores desde las fichas oficiales de App Store, Google Play, G2 y Trustpilot. Las tiendas no se pudieron abrir en vivo desde el entorno de trabajo. Lo marcado como «no verificado» no se pudo confirmar. Antes de citar un número en público, conviene volver a revisarlo en la tienda.
 >
-> **VOXA todavía no tiene calificaciones de usuarios.** Por eso, la columna de VOXA en las secciones 3 y 4 es una **evaluación experta**: contrasta el producto con los mismos criterios que usan los usuarios en sus reseñas. No es una nota de usuarios. Desde esta versión, VOXA pide estrellas (1–5, la escala de las tiendas) y NPS dentro de la app, para reemplazar esta estimación por datos reales (sección 6).
+> **Talkride todavía no tiene calificaciones de usuarios.** Por eso, la columna de Talkride en las secciones 3 y 4 es una **evaluación experta**: contrasta el producto con los mismos criterios que usan los usuarios en sus reseñas. No es una nota de usuarios. Desde esta versión, Talkride pide estrellas (1–5, la escala de las tiendas) y NPS dentro de la app, para reemplazar esta estimación por datos reales (sección 6).
 
 ## 1. Calificaciones de las apps de la categoría
 
@@ -37,7 +37,7 @@ Fuentes: fichas de [ELSA (App Store)](https://apps.apple.com/us/app/elsa-speak-e
 **Lectura rápida:**
 - Las líderes en calificación (4,7–4,9) son apps de **hablar otro idioma** con conversación por IA: Speak, Praktika, Cake, ELSA y BoldVoice.
 - Las de **oratoria y comunicación** quedan un escalón abajo (4,2–4,7), con fallas técnicas y modelos de cobro agresivos.
-- En español casi no hay oferta con tracción: ninguna app pasa de 2 mil reseñas. Ese hueco es el de VOXA.
+- En español casi no hay oferta con tracción: ninguna app pasa de 2 mil reseñas. Ese hueco es el de Talkride.
 
 ## 2. Qué hace que una app tenga 4,7 o más, y qué la hunde
 
@@ -71,11 +71,11 @@ Fuentes: fichas de [ELSA (App Store)](https://apps.apple.com/us/app/elsa-speak-e
 | Q9 | **Actualizaciones que empeoran** la app | ELSA, Babbel, Vocal Image |
 | Q10 | **Coach duro con principiantes** o voces robóticas | Orato, Praktika, ELSA, VirtualSpeech |
 
-## 3. Cómo sale VOXA en esos mismos criterios (evaluación experta)
+## 3. Cómo sale Talkride en esos mismos criterios (evaluación experta)
 
 Escala de 1 a 5 (5 = al nivel de la mejor app de la categoría). Las referencias se toman de las fichas y las reseñas, sin pruebas propias.
 
-| Criterio | Mejor referencia | VOXA hoy | Por qué | Brecha |
+| Criterio | Mejor referencia | Talkride hoy | Por qué | Brecha |
 |---|---|---|---|---|
 | A1 Feedback accionable | BoldVoice 5 | **3,5** | Un solo foco con ejercicio de 2 min, una línea de tiempo con las dudas marcadas y un coach IA que cita tu frase y la reescribe. Falta el nivel palabra por palabra. | Media |
 | A2 Roleplay con IA | Speak 5 | **4** | 6 personajes, 3 niveles, rebobinar y reintentar, y evaluación final. En el link de claude.ai es sólo por texto. | Baja |
@@ -88,7 +88,7 @@ Escala de 1 a 5 (5 = al nivel de la mejor app de la categoría). Las referencias
 | A9 Cercanía cultural | Cake 5 | **4** | Español por país, muletillas regionales y escenarios latinos. Le falta lo lúdico. | Baja |
 | A10 Cuidado de reseñas | Babbel 5 | **3** | Desde esta versión pide estrellas y NPS después de 3 prácticas. Todavía no está en tiendas. | Media |
 
-| Queja del sector | Riesgo en VOXA | Por qué |
+| Queja del sector | Riesgo en Talkride | Por qué |
 |---|---|---|
 | Q1 Cobros | Bajo hoy | No cobra. Al monetizar: aviso antes de cobrar, cancelar en un toque y reembolso simple. |
 | Q2 Puntaje inexacto | **Medio** | Las métricas son heurísticas sin calibrar con personas reales; el detector de «eeh» es una estimación. |
@@ -100,7 +100,7 @@ Escala de 1 a 5 (5 = al nivel de la mejor app de la categoría). Las referencias
 | Q9 Actualizaciones que empeoran | Bajo | Pruebas automáticas e integración continua en cada cambio. |
 | Q10 Duro con principiantes | Bajo | Primera práctica de baja exigencia, un solo foco y lenguaje de ánimo. |
 
-**Promedio de VOXA en los 10 atributos: 3,6 de 5** (3,45 antes de esta versión).
+**Promedio de Talkride en los 10 atributos: 3,6 de 5** (3,45 antes de esta versión).
 
 La [auditoría técnica](AUDITORIA.md) bajó el riesgo de Q2 (puntaje inexacto): una grabación muda ya no se puntúa, las metas no se cumplen repitiendo el mismo intento y el texto de relleno ya no aprueba.
 - Fortalezas que ya compiten con las mejores: gratis y sin cuenta, diagnóstico con metas, roleplay, progreso y foco cultural.
@@ -122,9 +122,9 @@ La [auditoría técnica](AUDITORIA.md) bajó el riesgo de Q2 (puntaje inexacto):
 | P2 | A9 Lo lúdico | Retos semanales con amigos y logros por hábitos (no por puntaje) | — | Pendiente |
 | P2 | Q1 Cobro honesto (al monetizar) | Aviso 3 días antes del cobro, cancelación en un toque y reembolso de 14 días sin preguntas | Menos del 2% de reseñas por cobros | Diseño |
 
-## 5. Funcionalidades: VOXA frente a las líderes
+## 5. Funcionalidades: Talkride frente a las líderes
 
-| Funcionalidad | Speak | BoldVoice | ELSA | Yoodli | Orai | Speeko | **VOXA** |
+| Funcionalidad | Speak | BoldVoice | ELSA | Yoodli | Orai | Speeko | **Talkride** |
 |---|---|---|---|---|---|---|---|
 | Diagnóstico inicial | ✅ | ✅ | ✅ | — | ◐ | ◐ | ✅ 8 dimensiones + puntos ciegos |
 | Metas con plazo | ◐ | ◐ | ◐ | — | — | ◐ | ✅ avanzan solas |
@@ -142,12 +142,12 @@ La [auditoría técnica](AUDITORIA.md) bajó el riesgo de Q2 (puntaje inexacto):
 
 ## 6. Medir con usuarios reales desde ahora
 
-- **Dónde:** en «Progreso → Califica VOXA», y en Hoy después de la tercera práctica (como mucho una vez cada 30 días; «Ahora no» lo pospone).
+- **Dónde:** en «Progreso → Califica Talkride», y en Hoy después de la tercera práctica (como mucho una vez cada 30 días; «Ahora no» lo pospone).
 - **Qué se pide:**
   - Estrellas de 1 a 5, comparables con las tiendas.
   - NPS de 0 a 10.
   - Qué funcionalidad sirve más.
   - Qué falta.
 - **Quién ve los resultados:** cada persona escribe sólo su propia calificación. Sólo quien es dueño del link ve el tablero (promedio, distribución, NPS y funcionalidades más útiles), y Claude lo puede leer para el próximo informe.
-- **Requisito:** las personas deben abrir VOXA con permiso de **Colaborador**. Con permiso de sólo lectura, la calificación queda guardada únicamente en su navegador.
+- **Requisito:** las personas deben abrir Talkride con permiso de **Colaborador**. Con permiso de sólo lectura, la calificación queda guardada únicamente en su navegador.
 - **Meta para validar el producto:** 30 calificaciones con promedio ≥ 4,5 ★ y NPS ≥ 40, el umbral para competir con las apps de 4,6–4,8.

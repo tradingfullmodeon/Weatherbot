@@ -1,4 +1,4 @@
-"""Pruebas de la API de VOXA con un cliente de Anthropic simulado (no consume la API real)."""
+"""Pruebas de la API de Talkride con un cliente de Anthropic simulado (no consume la API real)."""
 
 import json
 from types import SimpleNamespace

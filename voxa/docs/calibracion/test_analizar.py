@@ -22,14 +22,14 @@ def test_end_to_end(tmp_path):
     (exp / "ana.json").write_text(json.dumps({"profile": {}, "sessions": sessions}), encoding="utf-8")
     rows = ["grabacion,evaluador,global,voz,muletillas"]
     for i, t in enumerate([40, 55, 70, 85, 90]):
-        rows.append(f"ana:s{i},p1,{t - 10},{t},{t}")      # global: mismo orden, VOXA 10 más alto
+        rows.append(f"ana:s{i},p1,{t - 10},{t},{t}")      # global: mismo orden, Talkride 10 más alto
         rows.append(f"ana:s{i},p2,{t - 12},{t + 2},{t}")
     rows.append("ana:nada,p1,50,,")
     notas = tmp_path / "notas.csv"; notas.write_text("\n".join(rows), encoding="utf-8")
     res = analizar.analyze(analizar.load_voxa(exp), analizar.load_profes(notas))
     g = res["dims"]["global"]
     assert g["n"] == 5 and abs(g["spearman"] - 1) < 1e-9 and abs(g["bias"] - 11) < 1e-9 and abs(g["inter"] - 1) < 1e-9
-    assert res["dims"]["muletillas"]["spearman"] < 0            # VOXA invertido: debe salir mal
+    assert res["dims"]["muletillas"]["spearman"] < 0            # Talkride invertido: debe salir mal
     assert res["missing"] == ["ana:nada"]
     text = analizar.report(res)
     assert "| global | 5 | 1,00 |" in text and "⚠️ revisar" in text

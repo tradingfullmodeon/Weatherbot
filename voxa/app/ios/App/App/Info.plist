@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>VOXA</string>
+        <string>Talkride</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -67,10 +67,10 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>VOXA usa el micrófono para analizar tu voz mientras practicas. Las grabaciones se quedan en tu teléfono.</string>
+	<string>Talkride usa el micrófono para analizar tu voz mientras practicas. Las grabaciones se quedan en tu teléfono.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>VOXA usa la cámara para darte feedback de mirada y postura. El video no sale de tu teléfono.</string>
+	<string>Talkride usa la cámara para darte feedback de mirada y postura. El video no sale de tu teléfono.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>VOXA transcribe lo que dices para comentar tu estructura y tus muletillas.</string>
+	<string>Talkride transcribe lo que dices para comentar tu estructura y tus muletillas.</string>
 </dict>
 </plist>

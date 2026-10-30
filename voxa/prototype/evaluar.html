@@ -3,9 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>VOXA Evaluar</title>
+<title>Talkride Evaluar</title>
 <link rel="stylesheet" href="voxa.css">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#4f46e5">
 </head>
 <body>
@@ -98,7 +100,7 @@
       <div id="aiResult" aria-live="polite"></div>
     </div>
     <div id="aiOffline" class="hidden">
-      <p class="note">El coach IA necesita el servidor de VOXA conectado. Mientras tanto, puedes copiar tu práctica a cualquier asistente de IA.</p>
+      <p class="note">El coach IA necesita el servidor de Talkride conectado. Mientras tanto, puedes copiar tu práctica a cualquier asistente de IA.</p>
       <details><summary>Copiar mi práctica para un asistente de IA</summary>
         <textarea id="aiPrompt" readonly></textarea>
         <div class="btns"><button id="btnCopy">Copiar</button></div>
@@ -118,7 +120,7 @@
       <canvas id="chart" width="1000" height="140" aria-label="Volumen y tono a lo largo de la práctica"></canvas>
       <p class="note">Barras = volumen · línea = tono · rojo = silencios largos · amarillo = posibles «eeh/mmm».</p>
       <video id="replay" controls playsinline></video>
-      <div class="btns"><a id="download" class="btn-link" style="border:1px solid var(--line)" download="voxa-practica.webm">Descargar mi video</a></div>
+      <div class="btns"><a id="download" class="btn-link" style="border:1px solid var(--line)" download="talkride-practica.webm">Descargar mi video</a></div>
     </details>
     <details>
       <summary>Ver la transcripción</summary>
@@ -696,7 +698,7 @@ function aiPrompt(m, r) {
 Escenario: ${scenario().name}. Consigna: ${currentPrompt}
 Método esperado: ${scenario().method}. Duración: ${Math.round(m.dur)} s.
 Métricas: ${r.items.map(i => `${i.label}=${i.display} (ideal ${i.target})`).join('; ')}.
-Puntaje VOXA: ${r.total}/100 (${Object.entries(r.dims).map(([d, s]) => `${d} ${s}`).join(', ')}).
+Puntaje Talkride: ${r.total}/100 (${Object.entries(r.dims).map(([d, s]) => `${d} ${s}`).join(', ')}).
 Transcripción: """${(finalText + interimText).trim() || '(no disponible)'}"""
 
 Devuelve:

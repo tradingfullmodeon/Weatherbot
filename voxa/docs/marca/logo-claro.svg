@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 300">
+  <title>Talkride</title>
+  <defs>
+    <linearGradient id="tr-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4f46e5"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(22 22) scale(.5)">
+    <rect width="512" height="512" rx="112" fill="url(#tr-bg)"/>
+    <path d="M176 118H336A76 76 0 0 1 412 194V270A76 76 0 0 1 336 346H234L152 404Q138 413 142 397L170 346A76 76 0 0 1 100 270V194A76 76 0 0 1 176 118Z" fill="#fff"/>
+    <path d="M162 286C232 286 250 186 318 186" fill="none" stroke="#4f46e5" stroke-width="32" stroke-linecap="round"/>
+    <circle cx="350" cy="186" r="25" fill="#f59e0b"/>
+  </g>
+  <text x="318" y="198" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="150" font-weight="800" letter-spacing="-4"><tspan fill="#1b1f2a">talk</tspan><tspan fill="#4f46e5">ride</tspan></text>
+</svg>

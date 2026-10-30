@@ -1,6 +1,6 @@
-# Pruebas de VOXA en cada cambio: servidor (pytest), motor de análisis y contenido (node --test)
+# Pruebas de Talkride en cada cambio: servidor (pytest), motor de análisis y contenido (node --test)
 # y que la versión publicable (voxa/artifact/dist) esté regenerada desde el código fuente.
-name: VOXA CI
+name: Talkride CI
 
 on:
   push:

@@ -1,4 +1,4 @@
-// VOXA publicable: una sola página con vistas. Reutiliza shared.js y scenarios.js (inyectados por build.py)
+// Talkride publicable: una sola página con vistas. Reutiliza shared.js y scenarios.js (inyectados por build.py)
 // y usa el coach IA a través de la capacidad `sample` del visor de claude.ai cuando está disponible.
 
 const profile = loadProfile();
@@ -73,7 +73,7 @@ renderAIState();
   setupRoleplayPersonas();   // con IA: 9 personajes; sin IA: entrevistador de preguntas fijas
 }).catch(() => {});
 
-const COACH_RULES = `Reglas de VOXA (no negociables):
+const COACH_RULES = `Reglas de Talkride (no negociables):
 - Habla de conductas observables (palabras, voz, ritmo, estructura). Nunca infieras emociones internas, rasgos de personalidad ni diagnósticos.
 - Feedback concreto y cálido: cita frases textuales cuando existan. Un solo foco de mejora, el de mayor impacto.
 - Español neutro y natural; tutea.
@@ -514,7 +514,7 @@ $('btnCoach').addEventListener('click', async () => {
   const { m, r, isAudio, text, sc } = last;
   const hasText = !!text.trim();
   const goal = GOALS.find(([id]) => id === profile.goal)?.[1] || 'no indicado';
-  const prompt = `Eres el coach de comunicación de VOXA: experto en oratoria, comunicación interpersonal, voz y lenguaje corporal.
+  const prompt = `Eres el coach de comunicación de Talkride: experto en oratoria, comunicación interpersonal, voz y lenguaje corporal.
 ${COACH_RULES}
 
 Situación que practica el usuario: ${sc.name}
@@ -636,7 +636,7 @@ function say(text) {
 function rolePrompt() {
   const p = persona;
   const ctx = $('ctx').value.trim();
-  return `Estás en una simulación de práctica de comunicación de VOXA. Interpretas a ${p.name}, ${p.role}.
+  return `Estás en una simulación de práctica de comunicación de Talkride. Interpretas a ${p.name}, ${p.role}.
 Situación: ${p.scenario}
 Tu personalidad y conducta: ${p.behavior}
 ${DIFFICULTY[$('difficulty').value]}
@@ -726,7 +726,7 @@ async function endRoleplay() {
   if (sample) {
     const transcript = chatHistory.map(t => `${t.role === 'user' ? 'USUARIO' : persona.name.toUpperCase()}: ${t.text}`).join('\n');
     try {
-      ev = await sample.json(`Eres el coach de comunicación de VOXA y evalúas una simulación ya terminada.
+      ev = await sample.json(`Eres el coach de comunicación de Talkride y evalúas una simulación ya terminada.
 ${COACH_RULES}
 Personaje: ${persona.name} (${persona.role}). Dificultad ${$('difficulty').value}/3. Objetivo del usuario: ${persona.goal}. Técnicas esperables: ${persona.skills.join(', ')}.
 Métricas: el usuario aportó el ${Math.round(c.talkRatio * 100)}% de las palabras; intervenciones con preguntas: ${c.questions}; muletillas: ${c.fillers}.
@@ -799,7 +799,7 @@ $('btnWAI').addEventListener('click', async () => {
   $('btnWAI').disabled = true;
   $('wOut').innerHTML = '<p class="note">Mejorando tu texto… (la primera vez claude.ai te pedirá permiso)</p>';
   try {
-    const out = await sample.json(`Eres el coach de comunicación escrita de VOXA. Mejoras correos, mensajes y publicaciones en español para que sean claros, breves y efectivos sin perder la voz de quien escribe.
+    const out = await sample.json(`Eres el coach de comunicación escrita de Talkride. Mejoras correos, mensajes y publicaciones en español para que sean claros, breves y efectivos sin perder la voz de quien escribe.
 ${COACH_RULES}
 Principios: lo importante primero (BLUF), un pedido explícito con plazo cuando corresponde, frases cortas, sin rodeos ni disculpas innecesarias, tono cálido y respetuoso.
 
@@ -835,7 +835,7 @@ Responde SÓLO con JSON: {"strengths":["..."],"issues":["..."],"rewrite":"versi�
 const LADDER = [
   'Hablar 60 s a solas en voz alta, sin grabar.',
   'Grabar sólo audio y escucharte.',
-  'Subir una grabación a VOXA y leer tu reporte.',
+  'Subir una grabación a Talkride y leer tu reporte.',
   'Roleplay o simulacro en dificultad baja.',
   'Roleplay o simulacro en dificultad alta (con IA, el personaje presiona).',
   'Practicar frente a una persona de confianza.',
@@ -977,7 +977,7 @@ $('evQuestionsAI').addEventListener('click', async () => {
   $('evQuestionsAI').disabled = true;
   $('evAI').innerHTML = '<p class="note">Pensando en las preguntas más probables para tu evento…</p>';
   try {
-    const out = await sample.json(`Eres el coach de comunicación de VOXA.\n${COACH_RULES}\n\n` + eventQuestionsPrompt(ev));
+    const out = await sample.json(`Eres el coach de comunicación de Talkride.\n${COACH_RULES}\n\n` + eventQuestionsPrompt(ev));
     if (!Array.isArray(out?.questions) || !out.questions.length) throw { code: 'invalid_json' };
     ev.aiQuestions = out.questions.slice(0, 8).map(x => ({ q: String(x.q || ''), why: String(x.why || ''), tip: String(x.tip || '') }));
     saveEv(); renderEventQuestions(ev.aiQuestions);
@@ -1016,7 +1016,7 @@ $('btnPresence').addEventListener('click', async () => {
     const images = await grabFrames(file);
     if (!images.length) throw new Error('No pudimos tomar fotogramas de este video.');
     $('presenceOut').innerHTML = '<p class="note">Claude está revisando tu presencia… (puede pedirte permiso para enviar imágenes)</p>';
-    const out = await sample.json(`Eres el coach de lenguaje corporal de VOXA. Recibes ${images.length} fotogramas, en orden, del video de una persona practicando «${scenario().name}» frente a la cámara de su celular o computador.
+    const out = await sample.json(`Eres el coach de lenguaje corporal de Talkride. Recibes ${images.length} fotogramas, en orden, del video de una persona practicando «${scenario().name}» frente a la cámara de su celular o computador.
 ${COACH_RULES}
 Evalúa SÓLO conductas observables en los fotogramas: encuadre (posición en el cuadro, distancia, altura de la cámara), iluminación (frontal, contraluz), mirada (hacia el lente o fuera), postura (hombros, espalda, cabeza), gestos (manos visibles, dentro del marco) y expresión facial visible (por ejemplo, si se ve una sonrisa). No describas apariencia física, ropa, edad, género ni rasgos de la persona, ni infieras emociones o personalidad.
 Responde SÓLO con JSON: {"scores":{"encuadre":0,"iluminacion":0,"mirada":0,"postura":0,"gestos":0},"strength":"lo mejor que se observa","focus":"el único ajuste de mayor impacto","how":["paso concreto 1","paso concreto 2"],"notes":{"encuadre":"...","iluminacion":"...","mirada":"...","postura":"...","gestos":"..."}} con puntajes de 0 a 100.`, { images });

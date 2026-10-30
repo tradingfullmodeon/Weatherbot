@@ -18,7 +18,7 @@ export function helpHTML() {
     <p>Hablar con alguien ayuda. Estas líneas son gratuitas y confidenciales:</p>
     <ul>${HELP_LINES.map(([c, l, e]) => `<li><strong>${esc(c)}:</strong> ${esc(l)} · <span class="note">emergencias: ${esc(e)}</span></li>`).join('')}</ul>
     <p class="note">Si tu país no está, busca la línea de prevención de tu país o acude a la guardia de un hospital.</p>
-    <p class="note">VOXA es un entrenamiento de comunicación, no un tratamiento. Si el miedo a hablar te hace evitar el trabajo, los estudios o encuentros importantes, una terapia cognitivo-conductual ayuda mucho; VOXA la complementa.</p>`;
+    <p class="note">Talkride es un entrenamiento de comunicación, no un tratamiento. Si el miedo a hablar te hace evitar el trabajo, los estudios o encuentros importantes, una terapia cognitivo-conductual ayuda mucho; Talkride la complementa.</p>`;
 }
 
 // Frases que indican riesgo. Se revisan en el dispositivo: no se envían a ningún lado.
@@ -27,7 +27,7 @@ export const isCrisis = (text) => CRISIS_RE.test(text || '');
 
 // Apoyo profesional para el miedo a hablar (no es una crisis: va aparte de las líneas de prevención).
 export function professionalHTML() {
-  return `<p>Si el miedo a hablar te hace evitar el trabajo, los estudios o encuentros importantes, una <strong>terapia cognitivo-conductual (TCC)</strong> con exposición gradual es el tratamiento con más evidencia. VOXA la complementa.</p>
+  return `<p>Si el miedo a hablar te hace evitar el trabajo, los estudios o encuentros importantes, una <strong>terapia cognitivo-conductual (TCC)</strong> con exposición gradual es el tratamiento con más evidencia. Talkride la complementa.</p>
     <ul><li>Consulta por TCC en tu cobertura de salud (obra social, EPS, ISAPRE, prepaga o seguro).</li>
     <li>Muchas facultades de psicología tienen servicios de atención gratuitos o de bajo costo.</li>
     <li>Las asociaciones de terapia cognitiva de tu país publican directorios de profesionales.</li></ul>`;

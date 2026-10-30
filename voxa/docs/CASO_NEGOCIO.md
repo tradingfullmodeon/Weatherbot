@@ -1,10 +1,10 @@
-# Mini caso de negocio de VOXA
+# Mini caso de negocio de Talkride
 
 Octubre de 2026. El modelo es reproducible: los supuestos están en [`negocio/modelo.py`](negocio/modelo.py) y se recalcula con `python3 voxa/docs/negocio/modelo.py`. Las fuentes de precios y benchmarks se citan al final.
 
 ## En simple: qué cuesta y cuándo
 
-**La IA la pone VOXA, incluida en la app.** La persona no necesita ninguna cuenta de IA. La clave de Anthropic vive sólo en el servidor de VOXA, y nosotros pagamos cada llamada. Todos los costos de este documento ya lo suponen.
+**La IA la pone Talkride, incluida en la app.** La persona no necesita ninguna cuenta de IA. La clave de Anthropic vive sólo en el servidor de Talkride, y nosotros pagamos cada llamada. Todos los costos de este documento ya lo suponen.
 
 El link de claude.ai es sólo una **demo** para mostrar la idea: allí la IA corre con la cuenta de quien la abre. **No es el producto.**
 
@@ -62,7 +62,7 @@ Precios de Claude: Opus 5.5 US$4/20, Sonnet 5.5 US$2/10 y Haiku 5.5 US$0,10/0,50
 
 Los tokens son estimaciones del código de los prompts. Con la app en uso, el servidor ya mide el gasto real por uso en `/api/status`, y conviene reemplazar estas cifras por las medidas.
 
-> **En el producto, la IA la paga VOXA.** El servidor controla el gasto en tres niveles:
+> **En el producto, la IA la paga Talkride.** El servidor controla el gasto en tres niveles:
 > 1. Cupos por plan: gratis sin IA, prueba de 7 días con cupos, Pro con uso justo.
 > 2. Tope de gasto total del mes.
 > 3. Medición del costo real por uso (`/api/status`).
@@ -87,7 +87,7 @@ Se asume un uso activo de unas 3 prácticas por semana: 10 consejos, 4 roleplays
 
 La **elección de modelo por uso** es una decisión de calidad contra costo. El servidor ya permite cambiarla sin tocar código (`VOXA_MODEL_ROLEPLAY`, etc.). Antes de cambiar conviene medir la calidad con el panel experto ([PANEL.md](PANEL.md)). Hoy todo usa Opus 5.5, la máxima calidad.
 
-## 3. Precios: VOXA frente al mercado
+## 3. Precios: Talkride frente al mercado
 
 | App | Mensual | Anual | Notas |
 |---|---|---|---|
@@ -102,9 +102,9 @@ La **elección de modelo por uso** es una decisión de calidad contra costo. El 
 | Orai | 12 | 49,99 | Vitalicio a 149 |
 | Duolingo Super / Max | 6,99 / 29,99 | 83,88 / ~168 | Referencia de experiencia de uso |
 | Coach humano de oratoria | 14 €/h (España, clases); MXN 244–325/h (México) | — | Coaching ejecutivo: 100–180 €/h |
-| **VOXA (propuesta)** | **LatAm 6,99 · España y EE. UU. 12,99** | **44,99 · 69,99** | Diagnóstico, ensayo y lecciones siempre gratis |
+| **Talkride (propuesta)** | **LatAm 6,99 · España y EE. UU. 12,99** | **44,99 · 69,99** | Diagnóstico, ensayo y lecciones siempre gratis |
 
-Un mes de VOXA cuesta menos que media hora con un coach humano y menos que Speak o Speeko. La propuesta de valor es la única en español, con método (PREP, STAR, BLUF), roleplay, evento real y cuidado de la ansiedad.
+Un mes de Talkride cuesta menos que media hora con un coach humano y menos que Speak o Speeko. La propuesta de valor es la única en español, con método (PREP, STAR, BLUF), roleplay, evento real y cuidado de la ansiedad.
 
 ## 4. Margen y punto de equilibrio
 
@@ -169,7 +169,7 @@ Con este ritmo, lo invertido se recupera alrededor del mes 22. El 75% de la cont
 | Conversión menor (LatAm ~0,7–1,5%) | Más usuarios gratis por pagador | El plan gratis sin IA hace que esto casi no cueste; la prueba de 7 días mejora la conversión (la de 5–9 días convierte ~37%) |
 | Abandono alto (las apps con IA retienen 21% al año frente a 31% sin IA) | Menos valor de vida | Hábito: semana visible, metas, evento real, recordatorios y notificaciones |
 | Quejas por cobros (queja número 1 de la categoría) | Mala calificación | Aviso antes de cobrar, cancelar en un toque, reembolso en 14 días |
-| Venta B2B lenta | Equilibrio más tarde | Pilotos de 90 días con universidades (centros de carrera) y áreas de RR. HH., con el índice VOXA antes y después como prueba de valor |
+| Venta B2B lenta | Equilibrio más tarde | Pilotos de 90 días con universidades (centros de carrera) y áreas de RR. HH., con el índice Talkride antes y después como prueba de valor |
 | Competidor grande que entra en español | Presión de precio | Diferenciar con método, situaciones latinas, cuidado de la ansiedad y precio regional |
 
 ## 6. Recomendación

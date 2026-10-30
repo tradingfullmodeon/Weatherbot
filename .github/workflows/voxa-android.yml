@@ -1,11 +1,11 @@
-# Compila la app de VOXA para Android (APK de prueba) en cada cambio de la app web o de la app nativa.
-# Descarga: Actions → «VOXA Android (APK de prueba)» → la última ejecución → Artifacts → voxa-android-debug.
+# Compila la app de Talkride para Android (APK de prueba) en cada cambio de la app web o de la app nativa.
+# Descarga: Actions → «Talkride Android (APK de prueba)» → la última ejecución → Artifacts → voxa-android-debug.
 # En el teléfono: abre el .apk y permite instalar desde esta fuente. No es la versión de la tienda (va sin firma de publicación).
 # Para que la app hable con el servidor, define la variable del repositorio VOXA_API_BASE
 # (Settings → Secrets and variables → Actions → Variables), por ejemplo https://voxa.onrender.com/
 # Sin ella, la app funciona completa en modo local (todo menos el coach IA).
 # Para probar compras sin tiendas: variable VOXA_RC_TEST_KEY con la clave test_… de la Test Store de RevenueCat.
-name: VOXA Android (APK de prueba)
+name: Talkride Android (APK de prueba)
 
 on:
   push:

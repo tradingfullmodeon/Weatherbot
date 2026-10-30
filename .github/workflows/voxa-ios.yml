@@ -1,8 +1,8 @@
-# Comprueba que la app de VOXA para iPhone compila (simulador, sin firma), en una Mac de GitHub.
+# Comprueba que la app de Talkride para iPhone compila (simulador, sin firma), en una Mac de GitHub.
 # No necesita la cuenta de Apple: sirve para detectar problemas antes de publicar.
 # Para TestFlight y la App Store hace falta la cuenta de desarrollador (docs/TIENDAS.md §4).
 # Sólo corre cuando cambia la app nativa (voxa/app/**) o a mano, porque las Mac de GitHub consumen más minutos.
-name: VOXA iOS (compilación de prueba)
+name: Talkride iOS (compilación de prueba)
 
 on:
   push:

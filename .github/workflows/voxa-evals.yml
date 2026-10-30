@@ -1,9 +1,9 @@
-# Prueba real de modelos y nubes en cada función de VOXA (server/evals), con la clave de pruebas guardada como
+# Prueba real de modelos y nubes en cada función de Talkride (server/evals), con la clave de pruebas guardada como
 # secreto de GitHub (Settings → Secrets and variables → Actions → Secrets → ANTHROPIC_API_KEY). Nadie ve la clave.
-# Se ejecuta a mano (Actions → «VOXA pruebas de modelos» → Run workflow, cuando esté en main) o al cambiar
+# Se ejecuta a mano (Actions → «Talkride pruebas de modelos» → Run workflow, cuando esté en main) o al cambiar
 # voxa/server/evals/ejecutar.txt, nunca con otros cambios: cuesta menos de US$1 por corrida.
 # El resumen queda en la página de la ejecución y el detalle (todas las respuestas) en Artifacts → voxa-evals.
-name: VOXA pruebas de modelos
+name: Talkride pruebas de modelos
 
 on:
   push:

@@ -1,4 +1,4 @@
-# VOXA — Plataforma de entrenamiento acelerado en comunicación
+# Talkride — Plataforma de entrenamiento acelerado en comunicación
 
 > **Promesa:** que cualquier persona mejore de forma medible cómo habla, escucha, se mueve y persuade, en cualquier contexto (personal, profesional, público, digital), en el menor tiempo posible, con práctica guiada por IA y evaluación objetiva por cámara y micrófono.
 
@@ -98,17 +98,17 @@ Nadie combina en un solo producto, **en español nativo**:
 4. **Trabajo de confianza/ansiedad** basado en evidencia (exposición gradual, reestructuración cognitiva).
 5. **Puente al mundo real** (análisis post-reunión, preparación de eventos concretos, coach humano cuando aporta valor).
 
-Ese es el espacio de VOXA.
+Ese es el espacio de Talkride.
 
 ---
 
 ## 3. Modelos y metodologías de comunicación
 
-VOXA no inventa teoría: **operacionaliza** marcos probados como ejercicios y rúbricas medibles.
+Talkride no inventa teoría: **operacionaliza** marcos probados como ejercicios y rúbricas medibles.
 
 ### 3.1 Fundamentos
 
-| Modelo | Idea clave | Cómo se usa en VOXA |
+| Modelo | Idea clave | Cómo se usa en Talkride |
 |---|---|---|
 | **Retórica aristotélica** (ethos, pathos, logos) | Credibilidad, emoción, lógica. | Rúbrica de persuasión: ¿te presentaste con credibilidad? ¿hubo historia? ¿hubo datos? |
 | **Shannon–Weaver / Schramm** | Emisor, canal, ruido, receptor, retroalimentación. | Diagnóstico de "ruido": muletillas, volumen, jerga, distracciones visuales. |
@@ -169,7 +169,7 @@ VOXA no inventa teoría: **operacionaliza** marcos probados como ejercicios y r�
 
 El objetivo "en el menor tiempo posible" exige diseño basado en evidencia:
 
-| Principio | Implementación en VOXA |
+| Principio | Implementación en Talkride |
 |---|---|
 | **Práctica deliberada** (Ericsson) | Cada sesión ataca **una** sub-habilidad con meta medible ("< 3 muletillas/min"), feedback inmediato y repetición. |
 | **Feedback de alta calidad** (Hattie: entre los factores de mayor efecto) | Feedback específico, oportuno, sobre la tarea, con "siguiente paso" concreto. |
@@ -192,14 +192,14 @@ El objetivo "en el menor tiempo posible" exige diseño basado en evidencia:
 
 ## 5. Lenguaje no verbal: lo que sí y lo que no
 
-Como plataforma seria, VOXA separa evidencia de mito:
+Como plataforma seria, Talkride separa evidencia de mito:
 
 | Afirmación popular | Realidad | Decisión de producto |
 |---|---|---|
 | "El 93% de la comunicación es no verbal" (Mehrabian) | Mal citado: el estudio se refería a mensajes ambiguos sobre sentimientos, no a la comunicación en general. | Nunca usar esa cifra. Enseñar **coherencia** entre palabra, voz y cuerpo. |
 | "Posturas de poder suben testosterona" (Cuddy) | Efectos hormonales no replicados; efecto en la sensación subjetiva de poder es pequeño y debatido. | Usar postura abierta por cómo **te perciben** y por comodidad, no como "truco hormonal". |
 | "Las microexpresiones revelan mentiras" | Detectar mentiras por el cuerpo tiene bajo desempeño en investigación. | **No** se ofrece "detector de mentiras" ni lectura de mentes. |
-| "La IA puede leer tus emociones" | Inferir estados internos desde la cara es científicamente frágil y está **prohibido en contextos laborales y educativos en la UE** (AI Act, art. 5). | VOXA mide **conductas observables** (mirada a cámara, sonrisa, movimiento de cabeza, gesto, volumen, ritmo), nunca "emociones". |
+| "La IA puede leer tus emociones" | Inferir estados internos desde la cara es científicamente frágil y está **prohibido en contextos laborales y educativos en la UE** (AI Act, art. 5). | Talkride mide **conductas observables** (mirada a cámara, sonrisa, movimiento de cabeza, gesto, volumen, ritmo), nunca "emociones". |
 
 **Lo que sí está bien sustentado y se entrena:**
 - Contacto visual adecuado (en video: mirar a la cámara en momentos clave).
@@ -319,7 +319,7 @@ Reto semanal (roleplay largo o presentación) → reporte de progreso → ajuste
 
 ### 8.2 Puntaje y feedback
 
-- **Puntaje VOXA (0–100)** = media ponderada por dimensión; los pesos cambian según el contexto (en una entrevista pesa más la estructura; en un brindis, la expresividad).
+- **Puntaje Talkride (0–100)** = media ponderada por dimensión; los pesos cambian según el contexto (en una entrevista pesa más la estructura; en un brindis, la expresividad).
 - **Feedback "1 fortaleza + 1 foco + 1 ejercicio":** nunca una lista de 15 errores. La persona sabe exactamente qué repetir.
 - **Replay anotado:** línea de tiempo con marcadores (muletilla, pausa larga, pérdida de mirada, pico de ritmo).
 - **Reintento inmediato del mismo fragmento** y comparación lado a lado ("antes / después").
@@ -430,7 +430,7 @@ orgs / teams / seats                               -- B2B
 - Métricas de voz: ppm, muletillas por minuto, pausas largas, ratio de habla, volumen y variación de tono (semitonos).
 - Métricas de lenguaje: atenuadores / baja asertividad.
 - Métricas visuales (MediaPipe Face Landmarker): presencia en cuadro, contacto visual aproximado, sonrisa, estabilidad de cabeza.
-- Puntaje VOXA ponderado por escenario, feedback "fortaleza / foco / ejercicio", línea de tiempo de voz y prompt listo para un coach IA.
+- Puntaje Talkride ponderado por escenario, feedback "fortaleza / foco / ejercicio", línea de tiempo de voz y prompt listo para un coach IA.
 - Todo el análisis ocurre **localmente en el dispositivo**.
 
 **v2 (servidor `voxa/server`):**
@@ -460,7 +460,7 @@ orgs / teams / seats                               -- B2B
 - **B2B:** los empleadores ven sólo agregados y progreso de ruta; nunca grabaciones individuales sin consentimiento expreso del colaborador. La plataforma no se usa para evaluaciones de desempeño o selección automatizada (evita clasificación como sistema de alto riesgo).
 - **Marcos de protección de datos:** RGPD (UE/España), LGPD (Brasil), Ley 1581 (Colombia), LFPDPPP (México), Ley 25.326 (Argentina), Ley 21.719 (Chile), entre otros; COPPA/edad mínima para menores.
 - **Sesgos:** validar métricas por acento, género, edad, tono de piel (detección facial), neurodivergencia y discapacidad (p. ej. contacto visual no debe penalizar a personas autistas si eligen desactivarlo; tartamudez no se trata como "muletilla"). Opciones para desactivar métricas.
-- **Bienestar:** VOXA no es terapia; detección de señales de angustia con derivación a recursos profesionales.
+- **Bienestar:** Talkride no es terapia; detección de señales de angustia con derivación a recursos profesionales.
 
 ---
 
@@ -488,7 +488,7 @@ Cada día: calentamiento (1 min) → micro-lección (2 min) → práctica + rein
 | **Freemium B2C** | Diagnóstico, 3 sesiones/semana, métricas básicas. |
 | **Premium B2C** (mensual/anual) | Sesiones ilimitadas, roleplay por voz, rutas completas, replay anotado, modo evento real. |
 | **Packs puntuales** | "Entrevista en 7 días", "Pitch para inversionistas", "Charla TEDx". |
-| **Marketplace de coaches** | Comisión por sesión; los coaches usan VOXA como herramienta de seguimiento. |
+| **Marketplace de coaches** | Comisión por sesión; los coaches usan Talkride como herramienta de seguimiento. |
 | **B2B por licencia** | Ventas, atención, liderazgo, universidades (empleabilidad), programas de outplacement; panel y reportes Kirkpatrick. |
 | **Certificaciones** | Credenciales verificables de nivel (LinkedIn). |
 
@@ -514,7 +514,7 @@ Equipo mínimo MVP: PM/fundador, 2 full-stack (web/móvil), 1 ML/audio, 1 diseñ
 
 | Tipo | KPI |
 |---|---|
-| Aprendizaje | Delta del puntaje VOXA a 30 días; % usuarios que mejoran ≥ 15 puntos; reducción de muletillas/min. |
+| Aprendizaje | Delta del puntaje Talkride a 30 días; % usuarios que mejoran ≥ 15 puntos; reducción de muletillas/min. |
 | Conducta (Kirkpatrick 3) | Misiones reales completadas; autoeficacia percibida (escala pre/post). |
 | Resultados (Kirkpatrick 4, B2B) | Tasa de conversión en ventas, éxito en entrevistas, NPS clientes, evaluación 360. |
 | Producto | Activación (diagnóstico completado), retención D1/D7/D30, sesiones/semana, rachas. |

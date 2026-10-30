@@ -1,4 +1,4 @@
-# VOXA completa: la app web (prototype/) y el servidor con la IA de VOXA (server/) en un solo servicio.
+# Talkride completa: la app web (prototype/) y el servidor con la IA de Talkride (server/) en un solo servicio.
 # La clave de Anthropic se pasa como variable de entorno (ANTHROPIC_API_KEY); nunca va al teléfono.
 FROM python:3.12-slim
 WORKDIR /app

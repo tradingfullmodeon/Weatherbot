@@ -1,4 +1,4 @@
-<title>VOXA</title>
+<title>Talkride</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
   :root {
@@ -26,6 +26,9 @@
   nav.tabs a { text-decoration: none; color: var(--text); padding: 10px 14px; min-height: 44px; display: inline-flex; align-items: center; border-radius: 999px; border: 1px solid var(--line); font-size: .9rem; }
   nav.tabs a.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
   header h1 { margin: 0; font-size: 1.6rem; letter-spacing: .02em; }
+  header h1.brand { display: flex; align-items: center; gap: 10px; font-size: 1.9rem; font-weight: 800; letter-spacing: -.02em; }
+  header h1.brand img { border-radius: 10px; flex: none; }
+  .brand .ride { color: var(--accent); }
   header p { margin: 4px 0 0; color: var(--muted); }
   main { max-width: 1100px; margin: 0 auto; padding: 8px 16px 40px; display: grid; gap: 16px;
          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
@@ -305,7 +308,7 @@
 </style>
 
 <header>
-  <h1>VOXA</h1>
+  <h1>Talkride</h1>
   <p>Practica la conversación antes de tenerla.</p>
   <nav class="tabs" id="topNav" aria-label="Secciones"></nav>
 </header>
@@ -315,7 +318,7 @@
   <!-- ============================ HOY ============================ -->
   <section class="view" id="v-hoy" data-title="Hoy">
     <div class="card full hidden" id="welcome">
-      <h2>Bienvenido a VOXA 👋</h2>
+      <h2>Bienvenido a Talkride 👋</h2>
       <p class="lead">En unos minutos al día vas a hablar y escribir con más claridad y confianza. Primero, dos preguntas rápidas.</p>
       <h3>1. ¿Para qué quieres mejorar?</h3>
       <div class="chips-select" id="wGoal" role="group" aria-label="Objetivo"></div>
@@ -339,7 +342,7 @@
     </div>
 
     <div class="card full hidden" id="rateAsk">
-      <h2>¿Te está sirviendo VOXA?</h2>
+      <h2>¿Te está sirviendo Talkride?</h2>
       <p class="lead">Tu calificación nos dice qué mejorar. Toma 30 segundos.</p>
       <div class="btns"><button class="cta" id="rateAskGo">Calificar</button><button id="rateAskLater">Ahora no</button></div>
     </div>
@@ -407,7 +410,7 @@
       </div>
 
       <div id="paneAudio" class="hidden">
-        <p class="note">Graba tu respuesta y VOXA la analiza en tu navegador: no se sube a ningún lado.</p>
+        <p class="note">Graba tu respuesta y Talkride la analiza en tu navegador: no se sube a ningún lado.</p>
         <div class="rec-choices">
           <label for="recVideo" class="btn-link cta">🎥 Grabarme en video</label>
           <input type="file" id="recVideo" accept="video/*" capture="user" class="visually-hidden">
@@ -445,7 +448,7 @@
 
       <div id="presenceBox" class="hidden">
         <h2 style="margin-top:20px">Lenguaje corporal</h2>
-        <p class="note">VOXA toma 4 fotogramas de tu video y Claude revisa sólo lo observable: encuadre, luz, mirada hacia la cámara, postura y gestos. No se envía el video ni el audio.</p>
+        <p class="note">Talkride toma 4 fotogramas de tu video y Claude revisa sólo lo observable: encuadre, luz, mirada hacia la cámara, postura y gestos. No se envía el video ni el audio.</p>
         <div class="btns"><button id="btnPresence" class="primary">Analizar mi lenguaje corporal</button></div>
         <div id="presenceOut" aria-live="polite"></div>
       </div>
@@ -608,7 +611,7 @@
   <section class="view hidden" id="v-evento" data-title="Evento real">
     <div class="card full" id="evFormCard">
       <h2>Prepara un evento real</h2>
-      <p class="note">¿Tienes una entrevista, una charla o una conversación difícil? VOXA arma tu plan de práctica hasta ese día.</p>
+      <p class="note">¿Tienes una entrevista, una charla o una conversación difícil? Talkride arma tu plan de práctica hasta ese día.</p>
       <div class="row">
         <div><label for="evType">¿Qué evento es?</label><select id="evType"></select></div>
         <div><label for="evDate">¿Cuándo es?</label><input type="date" id="evDate" class="field"></div>
@@ -685,10 +688,10 @@
     </div>
     <div class="card full">
       <h2>¿Por qué grabo con la cámara del celular?</h2>
-      <p>Por privacidad, esta página no puede encender tu cámara ni tu micrófono en vivo: grabas con la app de tu celular y VOXA analiza el archivo aquí mismo, sin subirlo. Muy pronto: app instalable con evaluación en vivo, audiencia virtual y gimnasio de voz.</p>
+      <p>Por privacidad, esta página no puede encender tu cámara ni tu micrófono en vivo: grabas con la app de tu celular y Talkride analiza el archivo aquí mismo, sin subirlo. Muy pronto: app instalable con evaluación en vivo, audiencia virtual y gimnasio de voz.</p>
     </div>
     <div class="card full" id="rateCard">
-      <h2>Califica VOXA</h2>
+      <h2>Califica Talkride</h2>
       <div id="rateBox"></div>
       <div class="btns"><button class="cta" id="rateSend">Enviar mi calificación</button></div>
       <p class="note" id="rateMsg" aria-live="polite"></p>
@@ -706,7 +709,7 @@
 
 <script>
 (() => {
-// Utilidades compartidas por las páginas de VOXA: diccionarios, métricas de texto,
+// Utilidades compartidas por las páginas de Talkride: diccionarios, métricas de texto,
 // historial local de sesiones y acceso a la API del coach IA.
 
 // Muletillas frecuentes en español (incluye variantes regionales).
@@ -1413,7 +1416,7 @@ function assertivenessOf(text) {
 }
 
 
-// Modo «evento real»: la persona carga una entrevista, charla o reunión con fecha y VOXA arma un plan de
+// Modo «evento real»: la persona carga una entrevista, charla o reunión con fecha y Talkride arma un plan de
 // práctica hasta ese día, las preguntas difíciles probables y la rutina para el día del evento.
 // Lo usan evento.html y la versión publicada; las pruebas viven en voxa/tests.
 
@@ -1878,7 +1881,7 @@ function diagnosisHTML(r, previous = null) {
     : `<li>En <strong>${esc(dimName(g.dim))}</strong> eres más exigente contigo (${g.self}) de lo que medimos (${g.measured}): lo haces mejor de lo que crees.</li>`).join('');
   return `
     <div class="score-big"><div class="ring" style="border:8px solid ${colorFor(r.total)}">${r.total}</div>
-      <div><div style="font-size:1.15rem;font-weight:700">Índice VOXA ${r.total} · nivel ${esc(r.level)}</div>
+      <div><div style="font-size:1.15rem;font-weight:700">Índice Talkride ${r.total} · nivel ${esc(r.level)}</div>
       <div class="lead">${previous ? `Antes: ${previous.total} (nivel ${esc(previous.level)}). ${r.total - previous.total >= 0 ? '+' : ''}${r.total - previous.total} puntos.` : 'Este es tu punto de partida.'}</div>
       <div class="note">Tu índice de comunicación de 0 a 100: combina cómo te ves (40%) con lo que medimos en tus pruebas (60%). Vuelve a medirlo cada 4 semanas.</div></div></div>
     <canvas id="radar" width="520" height="420" aria-label="Perfil de comunicación por dimensión" style="width:100%;max-width:520px;height:auto;margin:8px auto;display:block"></canvas>
@@ -1893,12 +1896,12 @@ function diagnosisHTML(r, previous = null) {
     </details>`;
 }
 
-// Línea corta del Índice VOXA para Hoy: valor actual y cambio desde el primer diagnóstico.
+// Línea corta del Índice Talkride para Hoy: valor actual y cambio desde el primer diagnóstico.
 function indexLine(diagnoses) {
   const first = diagnoses?.[0], last = diagnoses?.at(-1);
   if (!last) return '';
   const d = diagnoses.length > 1 ? last.total - first.total : null;
-  return `Índice VOXA <strong>${last.total}</strong> · nivel ${esc(last.level)}${d != null ? ` · <span style="color:${d >= 0 ? 'var(--good)' : 'var(--bad)'}">${d >= 0 ? '+' : ''}${d} desde tu primer diagnóstico</span>` : ''} · ${new Date(last.date).toLocaleDateString('es')}`;
+  return `Índice Talkride <strong>${last.total}</strong> · nivel ${esc(last.level)}${d != null ? ` · <span style="color:${d >= 0 ? 'var(--good)' : 'var(--bad)'}">${d >= 0 ? '+' : ''}${d} desde tu primer diagnóstico</span>` : ''} · ${new Date(last.date).toLocaleDateString('es')}`;
 }
 
 function goalPickerHTML(suggestions) {
@@ -2307,7 +2310,7 @@ function helpHTML() {
     <p>Hablar con alguien ayuda. Estas líneas son gratuitas y confidenciales:</p>
     <ul>${HELP_LINES.map(([c, l, e]) => `<li><strong>${esc(c)}:</strong> ${esc(l)} · <span class="note">emergencias: ${esc(e)}</span></li>`).join('')}</ul>
     <p class="note">Si tu país no está, busca la línea de prevención de tu país o acude a la guardia de un hospital.</p>
-    <p class="note">VOXA es un entrenamiento de comunicación, no un tratamiento. Si el miedo a hablar te hace evitar el trabajo, los estudios o encuentros importantes, una terapia cognitivo-conductual ayuda mucho; VOXA la complementa.</p>`;
+    <p class="note">Talkride es un entrenamiento de comunicación, no un tratamiento. Si el miedo a hablar te hace evitar el trabajo, los estudios o encuentros importantes, una terapia cognitivo-conductual ayuda mucho; Talkride la complementa.</p>`;
 }
 
 // Frases que indican riesgo. Se revisan en el dispositivo: no se envían a ningún lado.
@@ -2316,7 +2319,7 @@ const isCrisis = (text) => CRISIS_RE.test(text || '');
 
 // Apoyo profesional para el miedo a hablar (no es una crisis: va aparte de las líneas de prevención).
 function professionalHTML() {
-  return `<p>Si el miedo a hablar te hace evitar el trabajo, los estudios o encuentros importantes, una <strong>terapia cognitivo-conductual (TCC)</strong> con exposición gradual es el tratamiento con más evidencia. VOXA la complementa.</p>
+  return `<p>Si el miedo a hablar te hace evitar el trabajo, los estudios o encuentros importantes, una <strong>terapia cognitivo-conductual (TCC)</strong> con exposición gradual es el tratamiento con más evidencia. Talkride la complementa.</p>
     <ul><li>Consulta por TCC en tu cobertura de salud (obra social, EPS, ISAPRE, prepaga o seguro).</li>
     <li>Muchas facultades de psicología tienen servicios de atención gratuitos o de bajo costo.</li>
     <li>Las asociaciones de terapia cognitiva de tu país publican directorios de profesionales.</li></ul>`;
@@ -2349,9 +2352,9 @@ function ratingFormHTML(prev = {}) {
   const stars = [1, 2, 3, 4, 5].map(n => `<button type="button" data-stars="${n}" aria-pressed="${prev.stars === n}" aria-label="${n} ${n === 1 ? 'estrella' : 'estrellas'}">${n} ★</button>`).join('');
   const nps = Array.from({ length: 11 }, (_, n) => `<button type="button" data-nps="${n}" aria-pressed="${prev.nps === n}">${n}</button>`).join('');
   const feats = FEATURES.map(([id, label]) => `<label class="chk"><input type="checkbox" data-feat="${id}" ${prev.features?.includes(id) ? 'checked' : ''}> ${esc(label)}</label>`).join('');
-  return `<p class="lead">¿Cómo calificarías VOXA?</p>
+  return `<p class="lead">¿Cómo calificarías Talkride?</p>
     <div class="stars" role="group" aria-label="Calificación de 1 a 5 estrellas">${stars}</div>
-    <p style="margin-top:12px">¿Qué tan probable es que recomiendes VOXA a un amigo o colega? (0 = nada, 10 = totalmente)</p>
+    <p style="margin-top:12px">¿Qué tan probable es que recomiendes Talkride a un amigo o colega? (0 = nada, 10 = totalmente)</p>
     <div class="nps" role="group" aria-label="Recomendación de 0 a 10">${nps}</div>
     <p style="margin-top:12px">¿Qué te sirve más?</p><div class="feats">${feats}</div>
     <label for="rateText" style="margin-top:12px">¿Qué mejorarías o qué te falta? (opcional)</label>
@@ -2380,7 +2383,7 @@ function ratingSummary(list) {
 }
 
 function ratingSummaryHTML(s) {
-  if (!s.n) return '<p class="note">Todavía no hay calificaciones. Comparte VOXA con permiso de «Colaborador» para que otras personas puedan calificar.</p>';
+  if (!s.n) return '<p class="note">Todavía no hay calificaciones. Comparte Talkride con permiso de «Colaborador» para que otras personas puedan calificar.</p>';
   const bars = s.dist.map((c, i) => `<div class="dist-row"><span>${i + 1}★</span><div class="bar"><div style="width:${Math.round(100 * c / s.n)}%"></div></div><span class="note">${c}</span></div>`).reverse().join('');
   const top = FEATURES.map(([id, label]) => [label, s.feats[id]]).filter(x => x[1]).sort((a, b) => b[1] - a[1]).slice(0, 3);
   return `<div class="kpis">
@@ -2394,8 +2397,8 @@ function ratingSummaryHTML(s) {
 // Recordatorio diario de práctica: evento repetido en el calendario de la persona (Google Calendar o .ics).
 // Sin servidor ni notificaciones push: el calendario se encarga de avisar.
 const pad = (n) => String(n).padStart(2, '0');
-const TITLE = 'VOXA: tu práctica de 7 minutos';
-const DETAIL = 'Abre VOXA y haz la práctica de hoy. Una práctica bien hecha vale más que muchas a medias.';
+const TITLE = 'Talkride: tu práctica de 7 minutos';
+const DETAIL = 'Abre Talkride y haz la práctica de hoy. Una práctica bien hecha vale más que muchas a medias.';
 
 // Próxima ocurrencia de la hora elegida («HH:MM»), en hora local.
 function firstStart(time, now) {
@@ -2414,13 +2417,13 @@ function googleCalendarUrl(time, link = '', now = new Date()) {
 
 function icsReminder(time, link = '', now = new Date()) {
   const a = firstStart(time, now), b = new Date(a.getTime() + 10 * 60e3);
-  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//VOXA//Recordatorio//ES', 'BEGIN:VEVENT',
-    `UID:voxa-${a.getTime()}@voxa`, `DTSTAMP:${stamp(now)}`, `DTSTART:${stamp(a)}`, `DTEND:${stamp(b)}`, 'RRULE:FREQ=DAILY',
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Talkride//Recordatorio//ES', 'BEGIN:VEVENT',
+    `UID:talkride-${a.getTime()}@talkride`, `DTSTAMP:${stamp(now)}`, `DTSTART:${stamp(a)}`, `DTEND:${stamp(b)}`, 'RRULE:FREQ=DAILY',
     `SUMMARY:${TITLE}`, `DESCRIPTION:${(DETAIL + (link ? ' ' + link : '')).replace(/[,;]/g, '\\$&')}`,
     'BEGIN:VALARM', 'TRIGGER:PT0M', 'ACTION:DISPLAY', `DESCRIPTION:${TITLE}`, 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
 }
 
-// VOXA publicable: una sola página con vistas. Reutiliza shared.js y scenarios.js (inyectados por build.py)
+// Talkride publicable: una sola página con vistas. Reutiliza shared.js y scenarios.js (inyectados por build.py)
 // y usa el coach IA a través de la capacidad `sample` del visor de claude.ai cuando está disponible.
 
 const profile = loadProfile();
@@ -2495,7 +2498,7 @@ renderAIState();
   setupRoleplayPersonas();   // con IA: 9 personajes; sin IA: entrevistador de preguntas fijas
 }).catch(() => {});
 
-const COACH_RULES = `Reglas de VOXA (no negociables):
+const COACH_RULES = `Reglas de Talkride (no negociables):
 - Habla de conductas observables (palabras, voz, ritmo, estructura). Nunca infieras emociones internas, rasgos de personalidad ni diagnósticos.
 - Feedback concreto y cálido: cita frases textuales cuando existan. Un solo foco de mejora, el de mayor impacto.
 - Español neutro y natural; tutea.
@@ -2936,7 +2939,7 @@ $('btnCoach').addEventListener('click', async () => {
   const { m, r, isAudio, text, sc } = last;
   const hasText = !!text.trim();
   const goal = GOALS.find(([id]) => id === profile.goal)?.[1] || 'no indicado';
-  const prompt = `Eres el coach de comunicación de VOXA: experto en oratoria, comunicación interpersonal, voz y lenguaje corporal.
+  const prompt = `Eres el coach de comunicación de Talkride: experto en oratoria, comunicación interpersonal, voz y lenguaje corporal.
 ${COACH_RULES}
 
 Situación que practica el usuario: ${sc.name}
@@ -3184,7 +3187,7 @@ function say(text) {
 function rolePrompt() {
   const p = persona;
   const ctx = $('ctx').value.trim();
-  return `Estás en una simulación de práctica de comunicación de VOXA. Interpretas a ${p.name}, ${p.role}.
+  return `Estás en una simulación de práctica de comunicación de Talkride. Interpretas a ${p.name}, ${p.role}.
 Situación: ${p.scenario}
 Tu personalidad y conducta: ${p.behavior}
 ${DIFFICULTY[$('difficulty').value]}
@@ -3274,7 +3277,7 @@ async function endRoleplay() {
   if (sample) {
     const transcript = chatHistory.map(t => `${t.role === 'user' ? 'USUARIO' : persona.name.toUpperCase()}: ${t.text}`).join('\n');
     try {
-      ev = await sample.json(`Eres el coach de comunicación de VOXA y evalúas una simulación ya terminada.
+      ev = await sample.json(`Eres el coach de comunicación de Talkride y evalúas una simulación ya terminada.
 ${COACH_RULES}
 Personaje: ${persona.name} (${persona.role}). Dificultad ${$('difficulty').value}/3. Objetivo del usuario: ${persona.goal}. Técnicas esperables: ${persona.skills.join(', ')}.
 Métricas: el usuario aportó el ${Math.round(c.talkRatio * 100)}% de las palabras; intervenciones con preguntas: ${c.questions}; muletillas: ${c.fillers}.
@@ -3347,7 +3350,7 @@ $('btnWAI').addEventListener('click', async () => {
   $('btnWAI').disabled = true;
   $('wOut').innerHTML = '<p class="note">Mejorando tu texto… (la primera vez claude.ai te pedirá permiso)</p>';
   try {
-    const out = await sample.json(`Eres el coach de comunicación escrita de VOXA. Mejoras correos, mensajes y publicaciones en español para que sean claros, breves y efectivos sin perder la voz de quien escribe.
+    const out = await sample.json(`Eres el coach de comunicación escrita de Talkride. Mejoras correos, mensajes y publicaciones en español para que sean claros, breves y efectivos sin perder la voz de quien escribe.
 ${COACH_RULES}
 Principios: lo importante primero (BLUF), un pedido explícito con plazo cuando corresponde, frases cortas, sin rodeos ni disculpas innecesarias, tono cálido y respetuoso.
 
@@ -3383,7 +3386,7 @@ Responde SÓLO con JSON: {"strengths":["..."],"issues":["..."],"rewrite":"versi�
 const LADDER = [
   'Hablar 60 s a solas en voz alta, sin grabar.',
   'Grabar sólo audio y escucharte.',
-  'Subir una grabación a VOXA y leer tu reporte.',
+  'Subir una grabación a Talkride y leer tu reporte.',
   'Roleplay o simulacro en dificultad baja.',
   'Roleplay o simulacro en dificultad alta (con IA, el personaje presiona).',
   'Practicar frente a una persona de confianza.',
@@ -3525,7 +3528,7 @@ $('evQuestionsAI').addEventListener('click', async () => {
   $('evQuestionsAI').disabled = true;
   $('evAI').innerHTML = '<p class="note">Pensando en las preguntas más probables para tu evento…</p>';
   try {
-    const out = await sample.json(`Eres el coach de comunicación de VOXA.\n${COACH_RULES}\n\n` + eventQuestionsPrompt(ev));
+    const out = await sample.json(`Eres el coach de comunicación de Talkride.\n${COACH_RULES}\n\n` + eventQuestionsPrompt(ev));
     if (!Array.isArray(out?.questions) || !out.questions.length) throw { code: 'invalid_json' };
     ev.aiQuestions = out.questions.slice(0, 8).map(x => ({ q: String(x.q || ''), why: String(x.why || ''), tip: String(x.tip || '') }));
     saveEv(); renderEventQuestions(ev.aiQuestions);
@@ -3564,7 +3567,7 @@ $('btnPresence').addEventListener('click', async () => {
     const images = await grabFrames(file);
     if (!images.length) throw new Error('No pudimos tomar fotogramas de este video.');
     $('presenceOut').innerHTML = '<p class="note">Claude está revisando tu presencia… (puede pedirte permiso para enviar imágenes)</p>';
-    const out = await sample.json(`Eres el coach de lenguaje corporal de VOXA. Recibes ${images.length} fotogramas, en orden, del video de una persona practicando «${scenario().name}» frente a la cámara de su celular o computador.
+    const out = await sample.json(`Eres el coach de lenguaje corporal de Talkride. Recibes ${images.length} fotogramas, en orden, del video de una persona practicando «${scenario().name}» frente a la cámara de su celular o computador.
 ${COACH_RULES}
 Evalúa SÓLO conductas observables en los fotogramas: encuadre (posición en el cuadro, distancia, altura de la cámara), iluminación (frontal, contraluz), mirada (hacia el lente o fuera), postura (hombros, espalda, cabeza), gestos (manos visibles, dentro del marco) y expresión facial visible (por ejemplo, si se ve una sonrisa). No describas apariencia física, ropa, edad, género ni rasgos de la persona, ni infieras emociones o personalidad.
 Responde SÓLO con JSON: {"scores":{"encuadre":0,"iluminacion":0,"mirada":0,"postura":0,"gestos":0},"strength":"lo mejor que se observa","focus":"el único ajuste de mayor impacto","how":["paso concreto 1","paso concreto 2"],"notes":{"encuadre":"...","iluminacion":"...","mirada":"...","postura":"...","gestos":"..."}} con puntajes de 0 a 100.`, { images });

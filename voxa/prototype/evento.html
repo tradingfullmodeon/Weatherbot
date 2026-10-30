@@ -3,15 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>VOXA Evento real</title>
+<title>Talkride Evento real</title>
 <link rel="stylesheet" href="voxa.css">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#4f46e5">
 </head>
 <body>
 <header>
   <h1>Evento real</h1>
-  <p>¿Tienes una entrevista, una charla o una conversación difícil? VOXA arma tu plan de práctica hasta ese día.</p>
+  <p>¿Tienes una entrevista, una charla o una conversación difícil? Talkride arma tu plan de práctica hasta ese día.</p>
 </header>
 
 <main>
@@ -100,7 +102,7 @@ $('eventOut').addEventListener('click', (e) => {
   location.href = p.lesson && !profile.lessons?.[p.lesson] ? `aprender.html?leccion=${p.lesson}` : practiceHref(p);
 });
 
-// Preguntas personalizadas: sólo con el servidor de VOXA conectado (coach IA).
+// Preguntas personalizadas: sólo con el servidor de Talkride conectado (coach IA).
 aiStatus().then(s => { if (s.ai) $('evQuestionsAI').classList.remove('hidden'); });
 $('evQuestionsAI').addEventListener('click', async () => {
   const ev = profile.event;

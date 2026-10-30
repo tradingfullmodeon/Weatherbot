@@ -1,4 +1,4 @@
-# Qué se necesita para tener VOXA como app (iOS, Android y web) con todas las funcionalidades
+# Qué se necesita para tener Talkride como app (iOS, Android y web) con todas las funcionalidades
 
 Octubre de 2026.
 
@@ -15,7 +15,7 @@ Hoy existen dos versiones:
 | Roleplay por voz | ✗ (por texto) | ✅ tocar para hablar |
 | Lenguaje corporal | 4 fotogramas revisados por IA | ✅ en vivo (MediaPipe) |
 | Gimnasio de voz y audiencia virtual | ✗ | ✅ |
-| Coach IA | Demo: usa la cuenta de Claude de quien la abre | ✅ **IA de VOXA incluida**: nuestra clave en el servidor, con cupos por plan y tope de gasto mensual |
+| Coach IA | Demo: usa la cuenta de Claude de quien la abre | ✅ **IA de Talkride incluida**: nuestra clave en el servidor, con cupos por plan y tope de gasto mensual |
 | Cuentas y sincronización | ✗ (todo en el navegador) | ✗ (todo en el navegador) |
 | Notificaciones | ✗ (calendario) | ✗ (calendario o .ics) |
 | Pagos | ✗ | ✗ |
@@ -37,7 +37,7 @@ Las dos brechas que más bajan la calificación son la **transcripción automát
                  │  · compras dentro de la app           · pago con tarjeta (web)                     │
                  └──────────────┬─────────────────────────────────────────────────────────────────────┘
                                 │ HTTPS (token de sesión)
-                 ┌──────────────▼──────────────── Servidor VOXA (FastAPI, ya existe) ─────────────────┐
+                 ┌──────────────▼──────────────── Servidor Talkride (FastAPI, ya existe) ─────────────────┐
                  │ /api/feedback · /api/roleplay · /api/roleplay/evaluate · /api/writing · /api/event │
                  │ + nuevos: /auth · /sync · /transcribe · /entitlements                              │
                  │ Claude (clave sólo en el servidor, modelo por uso, medición de gasto por uso)      │
@@ -46,7 +46,7 @@ Las dos brechas que más bajan la calificación son la **transcripción automát
 ```
 
 **Por qué Capacitor** y no reescribir en nativo (Swift/Kotlin) o en React Native:
-- VOXA ya está hecha con módulos JavaScript sin dependencias, probados (46 pruebas) y compartidos entre las dos versiones. Capacitor los envuelve tal cual.
+- Talkride ya está hecha con módulos JavaScript sin dependencias, probados (46 pruebas) y compartidos entre las dos versiones. Capacitor los envuelve tal cual.
 - Una sola base de código para iOS, Android y web. Se estima un 60–70% menos de trabajo que dos apps nativas.
 - El análisis acústico ya corre en el dispositivo y es rápido: 5 minutos de audio se analizan en unos 5 segundos.
 - Si una pantalla necesita más rendimiento (por ejemplo, la audiencia virtual), se puede hacer nativa después.
@@ -84,18 +84,18 @@ Las dos brechas que más bajan la calificación son la **transcripción automát
 ### 3.3 Requisitos de tiendas y privacidad
 
 - **Textos de permiso** (iOS: `NSMicrophoneUsageDescription`, `NSCameraUsageDescription`, `NSSpeechRecognitionUsageDescription`), explicando para qué se usa cada permiso.
-- **Etiquetas de privacidad** de App Store y el formulario de seguridad de datos de Google Play. VOXA declara:
+- **Etiquetas de privacidad** de App Store y el formulario de seguridad de datos de Google Play. Talkride declara:
   - El audio y el video se analizan en el dispositivo.
   - El texto se envía al coach IA solo cuando la persona lo pide.
   - No se venden datos.
 - **Suscripciones:** precio, período y renovación claros antes de pagar, y cancelación sencilla. La queja número 1 de la categoría son los cobros (ver [CALIFICACIONES.md](CALIFICACIONES.md)).
-- **No es una app de salud:** el modo calma y las líneas de ayuda acompañan, no diagnostican. Se mantiene el aviso de que VOXA no reemplaza una terapia.
+- **No es una app de salud:** el modo calma y las líneas de ayuda acompañan, no diagnostican. Se mantiene el aviso de que Talkride no reemplaza una terapia.
 - **Protección de datos:** política de privacidad y términos en español, cumplimiento de las leyes de cada país donde se distribuya (por ejemplo, el RGPD en España) y acuerdo de tratamiento de datos para clientes empresa.
 
 ## 3.4 La IA, incluida y controlada (ya implementado en el servidor)
 
 ```
-Teléfono / navegador ──(texto, métricas; nunca la clave)──► Servidor VOXA ──► Claude (API de Anthropic)
+Teléfono / navegador ──(texto, métricas; nunca la clave)──► Servidor Talkride ──► Claude (API de Anthropic)
                                                               │
                                     cupos por plan · tope de gasto del mes · medición por uso
 ```
@@ -131,7 +131,7 @@ Pasos:
 
 | Etapa | Qué se entrega | Duración estimada (1 desarrollador full-stack) |
 |---|---|---|
-| 1. Envoltorio y permisos | VOXA instalable en iOS y Android, micrófono y cámara en vivo, recordatorios locales | 2 semanas |
+| 1. Envoltorio y permisos | Talkride instalable en iOS y Android, micrófono y cámara en vivo, recordatorios locales | 2 semanas |
 | 2. Transcripción y roleplay por voz | Transcripción en el dispositivo más respaldo `/transcribe`; roleplay hablado con voz del sistema | 2–3 semanas |
 | 3. Cuentas, sincronización y borrado | Inicio de sesión, `/sync`, borrado de cuenta | 2 semanas |
 | 4. Pagos y cupos | RevenueCat, planes, cupos de IA, pantalla de suscripción honesta | 1–2 semanas |

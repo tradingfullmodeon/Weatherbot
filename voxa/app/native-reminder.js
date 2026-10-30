@@ -12,7 +12,7 @@
       const [hour, minute] = String(time || '08:30').split(':').map(Number);
       await plugin.cancel({ notifications: [{ id: ID }] });
       await plugin.schedule({ notifications: [{
-        id: ID, title: 'VOXA: tu práctica de 7 minutos',
+        id: ID, title: 'Talkride: tu práctica de 7 minutos',
         body: 'Una práctica bien hecha vale más que muchas a medias. ¿Vamos?',
         schedule: { on: { hour, minute }, allowWhileIdle: true },
       }] });
@@ -27,7 +27,7 @@
       const perm = await plugin.requestPermissions();
       if (!perm || perm.display !== 'granted') return false;
       await plugin.schedule({ notifications: [{
-        id: RENEWAL_ID, title: 'VOXA Pro se renueva en 3 días',
+        id: RENEWAL_ID, title: 'Talkride Pro se renueva en 3 días',
         body: 'Si no quieres seguir, cancélalo desde las suscripciones de tu tienda antes de esa fecha. Lo gratis sigue gratis.',
         schedule: { at, allowWhileIdle: true },
       }] });

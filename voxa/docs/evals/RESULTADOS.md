@@ -25,7 +25,7 @@ La única verificación que falló fue «más breve» en el correo, con Opus y S
 
 ## Qué significa
 
-1. **Calidad de los puntajes.** Opus es claramente el que mejor separa una práctica buena de una floja, sobre todo en la evaluación del roleplay: 59,5 puntos, frente a 51,0 de Sonnet y 38,2 de Haiku. Es lo que hace creíble a VOXA.
+1. **Calidad de los puntajes.** Opus es claramente el que mejor separa una práctica buena de una floja, sobre todo en la evaluación del roleplay: 59,5 puntos, frente a 51,0 de Sonnet y 38,2 de Haiku. Es lo que hace creíble a Talkride.
 2. **El costo real es la mitad de lo estimado.** Con Opus en todo, una persona que paga (uso medio del caso de negocio) cuesta **unos US$0,84 al mes**, no US$1,58.
 3. **Velocidad.** El coach con Opus tarda unos 22 segundos, lo que se siente largo. Sonnet tarda 9 y Haiku 11.
 4. **Turnos de roleplay, correos y preguntas del evento.** Los tres modelos aprobaron todo. Haiku es el más rápido en los turnos (2,5 s) y cuesta entre 30 y 45 veces menos.

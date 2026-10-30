@@ -1,4 +1,4 @@
-"""VOXA API: coach IA (feedback estructurado) y roleplay conversacional con personajes.
+"""Talkride API: coach IA (feedback estructurado) y roleplay conversacional con personajes.
 
 Sirve también el prototipo web (../prototype) para que cámara/micrófono funcionen en localhost.
 Sin credenciales la API responde 503 y el frontend usa su modo local.
@@ -64,7 +64,7 @@ def record_usage(route: str, model: str, usage) -> float:
 
 PROTOTYPE_DIR = Path(__file__).resolve().parent.parent / "prototype"
 
-app = FastAPI(title="VOXA API")
+app = FastAPI(title="Talkride API")
 
 # Límite simple de peticiones por IP a la API del coach (evita abusos y costos inesperados).
 RATE_LIMIT = int(os.environ.get("VOXA_RATE_LIMIT", "30"))   # por minuto
@@ -167,7 +167,7 @@ def call_claude(route: str, system: str, messages: list[dict], schema: dict, eff
 # --------------------------------------------------------------------------- reglas antes que IA
 WORD_RE = re.compile(r"\w+", re.UNICODE)
 MIN_FEEDBACK_WORDS = 15
-LOCAL_ONLY = "Para esto alcanza el análisis automático de VOXA (gratis y en tu teléfono): "
+LOCAL_ONLY = "Para esto alcanza el análisis automático de Talkride (gratis y en tu teléfono): "
 
 
 def words(text: str) -> int:
@@ -193,7 +193,7 @@ STR = {"type": "string"}
 INT = {"type": "integer"}
 STR_LIST = {"type": "array", "items": STR}
 
-COACH_RULES = """Reglas de VOXA (no negociables):
+COACH_RULES = """Reglas de Talkride (no negociables):
 - Habla de conductas observables (palabras, voz, mirada, gestos). Nunca infieras emociones internas, rasgos de personalidad ni diagnósticos.
 - Feedback concreto y cálido: cita frases textuales cuando existan. Un solo foco de mejora, el de mayor impacto.
 - Español neutro y natural, adaptado a la variante del usuario cuando se indique. Tutea.
@@ -239,7 +239,7 @@ FEEDBACK_SCHEMA = obj({
 
 @app.post("/api/feedback")
 def feedback(req: FeedbackRequest, uid: str = Depends(quotas.user_id)) -> dict:
-    system = f"""Eres el coach de comunicación de VOXA: experto en oratoria, comunicación interpersonal, voz y lenguaje corporal.
+    system = f"""Eres el coach de comunicación de Talkride: experto en oratoria, comunicación interpersonal, voz y lenguaje corporal.
 {COACH_RULES}
 Devuelve la rúbrica con valores de 0 a 100. Escala anclada para cada puntaje: 0–39 ausente o contraproducente; 40–69 parcial o genérico; 70–84 sólido, con evidencia en lo que dijo; 85–100 excelente y citable. Sin evidencia, 40 o menos. Usa todo el rango: no agrupes todo entre 70 y 85. La reescritura debe tener una duración similar a la original y seguir el método indicado.
 Si no hay transcripción, basa el feedback en las métricas y explica qué no pudiste evaluar."""
@@ -253,7 +253,7 @@ Objetivo personal del usuario: {req.goal or "no indicado"}
 Variante de español: {req.locale}
 Duración: {round(req.duration_s)} s
 Ansiedad declarada antes de empezar (1-5): {req.anxiety_before if req.anxiety_before is not None else "no indicada"}
-Puntaje VOXA automático: {req.total}/100 {req.dims}
+Puntaje Talkride automático: {req.total}/100 {req.dims}
 Métricas:
 {metrics or "- (sin métricas)"}
 
@@ -329,7 +329,7 @@ def personas() -> list[dict]:
 @app.post("/api/roleplay")
 def roleplay(req: RoleplayRequest, uid: str = Depends(quotas.user_id)) -> dict:
     p = persona_or_404(req.persona_id)
-    system = f"""Estás en una simulación de práctica de comunicación de VOXA. Interpretas a {p["name"]}, {p["role"]}.
+    system = f"""Estás en una simulación de práctica de comunicación de Talkride. Interpretas a {p["name"]}, {p["role"]}.
 Situación: {p["scenario"]}
 Tu personalidad y conducta: {p["behavior"]}
 {DIFFICULTY[req.difficulty]}
@@ -370,7 +370,7 @@ def roleplay_evaluate(req: EvaluateRequest, uid: str = Depends(quotas.user_id)) 
     guard(sum(t.role == "user" and words(t.text) >= 3 for t in req.history) >= 2,
           "con menos de dos respuestas tuyas, la evaluación por métricas de la conversación es suficiente.")
     transcript = "\n".join(f"{'USUARIO' if t.role == 'user' else p['name'].upper()}: {t.text}" for t in req.history)
-    system = f"""Eres el coach de comunicación de VOXA y evalúas una simulación ya terminada.
+    system = f"""Eres el coach de comunicación de Talkride y evalúas una simulación ya terminada.
 {COACH_RULES}
 Puntajes de 0 a 100. Escala anclada para cada puntaje: 0–39 ausente o contraproducente; 40–69 parcial o genérico; 70–84 sólido, con evidencia en lo que dijo; 85–100 excelente y citable. Sin evidencia, 40 o menos. Usa todo el rango: no agrupes todo entre 70 y 85. Objetivo del usuario en la simulación: {p["goal"]}. Técnicas esperables: {", ".join(p["skills"])}.{context_block(req.context)}"""
     user = f"""Personaje: {p["name"]} ({p["role"]}). Dificultad {req.difficulty}/3.
@@ -410,7 +410,7 @@ WRITING_SCHEMA = obj({
 @app.post("/api/writing")
 def writing(req: WritingRequest, uid: str = Depends(quotas.user_id)) -> dict:
     guard(words(req.text) >= 8, "un texto de menos de 8 palabras se revisa bien con las reglas de escritura.")
-    system = f"""Eres el coach de comunicación escrita de VOXA. Mejoras correos, mensajes y publicaciones en español para que sean claros, breves y efectivos sin perder la voz de quien escribe.
+    system = f"""Eres el coach de comunicación escrita de Talkride. Mejoras correos, mensajes y publicaciones en español para que sean claros, breves y efectivos sin perder la voz de quien escribe.
 {COACH_RULES}
 Principios: lo importante primero (BLUF), un pedido explícito con plazo cuando corresponde, frases cortas, sin rodeos ni disculpas innecesarias, tono cálido y respetuoso.
 Devuelve 1–3 fortalezas, 1–3 problemas concretos (citando el fragmento), la reescritura completa lista para enviar (misma lengua y variante, sin inventar datos: si falta algo, deja un marcador entre corchetes como [fecha]), un asunto si es un correo (si no, cadena vacía), el tono resultante en pocas palabras y la lista de cambios aplicados."""
@@ -450,7 +450,7 @@ def event_questions(req: EventRequest, uid: str = Depends(quotas.user_id)) -> di
     personal = " ".join((req.title, req.audience, req.message, req.concern, req.context))
     guard(words(personal) >= 6, "sin datos de tu evento (ante quién, mensaje, preocupación o material), "
           "las preguntas típicas de la guía ya son las más probables. Agrega contexto para preguntas a tu medida.")
-    system = f"""Eres el coach de comunicación de VOXA y ayudas a preparar eventos reales (entrevistas, charlas, reuniones, conversaciones difíciles).
+    system = f"""Eres el coach de comunicación de Talkride y ayudas a preparar eventos reales (entrevistas, charlas, reuniones, conversaciones difíciles).
 {COACH_RULES}
 Genera las 6 preguntas u objeciones más probables y difíciles para ESTE evento concreto (no genéricas), ordenadas de más a menos probable. Para cada una: por qué la harían y cómo responderla en 1–2 frases con una técnica concreta (STAR, BLUF, reformular, dato…). No inventes datos de la persona: si falta algo, sugiere qué preparar."""
     user = f"""Tipo de evento: {req.kind}

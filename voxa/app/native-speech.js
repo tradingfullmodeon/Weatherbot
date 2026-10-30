@@ -1,5 +1,5 @@
 // Transcripción nativa en la app instalable: el reconocimiento de voz del teléfono (gratis, sin servidor)
-// expuesto con la misma forma que la Web Speech API, para que las páginas de VOXA no cambien.
+// expuesto con la misma forma que la Web Speech API, para que las páginas de Talkride no cambien.
 // Sólo actúa dentro de la app (Capacitor) y si el plugin está instalado; en la web no hace nada.
 (function () {
   const cap = window.Capacitor;

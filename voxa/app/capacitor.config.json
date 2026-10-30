@@ -1,6 +1,6 @@
 {
-  "appId": "app.voxa.coach",
-  "appName": "VOXA",
+  "appId": "app.talkride.coach",
+  "appName": "Talkride",
   "webDir": "www",
   "server": { "androidScheme": "https" },
   "plugins": {

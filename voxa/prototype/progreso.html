@@ -3,9 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>VOXA Progreso</title>
+<title>Talkride Progreso</title>
 <link rel="stylesheet" href="voxa.css">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#4f46e5">
 <style>
   .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
@@ -172,7 +174,7 @@ function drawTrend() {
     if (pts.length) line(ctx, pts, C[d], W, H, pad, 1.5);
   }
   line(ctx, evals.map((s, i) => [x(i), y(s.total)]), C.total, W, H, pad, 3);
-  $('legend').innerHTML = Object.entries({ total: 'Puntaje VOXA', voz: 'Voz', lenguaje: 'Lenguaje', presencia: 'Presencia' })
+  $('legend').innerHTML = Object.entries({ total: 'Puntaje Talkride', voz: 'Voz', lenguaje: 'Lenguaje', presencia: 'Presencia' })
     .map(([k, l]) => `<span><i style="background:${C[k]}"></i>${l}</span>`).join('');
 }
 function drawAnx() {
@@ -215,7 +217,7 @@ const LADDER = [
   'Presentar 3 minutos ante un grupo pequeño.',
   'Presentar ante un público o en un evento.',
 ];
-// Peldaños que se pueden practicar dentro de VOXA.
+// Peldaños que se pueden practicar dentro de Talkride.
 const LADDER_LINKS = { 1: 'gimnasio.html', 2: 'evaluar.html?escenario=passion', 3: 'roleplay.html', 4: 'roleplay.html' };
 profile.ladder ||= {};
 $('ladder').innerHTML = LADDER.map((t, i) =>
@@ -235,13 +237,13 @@ if (share.practices >= 3 || share.index != null) $('shareBox').classList.remove(
 $('btnShare').addEventListener('click', async () => {
   try {
     const how = await shareProgress(share);
-    $('shareMsg').textContent = how === 'downloaded' ? 'Guardamos la imagen «mi-avance-voxa.png»: compártela donde quieras.' : '';
+    $('shareMsg').textContent = how === 'downloaded' ? 'Guardamos la imagen «mi-avance-talkride.png»: compártela donde quieras.' : '';
   } catch (e) { if (e.name !== 'AbortError') $('shareMsg').textContent = 'No se pudo compartir: ' + e.message; }
 });
 
 $('btnExport').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify({ profile, sessions }, null, 2)], { type: 'application/json' });
-  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'voxa-datos.json' });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'talkride-datos.json' });
   a.click();
 });
 // ---------------------------------------------------------------- diagnóstico y metas

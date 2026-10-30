@@ -7,7 +7,7 @@ import vm from 'node:vm';
 
 test('dist/voxa.html contiene un script que compila', () => {
   const html = readFileSync(new URL('../artifact/dist/voxa.html', import.meta.url), 'utf8');
-  assert.ok(html.startsWith('<title>VOXA</title>'), 'empieza con el título, sin esqueleto propio');
+  assert.ok(html.startsWith('<title>Talkride</title>'), 'empieza con el título, sin esqueleto propio');
   const code = html.slice(html.indexOf('<script>') + 8, html.lastIndexOf('</script>'));
   assert.ok(code.length > 10000);
   assert.doesNotThrow(() => new vm.Script(code, { filename: 'voxa.html' }));

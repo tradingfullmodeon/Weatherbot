@@ -1,6 +1,6 @@
 import { esc, localDay } from './shared.js';
 
-// Modo «evento real»: la persona carga una entrevista, charla o reunión con fecha y VOXA arma un plan de
+// Modo «evento real»: la persona carga una entrevista, charla o reunión con fecha y Talkride arma un plan de
 // práctica hasta ese día, las preguntas difíciles probables y la rutina para el día del evento.
 // Lo usan evento.html y la versión publicada; las pruebas viven en voxa/tests.
 

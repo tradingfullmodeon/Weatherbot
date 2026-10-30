@@ -1,12 +1,12 @@
-# VOXA — Benchmark global y estrategia de diferenciación
+# Talkride — Benchmark global y estrategia de diferenciación
 
-> Investigación de octubre de 2026 sobre plataformas de entrenamiento en comunicación de Norteamérica, Europa, Asia y el mundo hispanohablante, las necesidades reales de quienes buscan mejorar cómo se comunican y las mejoras con las que VOXA supera a la competencia.
+> Investigación de octubre de 2026 sobre plataformas de entrenamiento en comunicación de Norteamérica, Europa, Asia y el mundo hispanohablante, las necesidades reales de quienes buscan mejorar cómo se comunican y las mejoras con las que Talkride supera a la competencia.
 >
 > **Nota de método.** Las cifras de financiamiento y uso salen de comunicados, prensa especializada y bases de datos (TechCrunch, Axios, PR Newswire, Tracxn, CB Insights). Muchas comparativas de apps de oratoria las publican empresas que venden productos competidores, así que se usan como señal de funcionalidades y no como ranking independiente. Lo que no se pudo verificar en fuente primaria está marcado como **(no verificado)**. Las fuentes están al final.
 
 ---
 
-> Calificaciones de usuarios de 25 apps de la competencia, comparación con VOXA y plan de acción: [`CALIFICACIONES.md`](CALIFICACIONES.md). Auditoría técnica y pedagógica: [`AUDITORIA.md`](AUDITORIA.md). Economía unitaria y precios: [`CASO_NEGOCIO.md`](CASO_NEGOCIO.md). Qué falta para las apps: [`APP_NATIVA.md`](APP_NATIVA.md).
+> Calificaciones de usuarios de 25 apps de la competencia, comparación con Talkride y plan de acción: [`CALIFICACIONES.md`](CALIFICACIONES.md). Auditoría técnica y pedagógica: [`AUDITORIA.md`](AUDITORIA.md). Economía unitaria y precios: [`CASO_NEGOCIO.md`](CASO_NEGOCIO.md). Qué falta para las apps: [`APP_NATIVA.md`](APP_NATIVA.md).
 
 ## 1. Resumen ejecutivo
 
@@ -15,7 +15,7 @@
 3. **Asia muestra el modelo de crecimiento: hablar con una IA como hábito diario.** Speak (Corea del Sur) llegó a una valoración de US$1.000M con IA conversacional por voz, y BoldVoice (EE. UU.) superó US$10M de ingresos anuales recurrentes con feedback a nivel de fonema. En China y Corea hay apps verticales de 口才 (elocuencia) y de entrevistas con IA (AI 면접), pero casi siempre en el idioma local y centradas en una sola situación.
 4. **Europa marca la pauta regulatoria.** La ley de IA de la UE prohíbe reconocer emociones en el trabajo y en la educación (art. 5(1)(f)). Retorio, que analiza video, se enfrenta a preguntas de los comités de empresa. Cualquier producto que "lea emociones" queda bloqueado en Europa y es un riesgo reputacional en todas partes.
 5. **En español no hay un líder.** Existen opciones pequeñas (SpeakUp Coach, Orator.IA, Orato, Chiara) y soporte parcial de Yoodli u Orai, pero ningún producto combina currículo, roleplay, evaluación multimodal y trabajo de confianza **en español nativo y regional**.
-6. **La oportunidad de VOXA** es ser el *Speak/Duolingo de la comunicación en español*: práctica diaria con IA por voz y cámara, rutas por objetivo, conversaciones simuladas que reaccionan a cómo hablas, evidencia de progreso y privacidad por diseño. Después se escala a empresas sin abandonar al individuo.
+6. **La oportunidad de Talkride** es ser el *Speak/Duolingo de la comunicación en español*: práctica diaria con IA por voz y cámara, rutas por objetivo, conversaciones simuladas que reaccionan a cómo hablas, evidencia de progreso y privacidad por diseño. Después se escala a empresas sin abandonar al individuo.
 
 ---
 
@@ -52,7 +52,7 @@
 
 ### 2.3 Asia
 
-| Mercado | Actores | Qué hacen bien | Lección para VOXA |
+| Mercado | Actores | Qué hacen bien | Lección para Talkride |
 |---|---|---|---|
 | **Corea del Sur** | **Speak** (valoración de US$1.000M, Serie C de dic. 2024); apps de **entrevista con IA (AI 면접)** como "AI 면접: 면접 연습 & 피드백", **Haijob**, "AI 모의 면접 코치". | Speak convirtió la conversación por voz con IA en un hábito masivo: ~6% de la población coreana llegó a usarla y fue la app educativa con más ingresos de la App Store local. Las apps de entrevista generan preguntas desde el CV o la oferta de trabajo, graban video y permiten elegir el tono del entrevistador y la duración. | 1) La voz conversacional como núcleo del producto. 2) Preguntas generadas desde *tu* CV o *tu* oferta. 3) El tono del interlocutor como parámetro. |
 | **China** | **天天练口才** (Tiantian Lian Koucai: 50+ escenarios de oratoria, entrevista y conducción con evaluación de voz por IA); apps de inglés oral con IA (咕噜口语, 可栗口语, 扇贝口语); guías de entrenamiento con IA para 主持 (conducción de eventos). | Un vertical de **口才** (elocuencia) como categoría propia: cultura de práctica diaria, trabalenguas y fluidez; escenarios muy concretos (brindis, conducción, discurso de bodas). | 1) Escenarios de la vida social, no sólo laborales. 2) Ejercicios de dicción tipo trabalenguas con medición. 3) Las cifras de usuarios suelen ser autodeclaradas. |
@@ -77,7 +77,7 @@
 
 ✅ = fuerte · ◐ = parcial · — = no tiene (según información pública)
 
-| Funcionalidad | Yoodli | Orai | Speeko | BoldVoice | Speak | Retorio | VirtualSpeech | Second Nature | Apps de entrevista (KR/CN) | **VOXA** |
+| Funcionalidad | Yoodli | Orai | Speeko | BoldVoice | Speak | Retorio | VirtualSpeech | Second Nature | Apps de entrevista (KR/CN) | **Talkride** |
 |---|---|---|---|---|---|---|---|---|---|---|
 | Español nativo y regional | ◐ | ◐ | — | — | ◐ | — | ◐ | — | — | **✅** |
 | Métricas de voz (ritmo, muletillas, pausas) | ✅ | ✅ | ✅ | ◐ | ◐ | ◐ | ✅ | ◐ | ◐ | **✅** |
@@ -132,11 +132,11 @@
 
 ---
 
-## 5. Brechas del mercado → mejoras diferenciadoras de VOXA
+## 5. Brechas del mercado → mejoras diferenciadoras de Talkride
 
 Cada mejora responde a una brecha concreta. La columna "Estado" indica qué ya está en el prototipo (`voxa/prototype` + `voxa/server`).
 
-| # | Brecha detectada | Mejora VOXA (mejor que la competencia) | Estado |
+| # | Brecha detectada | Mejora Talkride (mejor que la competencia) | Estado |
 |---|---|---|---|
 | 1 | Nadie es nativo en español; se penalizan acentos | **Motor en español regional**: 7 variantes de reconocimiento, muletillas por país ("o sea", "este", "cachai", "en plan", "güey", "po", "viste") y personajes con nombres y contextos locales. Las métricas de claridad no penalizan el acento. | ✅ Prototipo |
 | 2 | Feedback genérico | **Feedback 1 + 1 + 1**: una fortaleza con cita textual, un solo foco y un ejercicio de 2 minutos, más una **reescritura de tu propia respuesta** según el método (STAR, BLUF, PREP, SBI). | ✅ Coach IA con salida estructurada |
@@ -170,7 +170,7 @@ Cada mejora responde a una brecha concreta. La columna "Estado" indica qué ya e
 
 ### 5.1 Cómo diagnostican y fijan metas los programas de referencia
 
-| Programa | Estado inicial | Diagnóstico | Metas y seguimiento | Qué toma VOXA |
+| Programa | Estado inicial | Diagnóstico | Metas y seguimiento | Qué toma Talkride |
 |---|---|---|---|---|
 | **ELSA Speak** (Asia) | Prueba de lectura en voz alta al instalar | Nivel y puntaje por sonido, fluidez y entonación | Ruta personalizada; cada sonido se «conquista» con 80% o más | Prueba real corta al inicio y criterio numérico por meta |
 | **BetterUp** (Norteamérica) | Whole Person Assessment confidencial | Perfil por habilidades, revisado con el coach | Áreas de foco; se repite cada 6 semanas como mínimo | Perfil por dimensiones, privacidad (sólo en el navegador) y re-diagnóstico cada 4 semanas |
@@ -178,11 +178,11 @@ Cada mejora responde a una brecha concreta. La columna "Estado" indica qué ya e
 | **Duolingo** (global) | Prueba de ubicación adaptativa opcional | Punto de partida en el curso | Meta diaria y racha | Diagnóstico opcional por partes y práctica diaria |
 | **Locke y Latham** (teoría de metas) | — | — | Metas claras y desafiantes, con compromiso, feedback y submetas para tareas complejas | Metas con criterio, plazo y «por qué», avance visible y práctica siguiente a un toque |
 
-Diferencia de VOXA: combina lo que la persona cree de sí misma con lo que se mide en una prueba real, y muestra la brecha. Así aparecen los puntos ciegos (te ves mejor de lo que suenas) y la autocrítica excesiva (lo haces mejor de lo que crees), algo que ninguno de los anteriores muestra junto.
+Diferencia de Talkride: combina lo que la persona cree de sí misma con lo que se mide en una prueba real, y muestra la brecha. Así aparecen los puntos ciegos (te ves mejor de lo que suenas) y la autocrítica excesiva (lo haces mejor de lo que crees), algo que ninguno de los anteriores muestra junto.
 
 ### 5.2 Barrido regional de las mejor calificadas (octubre de 2026): qué falta y qué profundizar
 
-| Región | Apps destacadas (calificación) | Lo que explica su nota y VOXA no tiene |
+| Región | Apps destacadas (calificación) | Lo que explica su nota y Talkride no tiene |
 |---|---|---|
 | **Asia** | Speak 4,8 · Cake 4,9 · ELSA 4,8 · Praktika 4,7 · Stimuler 4,7–4,8 (India, 4 M de instalaciones) · Liulishuo 4,5 · Speak Buddy (Japón) | Roleplay **por voz**. Lecciones **«Made for You»** generadas con tus errores (Speak). **Imitar clips reales** (Cake). Puntaje en una escala conocida, como la banda IELTS (Stimuler). **Estudio de eficacia** independiente (Liulishuo). Respuestas modelo en entrevistas coreanas (Mockee) |
 | **Europa** | Babbel 4,7 (Babbel Speak por voz con tareas visibles) · Busuu 4,5–4,6 (comunidad que corrige) · Preply 4,7 (la IA crea práctica entre clases) · Gymglish (lección diaria por email) · Vocal Image 4,5 (plan diario de 5–10 microejercicios) | Voz en el roleplay. Comunidad. Capa humana opcional. Rutina diaria corta de voz física |
@@ -203,11 +203,11 @@ Diferencia de VOXA: combina lo que la persona cree de sí misma con lo que se mi
 
 Las cuatro primeras necesitan la app instalable ([APP_NATIVA.md](APP_NATIVA.md)).
 
-**Lo que VOXA ya tiene y conviene profundizar** (esta versión avanza en varios puntos):
+**Lo que Talkride ya tiene y conviene profundizar** (esta versión avanza en varios puntos):
 
 | Qué | Evidencia | Estado |
 |---|---|---|
-| Diagnóstico → **Índice VOXA** único (0–100), que se vuelve a medir cada 4 semanas | Wellspoken Index, banda IELTS de Stimuler | ✅ Índice VOXA visible en Hoy y en el diagnóstico, con el cambio desde el primero |
+| Diagnóstico → **Índice Talkride** único (0–100), que se vuelve a medir cada 4 semanas | Wellspoken Index, banda IELTS de Stimuler | ✅ Índice Talkride visible en Hoy y en el diagnóstico, con el cambio desde el primero |
 | **Modelos para imitar** | BoldVoice, Cake, Mockee | ✅ Respuestas modelo STAR en el simulacro; «🔊 Escuchar cómo sonaría» con la reescritura del coach |
 | **Personajes**: tono, memoria y material compartido | Yoodli, Lily de Duolingo | ✅ La evaluación puntúa las técnicas propias de cada personaje, con citas verificadas, y cada personaje **recuerda tu siguiente paso** de la sesión anterior |
 | **Del error a la micro-lección** | Speak «Made for You», Preply | ✅ El foco enlaza la lección del método de la situación, y «Hecho para ti» arma ejercicios con tus propias muletillas, atenuadores y métricas más bajas |
@@ -218,7 +218,7 @@ Fuentes: [Speak](https://recurdash.com/subscription-pricing/speak), [Stimuler](h
 
 ## 6. Posicionamiento
 
-**Para** hispanohablantes que necesitan comunicarse con más confianza e impacto (en entrevistas, reuniones, conversaciones difíciles o en público), **VOXA es** un entrenador personal de comunicación con IA que **te hace practicar por voz y cámara con personajes reales, te dice exactamente qué mejorar y te muestra cómo progresas**. **A diferencia de** Yoodli, Orai o los cursos online, VOXA es nativo en español regional, entrena también la confianza y no sólo la técnica, te deja rebobinar y reintentar sin costo social, y protege tu privacidad analizando en tu dispositivo.
+**Para** hispanohablantes que necesitan comunicarse con más confianza e impacto (en entrevistas, reuniones, conversaciones difíciles o en público), **Talkride es** un entrenador personal de comunicación con IA que **te hace practicar por voz y cámara con personajes reales, te dice exactamente qué mejorar y te muestra cómo progresas**. **A diferencia de** Yoodli, Orai o los cursos online, Talkride es nativo en español regional, entrena también la confianza y no sólo la técnica, te deja rebobinar y reintentar sin costo social, y protege tu privacidad analizando en tu dispositivo.
 
 **Lema de trabajo:** *"Practica la conversación antes de tenerla."*
 

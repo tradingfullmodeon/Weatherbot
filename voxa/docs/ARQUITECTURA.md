@@ -1,23 +1,23 @@
-# Arquitectura de VOXA: plataforma operativa al menor costo y con la mayor calidad
+# Arquitectura de Talkride: plataforma operativa al menor costo y con la mayor calidad
 
 Octubre de 2026. Este documento completa [APP_NATIVA.md](APP_NATIVA.md) (qué construir) y [CASO_NEGOCIO.md](CASO_NEGOCIO.md) (cuánto cuesta y cuánto deja). Aquí está **cómo queda armada la plataforma**, **qué hace la IA y qué hacen las reglas en cada función**, **cómo se prueban los modelos y las nubes** y **qué falta para operar**.
 
 ## 1. La idea en una frase
 
-**Todo lo que se puede medir con reglas se mide en el teléfono, gratis y sin internet. La IA de VOXA, pagada por nosotros y protegida en nuestro servidor, se usa sólo donde aporta algo que las reglas no pueden dar.** Así la calidad es alta, el costo es bajo y cada gasto se controla.
+**Todo lo que se puede medir con reglas se mide en el teléfono, gratis y sin internet. La IA de Talkride, pagada por nosotros y protegida en nuestro servidor, se usa sólo donde aporta algo que las reglas no pueden dar.** Así la calidad es alta, el costo es bajo y cada gasto se controla.
 
 ## 2. Mapa de la plataforma
 
 ```
                       ┌───────────────────────── Teléfono / navegador (una sola base de código) ─────────────────────────┐
-  App Store ─┐        │  App web VOXA (prototype/)                                                                       │
+  App Store ─┐        │  App web Talkride (prototype/)                                                                       │
   Play Store ┼──────▶ │   · voz: ritmo, pausas, «eeh», muletillas, tono, volumen       · cámara: mirada y postura        │
   Web (https)┘        │   · estructura PREP/STAR/BLUF/SBI · escritura · diagnóstico · metas · plan · lecciones · simulacro │
                       │   · transcripción del teléfono (Web Speech o nativa)        · voz del personaje (sistema)        │
                       │  Capacitor (app/): micrófono, cámara, transcripción nativa, notificaciones, compras             │
                       └───────────────┬──────────────────────────────────────────────────────────────────────────────────┘
                                       │ https · JSON · id del dispositivo o token de la cuenta
-                      ┌───────────────▼──────────────── Servidor VOXA (server/, un solo servicio) ──────────────────────────┐
+                      ┌───────────────▼──────────────── Servidor Talkride (server/, un solo servicio) ──────────────────────────┐
                       │  FastAPI  ── reglas antes que IA (guard) ── caché de respuestas ── plan y cupos ── tope mensual    │
                       │     │                                                                         SQLite en disco      │
                       │     └── providers.py ─▶ Claude en: API de Anthropic · Claude Platform on AWS · Bedrock · Vertex · Foundry │
@@ -31,9 +31,9 @@ Octubre de 2026. Este documento completa [APP_NATIVA.md](APP_NATIVA.md) (qué co
 
 Revisé función por función qué se puede **automatizar con reglas** en vez de usar IA. La columna «Puerta» indica cuándo el servidor **no** llama a la IA porque no agregaría nada. En ese caso no cobra ni gasta cupo, y la app muestra el resultado local con una explicación.
 
-| Función | Reglas en el teléfono (US$0) | IA de VOXA (servidor) | Puerta: no se llama a la IA si… | Caché |
+| Función | Reglas en el teléfono (US$0) | IA de Talkride (servidor) | Puerta: no se llama a la IA si… | Caché |
 |---|---|---|---|---|
-| **Diagnóstico** | 100%: voz, estructura, escritura y autoevaluación → Índice VOXA y metas | — | — | — |
+| **Diagnóstico** | 100%: voz, estructura, escritura y autoevaluación → Índice Talkride y metas | — | — | — |
 | **Ensayo (Evaluar)** | Ritmo, pausas, «eeh», muletillas en contexto, tono, volumen, mirada y postura, estructura por método, variedad del vocabulario, puntaje total | Coach: lo que hiciste bien con cita, un foco, reescritura y rúbrica de contenido | hay menos de **15 palabras** transcritas | Sí |
 | **Gimnasio, lecciones, plan, metas, racha, recordatorio** | 100% | — | — | — |
 | **Simulacro de entrevista** | 100%: preguntas que repreguntan, puntaje STAR y respuestas modelo (`interview.js`) | — | — | — |
@@ -91,7 +91,7 @@ python -m evals.run --repeat 3 --out ../docs/evals/RESULTADOS.md        # 3 repe
 
 Una corrida completa (9 casos × 3 modelos) cuesta menos de US$1. El resultado es una tabla con verificaciones aprobadas, segundos y costo por llamada en cada función, y un `.json` con todas las respuestas para leerlas.
 
-**Estado honesto:** en este entorno no hay clave de ninguna nube, así que **el banco se verificó en modo simulado** (`--simulate`, incluido en las pruebas automáticas), **no con modelos reales**. No hay resultados inventados. Los números de calidad por modelo salen en el primer minuto en que se corra con la clave de VOXA.
+**Estado honesto:** en este entorno no hay clave de ninguna nube, así que **el banco se verificó en modo simulado** (`--simulate`, incluido en las pruebas automáticas), **no con modelos reales**. No hay resultados inventados. Los números de calidad por modelo salen en el primer minuto en que se corra con la clave de Talkride.
 
 ### 4.3 Qué esperar, y cómo decidir
 
@@ -199,7 +199,7 @@ La decisión de cambiar es tuya. Hoy todo usa el modelo de mayor calidad.
 - **Avisos en el teléfono** (`app/native-reminder.js`):
   - el recordatorio diario de práctica, a la hora elegida;
   - el aviso 3 días antes de cada renovación, que se reprograma al abrir la app.
-- **Textos de cobro exactos:** el reembolso en iPhone lo hace Apple, no VOXA, y la página lo dice.
+- **Textos de cobro exactos:** el reembolso en iPhone lo hace Apple, no Talkride, y la página lo dice.
 - **Pruebas:**
   - servidor: 33;
   - motor y app: 57, que suman el plan, las compras y los avisos.

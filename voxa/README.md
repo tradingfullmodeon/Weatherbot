@@ -1,4 +1,4 @@
-# VOXA — Entrenamiento acelerado en comunicación
+# Talkride — Entrenamiento acelerado en comunicación
 
 Plataforma para mejorar cómo se comunica una persona (confianza, desarrollo profesional, liderazgo, hablar en público, conversaciones difíciles, comunicación digital) con práctica guiada por IA y evaluación objetiva por cámara y micrófono.
 
@@ -8,16 +8,17 @@ Plataforma para mejorar cómo se comunica una persona (confianza, desarrollo pro
 
 | Ruta | Qué es |
 |---|---|
+| [`docs/marca/MARCA.md`](docs/marca/MARCA.md) | Marca Talkride: logo, ícono, colores, logotipo y cómo regenerar todos los íconos de las apps. |
 | [`docs/BENCHMARK.md`](docs/BENCHMARK.md) | Benchmark global (Norteamérica, Europa, Asia, mundo hispanohablante), matriz de funcionalidades, necesidades de los usuarios, quejas recurrentes y 27 mejoras diferenciadoras, con fuentes. |
-| [`docs/CALIFICACIONES.md`](docs/CALIFICACIONES.md) | Calificaciones de usuarios de 25 apps de la competencia (App Store, Google Play, G2, Trustpilot), qué hace que una app tenga 4,7 o más y qué la hunde, cómo sale VOXA en esos criterios y plan de acción por brecha. |
+| [`docs/CALIFICACIONES.md`](docs/CALIFICACIONES.md) | Calificaciones de usuarios de 25 apps de la competencia (App Store, Google Play, G2, Trustpilot), qué hace que una app tenga 4,7 o más y qué la hunde, cómo sale Talkride en esos criterios y plan de acción por brecha. |
 | [`docs/PANEL.md`](docs/PANEL.md) | Panel experto simulado (profesora de oratoria, coach ejecutivo, psicóloga, diseñadora de producto, investigador en voz e IA y una usuaria principiante): método, puntajes por ronda y qué se corrigió. |
 | [`docs/PLAN_ACCION.md`](docs/PLAN_ACCION.md) | Plan para subir la calificación y llegar a las primeras 30 personas: a quiénes invitar, mensaje de invitación listo, guía de prueba de 7 días, indicadores y reglas de decisión. |
 | [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) | Arquitectura operativa: qué hacen las reglas y qué hace la IA en cada función, pruebas con distintos modelos y nubes, plataformas elegidas con su costo mensual, seguridad y pasos para operar. |
 | [`docs/calibracion/`](docs/calibracion/README.md) | Kit para calibrar los puntajes con profesores: protocolo con consentimiento, planilla y `analizar.py` (correlación, sesgo y desacuerdos por dimensión). |
-| [`docs/NOMBRE.md`](docs/NOMBRE.md) | El nombre: por qué no conviene «VOXA» (marca registrada y otras apps), benchmark de nombres de la categoría, panel de expertos y la recomendación «Aplomo», con los pasos legales pendientes. |
+| [`docs/NOMBRE.md`](docs/NOMBRE.md) | El nombre: por qué se dejó el nombre de trabajo VOXA (marca registrada y otras apps), cuatro rondas de benchmark y paneles, y la decisión final, Talkride, con los pasos legales pendientes. |
 | [`docs/evals/RESULTADOS.md`](docs/evals/RESULTADOS.md) | Prueba real de Opus, Sonnet y Haiku en cada función: calidad, velocidad, costo y qué modelo conviene. |
 | [`docs/TIENDAS.md`](docs/TIENDAS.md) | Puesta en marcha paso a paso: Render, RevenueCat (nombres exactos que espera el código), Google Play y App Store, formularios de privacidad de las tiendas y textos de las fichas. |
-| [`docs/APP_NATIVA.md`](docs/APP_NATIVA.md) | Qué se necesita para tener VOXA en iOS, Android y web con todas las funcionalidades: arquitectura (Capacitor y el servidor actual), componentes, requisitos de tiendas, plan de 8–11 semanas y costos. |
+| [`docs/APP_NATIVA.md`](docs/APP_NATIVA.md) | Qué se necesita para tener Talkride en iOS, Android y web con todas las funcionalidades: arquitectura (Capacitor y el servidor actual), componentes, requisitos de tiendas, plan de 8–11 semanas y costos. |
 | [`docs/CASO_NEGOCIO.md`](docs/CASO_NEGOCIO.md) | Mini caso de negocio: costo por usuario, precios frente a la competencia, margen, valor de vida, punto de equilibrio y proyección a 18 meses. El modelo reproducible está en `docs/negocio/modelo.py`. |
 | [`docs/AUDITORIA.md`](docs/AUDITORIA.md) | Auditoría técnica y pedagógica: hallazgos, cómo se reproducían, correcciones y temas abiertos. |
 | [`docs/UX.md`](docs/UX.md) | Revisión de usabilidad: 14 problemas y su solución, principios de diseñadores y comunicadores aplicados, benchmark de UX con las apps mejor valoradas e indicadores antes/después. |
@@ -38,7 +39,7 @@ Incluye el **diagnóstico inicial con metas**, Hoy, Ensayar (respuesta escrita o
 **Versión completa con cámara y micrófono en vivo (GitHub Pages).** El flujo `.github/workflows/voxa-pages.yml` publica `voxa/prototype` en https://tradingfullmodeon.github.io/Weatherbot/. Para activarla una sola vez:
 1. Integra estos cambios en `main` (por ejemplo, con un pull request de la rama `claude/kind-ptolemy-5yibyk`).
 2. En GitHub: Settings → Pages → Source: «GitHub Actions».
-3. Ejecuta el flujo (Actions → «Publicar VOXA en GitHub Pages» → Run workflow) o haz cualquier cambio en `voxa/prototype`.
+3. Ejecuta el flujo (Actions → «Publicar Talkride en GitHub Pages» → Run workflow) o haz cualquier cambio en `voxa/prototype`.
 
 Como Pages no ejecuta el servidor, el coach IA no está disponible ahí (todo lo demás sí). Para el coach IA en vivo, ejecuta el servidor (abajo) o usa el link de claude.ai.
 
@@ -50,9 +51,9 @@ Como Pages no ejecuta el servidor, el coach IA no está disponible ahí (todo lo
 
 Para regenerarla tras cambiar el prototipo: `python3 voxa/artifact/build.py` (combina `prototype/shared.js`, `prototype/scenarios.js`, `prototype/lessons.js`, `prototype/writing.js`, `prototype/events.js`, `prototype/goals.js`, `prototype/voxa.css` y `server/personas.py` con `artifact/app.js` en `artifact/dist/voxa.html`).
 
-## Publicar la versión completa con la IA de VOXA (un solo servicio)
+## Publicar la versión completa con la IA de Talkride (un solo servicio)
 
-La IA la pone VOXA: la clave de Anthropic vive sólo en el servidor y cada persona tiene cupos según su plan (`server/quotas.py`: gratis sin IA, prueba de 7 días y Pro con uso justo), más un tope de gasto mensual (`VOXA_MONTHLY_BUDGET_USD`).
+La IA la pone Talkride: la clave de Anthropic vive sólo en el servidor y cada persona tiene cupos según su plan (`server/quotas.py`: gratis sin IA, prueba de 7 días y Pro con uso justo), más un tope de gasto mensual (`VOXA_MONTHLY_BUDGET_USD`).
 
 Para publicarla en Render:
 1. New → Blueprint → este repositorio (usa `render.yaml` en la raíz del repositorio y `voxa/Dockerfile`; guía paso a paso en [TIENDAS.md](docs/TIENDAS.md) §1).
@@ -76,7 +77,7 @@ Se obtiene un link https con micrófono y cámara en vivo, coach IA incluido y a
 | `VOXA_JWT_SECRET` o `VOXA_JWKS_URL` (+ `VOXA_JWT_AUD`) | Cuentas verificadas (Supabase Auth u otro emisor); sin ellas se usa el id del dispositivo |
 | `VOXA_CORS_ORIGINS` | Orígenes que pueden llamar a la API (por defecto, la app instalable) |
 
-**APK de prueba para Android, sin instalar nada:** cada cambio compila la app en GitHub (`.github/workflows/voxa-android.yml`). Se descarga en Actions → «VOXA Android (APK de prueba)» → la última ejecución → Artifacts. Para que hable con el servidor, define la variable del repositorio `VOXA_API_BASE`.
+**APK de prueba para Android, sin instalar nada:** cada cambio compila la app en GitHub (`.github/workflows/voxa-android.yml`). Se descarga en Actions → «Talkride Android (APK de prueba)» → la última ejecución → Artifacts. Para que hable con el servidor, define la variable del repositorio `VOXA_API_BASE`.
 
 App instalable: `cd voxa/app && npm install && VOXA_API_BASE=https://tu-servidor/ VOXA_RC_IOS_KEY=appl_… VOXA_RC_ANDROID_KEY=goog_… npm run android` (o `npm run ios` en una Mac). Las claves de RevenueCat son las públicas de cada plataforma; sin ellas, la app se empaqueta sin compras.
 
@@ -126,7 +127,7 @@ El reporte empieza con el puntaje, la comparación con tu intento anterior y tre
 
 **Escritura.** Seis tipos de texto (pedir algo, decir que no, feedback, disculpa, mensaje breve y LinkedIn). La revisión instantánea en el dispositivo comprueba si hay un pedido explícito y al inicio, un plazo, el largo de las frases, la legibilidad (Fernández Huerta), frases que restan seguridad, disculpas innecesarias y mayúsculas. Con el servidor conectado, la IA entrega una versión lista para enviar y un asunto sugerido.
 
-**Evento real.** Cargas tu entrevista, charla, reunión, conversación difícil, pitch o brindis con su fecha. VOXA arma un plan de práctica repartido hasta la víspera (si es mañana, un plan intensivo de 3 prácticas hoy), con preguntas difíciles probables según el tipo de evento y, con IA, otras personalizadas según tu audiencia, tu mensaje y lo que te preocupa. Incluye una rutina para la noche anterior, una hora antes y diez minutos antes, y notas para después. Mientras el evento está próximo, Hoy muestra su cuenta regresiva y la práctica del día.
+**Evento real.** Cargas tu entrevista, charla, reunión, conversación difícil, pitch o brindis con su fecha. Talkride arma un plan de práctica repartido hasta la víspera (si es mañana, un plan intensivo de 3 prácticas hoy), con preguntas difíciles probables según el tipo de evento y, con IA, otras personalizadas según tu audiencia, tu mensaje y lo que te preocupa. Incluye una rutina para la noche anterior, una hora antes y diez minutos antes, y notas para después. Mientras el evento está próximo, Hoy muestra su cuenta regresiva y la práctica del día.
 
 **Aprender.** 12 micro-lecciones de 2–3 minutos con ejemplo «así no / así sí», errores comunes, una pregunta de repaso y un botón «Practicar ahora» que abre el ejercicio exacto. El reporte de cada evaluación enlaza la lección de tu foco, y Hoy sugiere la siguiente lección pendiente.
 
@@ -145,11 +146,11 @@ Desactiva la ganancia automática y la supresión de ruido del navegador para me
 
 **Cuidado.** Modo calma sin números (automático en las primeras prácticas de quien dice que le cuesta mucho), meta de exposición «practicar aunque haya nervios», «💙 ¿Te sientes muy mal?» con líneas de ayuda y emergencias por país, detección de frases de crisis en el dispositivo y «Buscar un profesional».
 
-**Califica VOXA.** Tras 3 prácticas, Hoy pide una calificación (estrellas de 1 a 5, como en las tiendas, más NPS, qué sirve y qué falta), como mucho una vez al mes. En el link de claude.ai, quien es dueño ve el tablero con el promedio, la distribución y el NPS. Para que otras personas califiquen, compártelo con permiso de **Colaborador**.
+**Califica Talkride.** Tras 3 prácticas, Hoy pide una calificación (estrellas de 1 a 5, como en las tiendas, más NPS, qué sirve y qué falta), como mucho una vez al mes. En el link de claude.ai, quien es dueño ve el tablero con el promedio, la distribución y el NPS. Para que otras personas califiquen, compártelo con permiso de **Colaborador**.
 
 **Recordatorio diario.** En Hoy eliges la hora y lo agregas a Google Calendar (o como archivo .ics en la versión completa).
 
-**Privacidad.** El audio y el video se analizan en el navegador. La excepción en la versión completa es la transcripción en vivo: usa el reconocimiento de voz del navegador, que en Chrome y Edge procesa el audio en los servidores de Google o Microsoft (se avisa en la bienvenida). Al coach IA sólo se envían la transcripción y las métricas, y sólo cuando lo pides. La excepción es el análisis de lenguaje corporal del link de claude.ai: si lo pides, envía 4 fotogramas de tu video a Claude. El historial queda en tu navegador. VOXA mide conductas observables y nunca infiere emociones.
+**Privacidad.** El audio y el video se analizan en el navegador. La excepción en la versión completa es la transcripción en vivo: usa el reconocimiento de voz del navegador, que en Chrome y Edge procesa el audio en los servidores de Google o Microsoft (se avisa en la bienvenida). Al coach IA sólo se envían la transcripción y las métricas, y sólo cuando lo pides. La excepción es el análisis de lenguaje corporal del link de claude.ai: si lo pides, envía 4 fotogramas de tu video a Claude. El historial queda en tu navegador. Talkride mide conductas observables y nunca infiere emociones.
 
 ## Limitaciones conocidas
 

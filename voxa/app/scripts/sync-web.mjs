@@ -1,4 +1,4 @@
-// Copia la app web (../prototype) a www/ para empaquetarla con Capacitor, y le dice dónde está el servidor de VOXA.
+// Copia la app web (../prototype) a www/ para empaquetarla con Capacitor, y le dice dónde está el servidor de Talkride.
 // Uso: VOXA_API_BASE=https://voxa.onrender.com/ npm run sync
 import { cpSync, readdirSync, readFileSync, rmSync, writeFileSync, copyFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';

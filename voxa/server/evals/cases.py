@@ -1,6 +1,6 @@
 """Casos de prueba por función, con verificaciones automáticas (sin opinión humana en el ciclo).
 
-Cada caso dice qué endpoint llamar, con qué datos, y qué debe cumplir la respuesta para que VOXA sea creíble:
+Cada caso dice qué endpoint llamar, con qué datos, y qué debe cumplir la respuesta para que Talkride sea creíble:
 citas textuales reales, puntajes que separan una respuesta buena de una floja, español, longitud de turno,
 nota de seguridad cuando hay riesgo y nada inventado.
 """

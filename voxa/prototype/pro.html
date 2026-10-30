@@ -3,9 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>VOXA Tu plan</title>
+<title>Talkride Tu plan</title>
 <link rel="stylesheet" href="voxa.css">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#4f46e5">
 <style>
   .plan-left { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
@@ -108,7 +110,7 @@ async function showBuy() {
       <p class="note">Después de pagar, vuelve a esta página y toca «Ya pagué».</p><div class="btns"><button id="paid">Ya pagué</button></div>`;
     $('paid').addEventListener('click', () => confirmPro(true));
   } else {
-    $('buy').innerHTML = '<p class="note">La suscripción se activa desde la app de VOXA para iPhone o Android.</p>';
+    $('buy').innerHTML = '<p class="note">La suscripción se activa desde la app de Talkride para iPhone o Android.</p>';
   }
 }
 

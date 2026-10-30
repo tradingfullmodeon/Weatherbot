@@ -32,7 +32,7 @@ export function unblockHelp(env = environment()) {
 
 // Mensaje claro para cada tipo de error de getUserMedia.
 export function explainError(e, env = environment()) {
-  if (!env.secure) return 'Por seguridad, el navegador sólo permite la cámara y el micrófono en páginas https o en localhost. Abre VOXA desde su dirección https.';
+  if (!env.secure) return 'Por seguridad, el navegador sólo permite la cámara y el micrófono en páginas https o en localhost. Abre Talkride desde su dirección https.';
   if (env.inApp) return 'Estás dentro del navegador de otra app (WhatsApp, Instagram…), que bloquea la cámara y el micrófono. Abre el enlace en Chrome o Safari.';
   if (!env.hasMedia) return 'Este navegador no permite usar la cámara ni el micrófono. Prueba con Chrome, Edge o Safari actualizados.';
   switch (e?.name) {
@@ -65,7 +65,7 @@ export async function requestMedia({ video = true, audio = { echoCancellation: t
 // Panel «Probar cámara y micrófono»: vista previa, medidor de voz y lista de comprobaciones.
 export function mountDeviceCheck(box) {
   box.innerHTML = `
-    <p class="note">Antes de practicar, comprueba que VOXA te ve y te escucha. Nada se graba en esta prueba.</p>
+    <p class="note">Antes de practicar, comprueba que Talkride te ve y te escucha. Nada se graba en esta prueba.</p>
     <div class="btns"><button id="dcStart" class="primary">Probar cámara y micrófono</button><button id="dcStop" class="hidden">Terminar prueba</button></div>
     <div id="dcLive" class="hidden" style="margin-top:10px">
       <div class="stage" style="max-width:320px"><video id="dcVideo" playsinline muted></video></div>

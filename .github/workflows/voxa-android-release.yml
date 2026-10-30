@@ -1,10 +1,10 @@
-# Paquete firmado de VOXA para Google Play (AAB), listo para subir a la prueba interna o a producción.
-# Se ejecuta a mano (Actions → «VOXA Android para Google Play» → Run workflow) o al crear una etiqueta voxa-v*.
+# Paquete firmado de Talkride para Google Play (AAB), listo para subir a la prueba interna o a producción.
+# Se ejecuta a mano (Actions → «Talkride Android para Google Play» → Run workflow) o al crear una etiqueta voxa-v*.
 # Necesita, en Settings → Secrets and variables → Actions:
 #   Secrets:   VOXA_KEYSTORE_BASE64 (la clave de subida .jks en base64), VOXA_KEYSTORE_PASSWORD, VOXA_KEY_ALIAS, VOXA_KEY_PASSWORD
 #   Variables: VOXA_API_BASE (https del servidor) y VOXA_RC_ANDROID_KEY (clave pública goog_ de RevenueCat)
 # Cómo crear la clave de subida: docs/TIENDAS.md §3.
-name: VOXA Android para Google Play
+name: Talkride Android para Google Play
 
 on:
   workflow_dispatch:

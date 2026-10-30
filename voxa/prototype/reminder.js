@@ -1,8 +1,8 @@
 // Recordatorio diario de práctica: evento repetido en el calendario de la persona (Google Calendar o .ics).
 // Sin servidor ni notificaciones push: el calendario se encarga de avisar.
 const pad = (n) => String(n).padStart(2, '0');
-const TITLE = 'VOXA: tu práctica de 7 minutos';
-const DETAIL = 'Abre VOXA y haz la práctica de hoy. Una práctica bien hecha vale más que muchas a medias.';
+const TITLE = 'Talkride: tu práctica de 7 minutos';
+const DETAIL = 'Abre Talkride y haz la práctica de hoy. Una práctica bien hecha vale más que muchas a medias.';
 
 // Próxima ocurrencia de la hora elegida («HH:MM»), en hora local.
 function firstStart(time, now) {
@@ -21,8 +21,8 @@ export function googleCalendarUrl(time, link = '', now = new Date()) {
 
 export function icsReminder(time, link = '', now = new Date()) {
   const a = firstStart(time, now), b = new Date(a.getTime() + 10 * 60e3);
-  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//VOXA//Recordatorio//ES', 'BEGIN:VEVENT',
-    `UID:voxa-${a.getTime()}@voxa`, `DTSTAMP:${stamp(now)}`, `DTSTART:${stamp(a)}`, `DTEND:${stamp(b)}`, 'RRULE:FREQ=DAILY',
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Talkride//Recordatorio//ES', 'BEGIN:VEVENT',
+    `UID:talkride-${a.getTime()}@talkride`, `DTSTAMP:${stamp(now)}`, `DTSTART:${stamp(a)}`, `DTEND:${stamp(b)}`, 'RRULE:FREQ=DAILY',
     `SUMMARY:${TITLE}`, `DESCRIPTION:${(DETAIL + (link ? ' ' + link : '')).replace(/[,;]/g, '\\$&')}`,
     'BEGIN:VALARM', 'TRIGGER:PT0M', 'ACTION:DISPLAY', `DESCRIPTION:${TITLE}`, 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
 }

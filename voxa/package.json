@@ -2,7 +2,7 @@
   "name": "voxa",
   "private": true,
   "type": "module",
-  "description": "VOXA: entrenamiento de comunicación. Este archivo sólo marca los módulos como ES modules para las pruebas.",
+  "description": "Talkride: entrenamiento de comunicación. Este archivo sólo marca los módulos como ES modules para las pruebas.",
   "scripts": {
     "test": "node --test tests/*.test.js"
   }

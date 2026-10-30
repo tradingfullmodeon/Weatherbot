@@ -1,6 +1,6 @@
-# Publica la versión completa de VOXA (voxa/prototype) en GitHub Pages: https con cámara y micrófono en vivo.
+# Publica la versión completa de Talkride (voxa/prototype) en GitHub Pages: https con cámara y micrófono en vivo.
 # Requiere activar una vez Settings → Pages → Source: «GitHub Actions».
-name: Publicar VOXA en GitHub Pages
+name: Publicar Talkride en GitHub Pages
 
 on:
   push:

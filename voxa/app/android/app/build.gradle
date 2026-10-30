@@ -6,10 +6,10 @@ def env = System.getenv()
 def signed = env.VOXA_KEYSTORE_FILE != null
 
 android {
-    namespace = "app.voxa.coach"
+    namespace = "app.talkride.coach"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "app.voxa.coach"
+        applicationId "app.talkride.coach"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode((env.VOXA_VERSION_CODE ?: "1") as Integer)

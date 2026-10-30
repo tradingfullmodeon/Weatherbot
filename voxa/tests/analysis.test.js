@@ -1,4 +1,4 @@
-// Pruebas del motor de análisis de VOXA (voz, texto y contenido). Ejecutar: cd voxa && node --test tests/
+// Pruebas del motor de análisis de Talkride (voz, texto y contenido). Ejecutar: cd voxa && node --test tests/
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { FILLER_RE, HEDGE_RE, countMatches, wordCount, detectPitch, findFilledPauses, highlight } from '../prototype/shared.js';

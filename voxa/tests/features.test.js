@@ -61,6 +61,6 @@ test('personajes según la meta y memoria entre sesiones', () => {
 test('compartir: sólo Índice, racha y prácticas', () => {
   const st = shareStats({ diagnoses: [{ total: 52, level: 'Practicante' }, { total: 64, level: 'Competente' }] }, [{}, {}, {}], 5);
   assert.deepEqual(st, { index: 64, level: 'Competente', delta: 12, streak: 5, practices: 3 });
-  assert.equal(shareText(st), 'Mi Índice VOXA es 64 (Competente): subí 12 puntos desde mi primer diagnóstico. Llevo 5 días seguidos practicando. 3 prácticas para comunicarme con más seguridad con VOXA.');
-  assert.equal(shareText(shareStats({}, [{}], 0)), '1 práctica para comunicarme con más seguridad con VOXA.');
+  assert.equal(shareText(st), 'Mi Índice Talkride es 64 (Competente): subí 12 puntos desde mi primer diagnóstico. Llevo 5 días seguidos practicando. 3 prácticas para comunicarme con más seguridad con Talkride.');
+  assert.equal(shareText(shareStats({}, [{}], 0)), '1 práctica para comunicarme con más seguridad con Talkride.');
 });

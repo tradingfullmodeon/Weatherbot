@@ -1,6 +1,6 @@
 # El nombre: benchmark, panel de expertos y recomendación
 
-Octubre de 2026. **Estado actual (tercera ronda, §13): «Aplomo» quedó descartado por preferencia del fundador. Los tres finalistas para elegir son «Brío», «Lánzate» y «Habli».** Las rondas 1 y 2 se mantienen abajo como registro: el diagnóstico de por qué hay que cambiar «VOXA» sigue vigente.
+Octubre de 2026. **Estado actual (§22): el fundador eligió «Talkride», y ya está aplicado en la app, el logo y las tiendas.** Las rondas anteriores quedan abajo como registro de por qué se cambió el nombre de trabajo «VOXA» y de cómo se llegó a la decisión.
 
 ## 1. Por qué no podemos seguir con «VOXA»
 
@@ -367,3 +367,20 @@ Para esta ronda trabajaron cuatro paneles simulados. Cada uno tiene una sola mir
 2. **Los dos mejores de la lista son Speakboom (3,78) y Fluentis (3,53),** y son opuestos: Speakboom es energía y cercanía, con poca autoridad; Fluentis es autoridad y seriedad, con menos calidez y una asociación con idiomas.
 3. **Lo que revela la lista:** el fundador prefiere nombres **en inglés, compuestos, con «speak», «voice» o «fluent», y con energía.** Es una dirección válida, porque Speak, BoldVoice y Wellspoken están entre las mejor evaluadas. Pero es la zona más ocupada del mercado, así que cualquier nombre nuevo en esa línea debe verificarse antes de enamorarse de él.
 4. **Recomendación:** si eliges uno de esta lista, **Speakboom** es el más seguro y recordable. Para que gane autoridad, se puede acompañar de un subtítulo serio en la tienda: «Speakboom: AI Communication Coach».
+
+## 22. Decisión final: Talkride
+
+El fundador eligió **Talkride** (octubre de 2026). Queda aplicado en toda la app: textos, nombre en las tiendas, ícono, identificador de la app (`app.talkride.coach` en iOS y Android) y logo. La guía de uso de la marca está en [`marca/MARCA.md`](marca/MARCA.md).
+
+**Cómo neutralizamos su punto débil.** El panel advirtió que «ride» se puede leer como transporte. Por eso el nombre nunca va solo:
+
+- **En las tiendas** va siempre con el subtítulo: «Talkride: habla con seguridad» (en inglés, «Talkride: Speak with Confidence»).
+- **El logo** muestra un globo de diálogo, no un vehículo: dentro hay un camino que sube hacia una meta. El «ride» es el recorrido de tu progreso.
+- **El eslogan** cierra la idea: «Tu recorrido para hablar con seguridad».
+
+**Revisión de disponibilidad (30/10/2026).** Busqué en la web y no encontré ninguna app ni marca llamada Talkride o «Talk Ride». Lo más cercano son apps de transporte con «Ride» y coaches de habla con «Talk» (AI Talk Coach, TalkPro, Talky Coach). Ninguna lleva el nombre completo.
+
+**Falta antes de publicar**, y lo tiene que hacer el fundador:
+
+1. Buscar «TALKRIDE» y «TALK RIDE» en la oficina de marcas de cada país donde se va a vender (USPTO, EUIPO, INAPI o la que corresponda) en las clases 9 (software) y 41 (educación).
+2. Registrar el dominio (talkride.app o talkride.com) y los usuarios en las redes sociales.

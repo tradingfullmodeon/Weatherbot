@@ -1,4 +1,4 @@
-"""Dónde corre la IA de VOXA: la misma app y los mismos prompts sobre la nube que convenga.
+"""Dónde corre la IA de Talkride: la misma app y los mismos prompts sobre la nube que convenga.
 
 VOXA_PROVIDER elige la plataforma (todas sirven los modelos Claude con la misma API de mensajes):
   · anthropic (por defecto): API de Anthropic. Clave en ANTHROPIC_API_KEY.

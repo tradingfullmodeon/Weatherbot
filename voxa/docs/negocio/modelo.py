@@ -1,4 +1,4 @@
-"""Mini caso de negocio de VOXA: costo por usuario, precio, margen, LTV y punto de equilibrio.
+"""Mini caso de negocio de Talkride: costo por usuario, precio, margen, LTV y punto de equilibrio.
 
 Todos los supuestos están arriba y se pueden cambiar. Uso: python3 voxa/docs/negocio/modelo.py
 Las fuentes de cada cifra están en voxa/docs/CASO_NEGOCIO.md.

@@ -71,7 +71,7 @@ El orden sigue el impacto en el valor percibido (barrido regional en [BENCHMARK.
 | P0 | **Transcripción automática**: en el dispositivo y gratis, con respaldo en el servidor a US$0,003/min | Todas las líderes la tienen; es lo peor evaluado (A6 2,9) | ≥ 80% de las grabaciones con texto | Pendiente (app) |
 | P0 | **Roleplay por voz** (tocar para hablar y voz del personaje) | Speak, Praktika, Babbel Speak | ≥ 50% de los roleplays por voz | Ya existe en la versión completa; falta en la app |
 | P0 | **Plan gratis sin IA en el servidor, prueba de 7 días y precio medio** | Con IA gratis el margen es negativo (−86%) | Margen ≥ 35% | Definido en el caso de negocio |
-| P1 | **Índice VOXA** único que se vuelve a medir | Wellspoken Index, banda IELTS de Stimuler | Re-diagnóstico ≥ 40% al mes | ✅ Hecho |
+| P1 | **Índice Talkride** único que se vuelve a medir | Wellspoken Index, banda IELTS de Stimuler | Re-diagnóstico ≥ 40% al mes | ✅ Hecho |
 | P1 | **Modelos para imitar**: respuestas modelo y «Escuchar cómo sonaría» | BoldVoice, Cake, Mockee | Uso ≥ 30% de los reportes | ✅ Hecho |
 | P1 | **Técnicas por personaje** en la evaluación con IA, con citas verificadas | Pedido del panel; Yoodli (rúbricas) | — | ✅ Hecho |
 | P1 | **Cierre de la práctica** con avance de meta y «Mañana: …» | Duolingo: una racha de 7 días hace 2,4 veces más probable volver | Retención al día 7 ≥ 25% | ✅ Hecho, con aviso diario como notificación del teléfono en la app |
@@ -92,7 +92,7 @@ El orden sigue el impacto en el valor percibido (barrido regional en [BENCHMARK.
 - **Cobro honesto (implementado en «Tu plan», `pro.html`).** Es la queja número 1 de la categoría:
   - aviso en el teléfono 3 días antes de cada renovación (notificación local programada con la fecha del plan);
   - cancelación en un toque, con enlace directo a las suscripciones de la tienda;
-  - reembolso en 14 días: en Android lo hace VOXA; en iPhone se pide a Apple, que es quien cobra, y VOXA ayuda;
+  - reembolso en 14 días: en Android lo hace Talkride; en iPhone se pide a Apple, que es quien cobra, y Talkride ayuda;
   - el diagnóstico, el ensayo, el análisis de voz y las lecciones siempre gratis.
 
 ## 3. Cómo seguir midiendo sin usuarios reales: el panel experto
@@ -110,22 +110,22 @@ No reemplaza a las personas reales: sirve para no salir a la beta con errores ev
 
 ## 4. Mensaje de invitación (listo para enviar)
 
-> **Asunto: ¿Me ayudas a probar VOXA? (10 minutos al día, una semana)**
+> **Asunto: ¿Me ayudas a probar Talkride? (10 minutos al día, una semana)**
 >
-> ¡Hola, [nombre]! Estoy creando VOXA, un entrenador gratuito en español para comunicarte con más seguridad: entrevistas, presentaciones, conversaciones difíciles y correos.
+> ¡Hola, [nombre]! Estoy creando Talkride, un entrenador gratuito en español para comunicarte con más seguridad: entrevistas, presentaciones, conversaciones difíciles y correos.
 >
 > Te invito a probarlo una semana:
 > 1. Abre el link y haz el diagnóstico inicial (8 min): te dice tu nivel en 8 áreas y te propone metas.
 > 2. Practica 4 días, unos 7 minutos cada vez. Si tienes una entrevista o una charla con fecha, usa «Evento real».
-> 3. Al final, califícalo en «Progreso → Califica VOXA» y cuéntame qué te faltó.
+> 3. Al final, califícalo en «Progreso → Califica Talkride» y cuéntame qué te faltó.
 >
 > Link: https://claude.ai/artifact/Q8vtmWQ5KWWXHWFnwzBNXr (se abre con una cuenta de Claude).
 >
-> No tienes que crear una cuenta en VOXA. Tus grabaciones se analizan en tu navegador y no se suben a ningún lado. ¡Gracias!
+> No tienes que crear una cuenta en Talkride. Tus grabaciones se analizan en tu navegador y no se suben a ningún lado. ¡Gracias!
 
 Versión corta para WhatsApp:
 
-> ¡Hola! Estoy probando VOXA, un coach gratis para hablar con más seguridad (entrevistas, presentaciones, conversaciones difíciles). ¿Lo pruebas una semana y me dices qué te parece? Haz el diagnóstico de 8 min y después 4 prácticas cortas: https://claude.ai/artifact/Q8vtmWQ5KWWXHWFnwzBNXr
+> ¡Hola! Estoy probando Talkride, un coach gratis para hablar con más seguridad (entrevistas, presentaciones, conversaciones difíciles). ¿Lo pruebas una semana y me dices qué te parece? Haz el diagnóstico de 8 min y después 4 prácticas cortas: https://claude.ai/artifact/Q8vtmWQ5KWWXHWFnwzBNXr
 
 ## 5. Guía para las personas que prueban
 
@@ -136,4 +136,4 @@ Versión corta para WhatsApp:
 | 3 | Simulacro de entrevista o roleplay | ¿Te sentiste escuchado o escuchada? |
 | 4 | Escritura: mejora un correo real | ¿Lo enviarías? |
 | 5–7 | Repite tu situación más importante y mira Progreso | ¿Ves que mejoras? |
-| 7 | **Califica VOXA** y escribe qué falta | — |
+| 7 | **Califica Talkride** y escribe qué falta | — |

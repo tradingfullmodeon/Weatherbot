@@ -1,4 +1,4 @@
-// Utilidades compartidas por las páginas de VOXA: diccionarios, métricas de texto,
+// Utilidades compartidas por las páginas de Talkride: diccionarios, métricas de texto,
 // historial local de sesiones y acceso a la API del coach IA.
 
 // Muletillas frecuentes en español (incluye variantes regionales).

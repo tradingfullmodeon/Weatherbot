@@ -1,5 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#4f46e5"/>
-  <path d="M136 160l120 200 120-200" fill="none" stroke="#fff" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M96 256h24M392 256h24M64 236v40M448 236v40" stroke="#c7d2fe" stroke-width="20" stroke-linecap="round"/>
+  <title>Talkride</title>
+  <defs>
+    <linearGradient id="tr-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4f46e5"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#tr-bg)"/>
+  <path d="M176 118H336A76 76 0 0 1 412 194V270A76 76 0 0 1 336 346H234L152 404Q138 413 142 397L170 346A76 76 0 0 1 100 270V194A76 76 0 0 1 176 118Z" fill="#fff"/>
+  <path d="M162 286C232 286 250 186 318 186" fill="none" stroke="#4f46e5" stroke-width="32" stroke-linecap="round"/>
+  <circle cx="350" cy="186" r="25" fill="#f59e0b"/>
 </svg>

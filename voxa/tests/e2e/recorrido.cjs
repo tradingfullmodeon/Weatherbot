@@ -1,4 +1,4 @@
-// Recorrido completo de VOXA como lo haría una persona nueva, en un celular (390 × 844), en modo claro y oscuro.
+// Recorrido completo de Talkride como lo haría una persona nueva, en un celular (390 × 844), en modo claro y oscuro.
 // Usa el servidor con coach IA simulado (servidor_simulado.py) y micrófono y cámara simulados del navegador.
 //
 //   python voxa/tests/e2e/servidor_simulado.py 8800 &
@@ -20,7 +20,7 @@ const steps = [];
 const ok = (cond, what) => { steps.push(`${cond ? '✓' : '✗'} ${what}`); if (!cond) problems.push(what); };
 
 // Revisión de UX de cada pantalla: toques de al menos 44 px (WCAG 2.5.5 / Apple HIG), nada fuera de la pantalla,
-// imágenes con texto alternativo y controles con nombre accesible.
+// imágenes con texto alternativo (alt="" vale para las decorativas, como el logo junto al nombre) y controles con nombre accesible.
 async function audit(page, name) {
   const r = await page.evaluate(() => {
     const vis = (el) => { const b = el.getBoundingClientRect(); const s = getComputedStyle(el); return b.width > 0 && b.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
@@ -30,7 +30,7 @@ async function audit(page, name) {
     const unnamed = [...document.querySelectorAll('button, a[href], input:not([type=hidden]), select, textarea')].filter(vis)
       .filter(el => !(el.getAttribute('aria-label') || el.textContent.trim() || el.title || el.placeholder || (el.id && document.querySelector(`label[for="${el.id}"]`)) || el.closest('label')))
       .map(el => `${el.tagName.toLowerCase()}#${el.id}`);
-    return { overflow: document.documentElement.scrollWidth - window.innerWidth, small, unnamed, imgs: [...document.images].filter(i => !i.alt).length };
+    return { overflow: document.documentElement.scrollWidth - window.innerWidth, small, unnamed, imgs: [...document.images].filter(i => !i.hasAttribute('alt')).length };
   });
   ok(r.overflow <= 1, `${name}: sin desplazamiento horizontal (${r.overflow}px)`);
   ok(r.small.length === 0, `${name}: toques de 44 px o más${r.small.length ? ' → ' + r.small.slice(0, 6).join('; ') : ''}`);

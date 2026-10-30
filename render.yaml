@@ -1,5 +1,5 @@
-# VOXA en Render (https://render.com): la app web y el servidor con la IA de VOXA (carpeta voxa/) en un solo servicio.
-# New → Blueprint → este repositorio → rama donde está VOXA. Luego cargar ANTHROPIC_API_KEY en el panel (no se guarda aquí).
+# Talkride en Render (https://render.com): la app web y el servidor con la IA de Talkride (carpeta voxa/) en un solo servicio.
+# New → Blueprint → este repositorio → rama donde está Talkride. Luego cargar ANTHROPIC_API_KEY en el panel (no se guarda aquí).
 # Paso a paso: voxa/docs/TIENDAS.md §1. El plan Starter (US$7/mes) es necesario porque el plan gratis no admite disco.
 services:
   - type: web

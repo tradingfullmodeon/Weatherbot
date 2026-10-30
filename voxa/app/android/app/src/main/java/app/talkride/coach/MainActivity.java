@@ -1,4 +1,4 @@
-package app.voxa.coach;
+package app.talkride.coach;
 
 import com.getcapacitor.BridgeActivity;
 

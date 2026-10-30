@@ -1,4 +1,4 @@
-"""Calibración de VOXA con profesores: ¿los puntajes automáticos ordenan las prácticas como lo haría un experto?
+"""Calibración de Talkride con profesores: ¿los puntajes automáticos ordenan las prácticas como lo haría un experto?
 
 Uso:
     python analizar.py --voxa exportaciones/ --profes notas.csv [--out resultado.md]
@@ -8,9 +8,9 @@ Uso:
   Las columnas vacías se ignoran. Los profesores puntúan de 0 a 100 con la escala anclada (README.md).
 
 Mide por dimensión:
-- Spearman entre VOXA y el promedio de los profesores (meta ≥ 0,6);
-- error medio absoluto y sesgo (VOXA − profesores);
-- acuerdo entre profesores (el techo razonable para VOXA);
+- Spearman entre Talkride y el promedio de los profesores (meta ≥ 0,6);
+- error medio absoluto y sesgo (Talkride − profesores);
+- acuerdo entre profesores (el techo razonable para Talkride);
 - y las 5 grabaciones con más desacuerdo, para revisarlas.
 """
 
@@ -20,7 +20,7 @@ import json
 import statistics
 from pathlib import Path
 
-# Columna de la planilla → cómo leer el mismo puntaje en una sesión de VOXA.
+# Columna de la planilla → cómo leer el mismo puntaje en una sesión de Talkride.
 DIMENSIONS = {
     "global": lambda s: s.get("total"),
     "voz": lambda s: (s.get("dims") or {}).get("voz"),
@@ -111,20 +111,20 @@ def fmt(x, nd=2):
 
 
 def report(res: dict) -> str:
-    lines = ["# Calibración de VOXA con profesores", "",
-             f"Meta: Spearman ≥ {fmt(TARGET, 1)} entre VOXA y el promedio de los profesores en cada dimensión.", "",
-             "| Dimensión | Grabaciones | Spearman VOXA–profes | Acuerdo entre profes | Error medio | Sesgo de VOXA | ¿Cumple? |",
+    lines = ["# Calibración de Talkride con profesores", "",
+             f"Meta: Spearman ≥ {fmt(TARGET, 1)} entre Talkride y el promedio de los profesores en cada dimensión.", "",
+             "| Dimensión | Grabaciones | Spearman Talkride–profes | Acuerdo entre profes | Error medio | Sesgo de Talkride | ¿Cumple? |",
              "|---|---|---|---|---|---|---|"]
     for dim, d in res["dims"].items():
         ok = d["spearman"] is not None and d["spearman"] >= TARGET
         lines.append(f"| {dim} | {d['n']} | {fmt(d['spearman'])} | {fmt(d['inter'])} | {fmt(d['mae'], 1)} | "
                      f"{'+' if d['bias'] > 0 else ''}{fmt(d['bias'], 1)} | {'✅' if ok else '⚠️ revisar'} |")
     lines += ["", "**Cómo leerlo:**",
-              "- Si el sesgo es positivo, VOXA puntúa más alto que los profesores: conviene endurecer esa dimensión.",
-              "- Si el acuerdo entre profesores es bajo, la dimensión es difícil de juzgar incluso para expertos: no se le puede exigir más a VOXA.",
+              "- Si el sesgo es positivo, Talkride puntúa más alto que los profesores: conviene endurecer esa dimensión.",
+              "- Si el acuerdo entre profesores es bajo, la dimensión es difícil de juzgar incluso para expertos: no se le puede exigir más a Talkride.",
               "", "## Grabaciones con más desacuerdo", ""]
     for dim, d in res["dims"].items():
-        lines.append(f"- **{dim}:** " + "; ".join(f"{g} (VOXA {fmt(v, 0)}, profes {fmt(p, 1)})" for g, v, p in d["worst"]))
+        lines.append(f"- **{dim}:** " + "; ".join(f"{g} (Talkride {fmt(v, 0)}, profes {fmt(p, 1)})" for g, v, p in d["worst"]))
     if res["missing"]:
         lines += ["", f"Grabaciones de la planilla que no están en las exportaciones: {', '.join(res['missing'])}"]
     return "\n".join(lines) + "\n"

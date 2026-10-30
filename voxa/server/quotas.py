@@ -1,6 +1,6 @@
 """Planes, cupos de IA por persona y tope de gasto mensual.
 
-La IA la paga VOXA (la clave de Anthropic vive sólo en el servidor), así que cada llamada se controla:
+La IA la paga Talkride (la clave de Anthropic vive sólo en el servidor), así que cada llamada se controla:
   · gratis: sin IA (todo el análisis local sigue funcionando en el teléfono);
   · prueba: 7 días con cupos amplios para conocer el coach;
   · pro: uso justo mensual, pensado para que nadie que practique de verdad lo alcance.

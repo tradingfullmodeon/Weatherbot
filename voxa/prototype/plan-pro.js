@@ -10,7 +10,7 @@ export const AI_FEATURES = [
 ];
 // Lo que nunca se cobra: todo lo que se calcula en el teléfono.
 export const ALWAYS_FREE = [
-  'Diagnóstico inicial, Índice VOXA y metas',
+  'Diagnóstico inicial, Índice Talkride y metas',
   'Análisis de tu voz: ritmo, pausas, «eeh», muletillas, tono y volumen',
   'Mirada y postura con la cámara',
   'Estructura de tus respuestas (PREP, STAR, BLUF, SBI) y revisión de escritura',

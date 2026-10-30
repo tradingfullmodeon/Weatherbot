@@ -1,4 +1,4 @@
-"""Prueba cada función de VOXA con distintos modelos y nubes, y mide calidad, velocidad y costo.
+"""Prueba cada función de Talkride con distintos modelos y nubes, y mide calidad, velocidad y costo.
 
 Pasa por el mismo código que usan las personas (los endpoints reales), así que mide lo que la app hará en producción.
 
