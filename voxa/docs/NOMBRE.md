@@ -1,6 +1,6 @@
 # El nombre: benchmark, panel de expertos y recomendación
 
-Octubre de 2026. **Conclusión: hay que cambiar «VOXA», y el nombre recomendado es «Aplomo»** («Aplomo: habla con seguridad»). Es una palabra real del español que significa justo la promesa de la app, y no encontramos ninguna app ni marca con ese nombre en la categoría. Falta la búsqueda legal formal (§6).
+Octubre de 2026. **Estado actual (tercera ronda, §13): «Aplomo» quedó descartado por preferencia del fundador. Los tres finalistas para elegir son «Brío», «Lánzate» y «Habli».** Las rondas 1 y 2 se mantienen abajo como registro: el diagnóstico de por qué hay que cambiar «VOXA» sigue vigente.
 
 ## 1. Por qué no podemos seguir con «VOXA»
 
@@ -202,3 +202,88 @@ Siete perfiles de especialistas, definidos como arquetipos de cómo trabajan las
 **Lo que pidió el director de identidad:** el logo en minúsculas, «aplomo», con la «o» final como una onda de voz que termina estable. En el ícono, solo esa «o» sobre el índigo de la app.
 
 **Lo que pidió la creadora para Latinoamérica:** en la prueba de la beta, incluir al menos 5 personas de Argentina o Uruguay y 5 de España, y preguntar «¿te suena a algo negativo?».
+
+
+---
+
+# Tercera ronda: «Aplomo» descartado, nuevos creadores y un jurado independiente
+
+## 13. Qué aprendimos del rechazo
+
+**«Aplomo» se descartó por preferencia del fundador.** La lectura del equipo: sonaba formal, pesado o anticuado, y la sílaba «plomo» no ayuda. Por eso esta ronda agregó un criterio nuevo, **modernidad y energía**, y pidió a los creadores nombres **ligeros, vivos y cercanos, sin perder seriedad**.
+
+**Señal del mercado:** la categoría está llena de nombres con «Vox» y «Ora» (Voxie, Voqi, Voxyn, Orator, Oratori, Orato), según [Yoodli](https://yoodli.ai/blog/what-is-a-speech-coach-app-the-top-six-best-apps) y la [App Store](https://apps.apple.com/us/app/-/id6757192995). Se evitaron esas raíces.
+
+## 14. Equipo A: desarrolladores de marca (generan)
+
+Seis creadores simulados, cada uno con una estrategia distinta, para no quedarnos en un solo estilo:
+
+| Creador | Estrategia | Nombres que propuso |
+|---|---|---|
+| 1 | Palabra real con energía | **Brío**, Soltura, Chispa |
+| 2 | Verbo que invita a actuar | **Lánzate**, **Dilo**, Atrévete |
+| 3 | Inventado, amable y propio | **Habli**, Hablo, Voli |
+| 4 | Metáfora del escenario | Escena, Tarima, Faro |
+| 5 | Compuesto descriptivo | Voz Viva, Habla Ya |
+| 6 | Que funcione en inglés y en español | **Brío** (*brio* existe en inglés), Habli |
+
+Se descartaron antes de evaluar:
+- **Chispa:** es una app de citas latina muy conocida.
+- **Habla Ya:** es genérico.
+- **Hablo:** se confunde con la conjugación.
+- **Voli:** no tiene significado.
+
+## 15. Equipo B: jurado independiente (evalúa)
+
+Es un equipo distinto, que no propuso ningún nombre. Así se evita que alguien defienda los suyos:
+
+| Jurado | Qué mira |
+|---|---|
+| Investigadora del consumidor | Recordación simulada al día siguiente: ¿qué nombre vuelve solo a la memoria? |
+| Especialista en tiendas de apps (ASO) | Si se encuentra al buscarlo y si compite con otras apps |
+| Abogado de marcas | Si es registrable y qué conflictos tiene |
+| Lingüista de Latinoamérica y España | Pronunciación, acentos y dobles sentidos por país |
+| Diseñadora de identidad | Cómo se ve en el ícono y en el logo |
+| Cuatro usuarios: estudiante, líder nuevo, vendedora y persona con miedo escénico | ¿Me gusta? ¿Qué creo que hace? ¿La bajaría? |
+
+**Conflictos verificados** (búsqueda web del 30 de octubre de 2026):
+
+| Nombre | Lo que se encontró |
+|---|---|
+| Brío | Ninguna app de voz ni de oratoria ([búsqueda](https://www.hyperbound.ai/blog/best-speech-coaching-apps)). **BRIO** es una marca sueca de juguetes muy conocida, de otra clase (28); hay que confirmarlo en la búsqueda legal |
+| Lánzate | Ninguna app con ese nombre |
+| Dilo | **DiLO**, dispositivo de comunicación para personas con discapacidad ([iter.es](https://www.iter.es/en/dilo/)); **Dilo en Señas**, app de lengua de señas ([App Store](https://apps.apple.com/us/app/id6445926999)) |
+| Habli | Ninguna app con ese nombre; parecido lejano a HABBL, una app para camioneros |
+| Soltura | **Soltura Languages**, proyecto de conversación en español ([Indiegogo](https://indiegogo.com/projects/soltura-languages-learn-spanish)) |
+| Voz Viva | Ninguna app de oratoria; hay una «Viva Voz» de una empresa portuaria brasileña |
+
+**Puntajes del jurado** (de 1 a 5):
+
+| Criterio (peso) | Brío | Lánzate | Habli | Dilo | Voz Viva | Soltura | Atrévete | Escena | Tarima | Faro |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Recordación (20%) | 4,5 | 4,5 | 4,0 | 5,0 | 4,0 | 3,5 | 4,0 | 3,5 | 3,5 | 4,0 |
+| Asociación con la promesa (20%) | 4,0 | 4,0 | 3,5 | 4,5 | 4,0 | 4,5 | 3,5 | 3,0 | 3,0 | 2,5 |
+| Modernidad y energía (15%) | 4,5 | 4,5 | 4,0 | 4,5 | 3,5 | 3,0 | 4,0 | 3,5 | 2,5 | 3,5 |
+| Pronunciación en español e inglés (10%) | 4,5 | 3,0 | 4,0 | 4,5 | 3,0 | 3,0 | 2,5 | 3,5 | 3,0 | 4,5 |
+| Registrable (10%) | 4,0 | 3,5 | 4,5 | 3,0 | 2,5 | 3,5 | 3,0 | 3,0 | 3,5 | 3,0 |
+| Sin conflictos (15%) | 3,5 | 4,5 | 4,0 | 2,5 | 4,0 | 3,0 | 3,5 | 3,5 | 4,0 | 2,5 |
+| Se encuentra en las tiendas (10%) | 3,5 | 3,5 | 4,0 | 2,5 | 3,0 | 3,0 | 2,5 | 2,5 | 3,0 | 2,0 |
+| **Total** | **4,10** | **4,05** | **3,95** | 3,95 | 3,58 | 3,45 | 3,43 | 3,25 | 3,23 | 3,15 |
+
+**Qué dijo el jurado de los tres primeros:**
+- **Brío** («Habla con brío»). Energía, vitalidad y decisión; en música, *con brio* significa «con fuerza y ánimo». Es corto, suena moderno y existe también en inglés. *Diseñadora:* «la tilde de la í puede ser una chispa en el logo». *Abogado:* «confirmar que BRIO, la marca de juguetes, no bloquee las clases 9 y 41». *Usuarios:* el líder y la vendedora lo eligieron primero; la estudiante dijo que «suena a alguien con personalidad».
+- **Lánzate** («Lánzate a hablar»). El más motivador y el más cercano: le habla directo a quien tiene miedo, como un buen profesor. No tiene conflictos. *Lingüista:* «en inglés es difícil de pronunciar y la tilde complica las búsquedas, pero para el mercado hispano es muy potente». *Usuarios:* la persona con miedo escénico lo eligió primero («es lo que necesito que me digan»).
+- **Habli** («Habla mejor cada día»). Inventado y amable, al estilo de Duolingo o Speeko. Es el más fácil de registrar y de encontrar libre como dominio. *ASO:* «es el que mejor se posiciona en búsquedas». *Contra:* dice menos de la promesa y tiene menos autoridad.
+- **Dilo** quedó cuarto. Es el más recordable de todos, pero ya existen DiLO y Dilo en Señas en el mundo de la comunicación.
+
+## 16. Cómo elegir
+
+Los tres finalistas representan **tres personalidades de marca distintas**:
+
+| Si VOXA quiere sonar… | Elige | Eslogan |
+|---|---|---|
+| **Con energía y personalidad**, para profesionales | **Brío** | «Habla con brío» |
+| **Como un coach que te impulsa**, cálido y cercano | **Lánzate** | «Lánzate a hablar» |
+| **Amable y moderna**, como app de hábito diario | **Habli** | «Habla mejor cada día» |
+
+Antes de confirmar cualquiera, sigue en pie lo de §6 (búsqueda legal, dominio y redes) y la prueba con la beta (§7), usando estos tres finalistas.
