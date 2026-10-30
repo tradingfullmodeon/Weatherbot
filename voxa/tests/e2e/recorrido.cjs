@@ -105,11 +105,15 @@ async function shoot(page, name) {
   for (const t of ['Me interesa porque llevo tres años analizando datos y quiero aplicarlo a decisiones de negocio.',
     'En mi último trabajo reduje los reclamos atrasados a la mitad con un tablero de prioridades.',
     'Volvería a hacerlo, pero involucraría antes al equipo de operaciones.']) {
-    await page.fill('#txt', t); await page.click('#btnSend'); await page.waitForTimeout(900);
+    const before = (await page.$$('#chat > *')).length;
+    await page.fill('#txt', t); await page.click('#btnSend');
+    // Con IA real, cada turno tarda unos segundos: se espera la respuesta del personaje (hasta 60 s).
+    await page.waitForFunction((n) => document.querySelectorAll('#chat > *').length >= n + 2, before, { timeout: 60000 }).catch(() => {});
   }
   ok((await page.$$('#chat > *')).length >= 6, 'Roleplay: el personaje responde cada turno');
   await shoot(page, '09-roleplay-conversacion'); await audit(page, 'Roleplay · conversación');
-  await page.click('#btnEnd'); await page.waitForTimeout(1500);
+  await page.click('#btnEnd');
+  await page.waitForFunction(() => /Siguiente paso/.test(document.getElementById('evalOut')?.textContent || ''), null, { timeout: 90000 }).catch(() => {});
   ok(await page.isVisible('#report'), 'Roleplay: evaluación al terminar');
   await shoot(page, '10-roleplay-evaluacion');
 
@@ -118,8 +122,11 @@ async function shoot(page, name) {
   await page.fill('#text', 'Hola Carolina, perdón por molestar, quería saber si de pronto podría tomarme el viernes libre si no es mucha molestia. Gracias y perdón.');
   await page.waitForTimeout(500);
   await shoot(page, '11-escritura'); await audit(page, 'Escritura');
-  if (await page.isVisible('#btnAI')) { await page.click('#btnAI'); await page.waitForTimeout(1200); }
-  ok((await page.textContent('#aiOut')).includes('Viernes 14 libre'), 'Escritura: el coach reescribe el correo');
+  if (await page.isVisible('#btnAI')) {
+    await page.click('#btnAI');
+    await page.waitForFunction(() => /Versión mejorada|No se pudo/.test(document.getElementById('aiOut').textContent), null, { timeout: 90000 }).catch(() => {});
+  }
+  ok((await page.textContent('#aiOut')).includes('Versión mejorada'), 'Escritura: el coach reescribe el correo');
   await shoot(page, '12-escritura-coach');
 
   // 7. Evento real con preguntas a la medida.
@@ -132,8 +139,11 @@ async function shoot(page, name) {
   await page.fill('#evConcern', 'No tengo experiencia en seguros');
   await page.click('#evCreate'); await page.waitForTimeout(500);
   ok(await page.isVisible('#eventCard'), 'Evento: plan día a día');
-  if (await page.isVisible('#evQuestionsAI')) { await page.click('#evQuestionsAI'); await page.waitForTimeout(1200); }
-  ok((await page.textContent('#eventOut') + await page.textContent('body')).includes('Pregunta difícil 1'), 'Evento: preguntas a la medida');
+  if (await page.isVisible('#evQuestionsAI')) {
+    await page.click('#evQuestionsAI');
+    await page.waitForFunction(() => /Preguntas para tu caso|No se pudieron/.test(document.getElementById('evAI').textContent), null, { timeout: 90000 }).catch(() => {});
+  }
+  ok((await page.$$('#evAI details')).length >= 3, 'Evento: preguntas a la medida');
   await shoot(page, '13-evento'); await audit(page, 'Evento');
 
   // 8. Lo nuevo: memoria del personaje, personajes según la meta, letra grande, compartir y «Hecho para ti».
