@@ -240,14 +240,24 @@ export function clearAll() { for (const k of [KEY, PROFILE_KEY]) { delete memory
 export const calmText = (drop) => Math.abs(drop) < 0.05 ? '0' : Math.abs(drop).toFixed(1);
 // Día local «AAAA-MM-DD» (no UTC: a las 21 h en América ya sería mañana en UTC).
 export const localDay = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-export const loadSessions = () => read(KEY, []);
+// Sólo sesiones con fecha válida: una incompleta (dato dañado o de una versión vieja) se ignora en vez de romper la página.
+export const loadSessions = () => read(KEY, []).filter(s => typeof s.date === 'string' && !Number.isNaN(Date.parse(s.date)));
 export function saveSession(session) {
   const all = loadSessions();
   const i = all.findIndex(s => s.id === session.id);
   i >= 0 ? (all[i] = session) : all.push(session);
   return write(KEY, all.slice(-300));
 }
-export const loadProfile = () => read(PROFILE_KEY, { goal: '', ladder: {}, locale: '', onboarded: false });
+// Perfil con forma garantizada: diagnósticos y metas incompletos (datos dañados) se descartan.
+export function loadProfile() {
+  const p = read(PROFILE_KEY, { goal: '', ladder: {}, locale: '', onboarded: false });
+  if (p.diagnoses != null) p.diagnoses = (Array.isArray(p.diagnoses) ? p.diagnoses : [])
+    .filter(d => d && Number.isFinite(d.total) && d.profile && typeof d.profile === 'object' && typeof d.date === 'string');
+  if (p.goals != null) p.goals = (Array.isArray(p.goals) ? p.goals : [])
+    .filter(g => g && typeof g.id === 'string' && typeof g.dim === 'string' && g.check && g.next && typeof g.due === 'string');
+  if (p.event && (typeof p.event !== 'object' || typeof p.event.type !== 'string' || typeof p.event.date !== 'string')) delete p.event;
+  return p;
+}
 export const saveProfile = (p) => write(PROFILE_KEY, p);
 
 // ---------------------------------------------------------------- API del coach IA

@@ -27,14 +27,14 @@ export function levelOfSession(s) {
   if (s.type === 'evaluacion' && s.scenario) return levelOfScenario(s.scenario);
   return null;
 }
-const byIndex = (total) => [...LEVEL_PATH].reverse().find(l => total >= l.min).n;
+const byIndex = (total) => Number.isFinite(total) ? [...LEVEL_PATH].reverse().find(l => total >= l.min).n : 1;
 
 // Nivel actual y qué falta para el siguiente. Sin diagnóstico se empieza en Explorador.
 export function currentLevel(profile = {}, sessions = []) {
-  const diag = profile.diagnoses?.at(-1);
+  const diag = Array.isArray(profile.diagnoses) ? profile.diagnoses.at(-1) : null;
   const indexLevel = diag ? byIndex(diag.total) : 1;
   // Prácticas sólidas por nivel (las de un nivel más alto cuentan también para los de abajo).
-  const solid = (n) => sessions.filter(s => s.total >= SOLID && (levelOfSession(s) ?? 0) >= n).length;
+  const solid = (n) => sessions.filter(s => Number(s.total) >= SOLID && (levelOfSession(s) ?? 0) >= n).length;
   // El nivel por práctica sube de a uno: para pasar del nivel n hay que demostrar NEEDED prácticas sólidas en n.
   let practiceLevel = 1;
   while (practiceLevel < 5 && solid(practiceLevel) >= NEEDED) practiceLevel++;

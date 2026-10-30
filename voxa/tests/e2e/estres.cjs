@@ -211,6 +211,8 @@ async function rapid() {
     await page.click('#dgNext2');
   }
   await page.fill('#dgWrite', '');
+  // Con el mensaje vacío, el primer toque avisa una vez; el segundo sigue sin medir la escritura.
+  await page.click('#dgRun'); await page.waitForTimeout(400);
   await page.click('#dgRun'); await page.waitForTimeout(1200);
   note(`Diagnóstico paso 3 vacío → «${(await text(page, '#dgErr')).trim() || '(sin aviso)'}», queda en «${(await text(page, '#dgStepLabel')).trim()}»`);
   await page.click('#dgSave', { clickCount: 3, delay: 10 }).catch(() => {});
