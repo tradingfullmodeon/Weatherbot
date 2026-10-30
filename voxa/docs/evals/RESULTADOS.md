@@ -45,3 +45,41 @@ Una función pasa a un modelo más económico solo si aprueba las mismas verific
 **Combinación posible:** Opus en el coach y la evaluación, Haiku en los turnos, los correos y el evento. Cuesta unos **US$0,59 al mes por persona que paga** (30% menos) y deja los turnos de roleplay en 2,5 segundos. La decisión es del responsable del producto. Se aplica sin cambiar código, con las variables `VOXA_MODEL_ROLEPLAY`, `VOXA_MODEL_WRITING` y `VOXA_MODEL_EVENT` en Render.
 
 **Antes de decidir:** se corrió una sola repetición con 9 casos. Conviene repetir con 3 repeticiones (modificando `voxa/server/evals/ejecutar.txt`, unos US$1,5) y leer algunas respuestas del roleplay en el detalle (Artifacts → `voxa-evals`).
+
+---
+
+## Confirmación con 3 repeticiones (30 de octubre de 2026)
+
+[Ejecución 40990247335](https://github.com/tradingfullmodeon/Weatherbot/actions/runs/40990247335): 9 casos × 3 modelos × 3 repeticiones. Ahora sin la caché de respuestas, así que cada repetición llega de verdad al modelo.
+
+| Función | Opus 5.5 | Sonnet 5.5 | Haiku 5.5 |
+|---|---|---|---|
+| Coach | 27/27 · 20,4 s · US$0,0457 | 27/27 · 8,6 s · US$0,0140 | 27/27 · 11,4 s · US$0,0012 |
+| Turno de roleplay | 15/15 · 3,8 s · US$0,0050 | 15/15 · 2,5 s · US$0,0022 | **15/15 · 1,9 s** · US$0,0001 |
+| Evaluación del roleplay | 15/15 · 12,7 s · US$0,0303 | 15/15 · 6,5 s · US$0,0112 | 14/15 · 7,5 s · US$0,0007 |
+| Correo | 11/12 · 11,3 s · US$0,0259 | 11/12 · 5,4 s · US$0,0089 | 11/12 · 7,2 s · US$0,0008 |
+| Preguntas del evento | **9/9** · 16,1 s · US$0,0300 | 8/9 · 11,6 s · US$0,0148 | 7/9 · 11,9 s · US$0,0012 |
+| Separación (coach, evaluación) | **44,1 y 55,4** | 32,9 y 48,7 | 41,8 y 37,4 |
+
+**Qué cambió respecto de la primera corrida:**
+1. **Se confirma:** Opus es el que mejor separa una práctica buena de una floja. En los **turnos de roleplay**, los tres modelos aprueban todo, y Haiku responde en 1,9 segundos.
+2. **No se sostiene:** que Haiku apruebe todo en las **preguntas del evento**. Con más repeticiones dio consejos demasiado largos (2 de 9). Sonnet falló una vez en dar preguntas específicas del caso. Opus siguió perfecto.
+3. **Correo:** los tres empatan (11 de 12). La única falla es que la reescritura quedó un poco más larga de lo pedido.
+4. Haiku falló una vez en reconocer que se había logrado el objetivo de la conversación. Confirma que la evaluación debe seguir en Opus.
+
+**Recomendación revisada** (la decisión es del responsable del producto):
+
+| Función | Modelo | Por qué |
+|---|---|---|
+| Coach, evaluación del roleplay y preguntas del evento | **Opus 5.5** | Puntajes más creíbles y el único sin fallas en el evento |
+| Turnos de roleplay y correos | **Haiku 5.5** | Misma calidad medida, 2 veces más rápido en el roleplay y entre 30 y 50 veces más económico |
+
+**Costo por persona que paga:**
+- Con esa combinación: **unos US$0,61 al mes**.
+- Con Opus en todo: unos US$0,85 al mes.
+
+Ahorra un 28% y el roleplay se siente más fluido.
+
+**Para aplicarla:** en Render → servicio voxa → Environment, agregar:
+- `VOXA_MODEL_ROLEPLAY=claude-haiku-5-5`
+- `VOXA_MODEL_WRITING=claude-haiku-5-5`
