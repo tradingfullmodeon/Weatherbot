@@ -1,2 +1,2 @@
 # Cambiar este archivo lanza la prueba real de modelos en GitHub (.github/workflows/voxa-evals.yml).
-# Última solicitud: (ninguna)
+# Última solicitud: 2026-10-30, Opus, Sonnet y Haiku, 1 repetición.
