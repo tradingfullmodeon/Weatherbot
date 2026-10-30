@@ -1,10 +1,13 @@
 # Prueba real de modelos y nubes en cada función de VOXA (server/evals), con la clave de pruebas guardada como
 # secreto de GitHub (Settings → Secrets and variables → Actions → Secrets → ANTHROPIC_API_KEY). Nadie ve la clave.
-# Se ejecuta sólo a mano (Actions → «VOXA pruebas de modelos» → Run workflow): cuesta menos de US$1 por corrida.
+# Se ejecuta a mano (Actions → «VOXA pruebas de modelos» → Run workflow, cuando esté en main) o al cambiar
+# voxa/server/evals/ejecutar.txt, nunca con otros cambios: cuesta menos de US$1 por corrida.
 # El resumen queda en la página de la ejecución y el detalle (todas las respuestas) en Artifacts → voxa-evals.
 name: VOXA pruebas de modelos
 
 on:
+  push:
+    paths: ["voxa/server/evals/ejecutar.txt"]
   workflow_dispatch:
     inputs:
       models:
@@ -34,8 +37,8 @@ jobs:
         working-directory: voxa/server
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          MODELS: ${{ inputs.models }}
-          REPEAT: ${{ inputs.repeat }}
+          MODELS: ${{ inputs.models || 'claude-opus-5-5,claude-sonnet-5-5,claude-haiku-5-5' }}
+          REPEAT: ${{ inputs.repeat || '1' }}
         run: |
           python -m evals.run --models "$MODELS" --repeat "$REPEAT" --out "$RUNNER_TEMP/evals/RESULTADOS.md"
           cat "$RUNNER_TEMP/evals/RESULTADOS.md" >> "$GITHUB_STEP_SUMMARY"
