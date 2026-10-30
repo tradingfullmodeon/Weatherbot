@@ -230,8 +230,8 @@
   .week .wk.on { background: var(--good); border-color: var(--good); color: #fff; opacity: 1; }
   .week .wk.today { outline: 2px solid var(--accent); outline-offset: 1px; opacity: 1; }
   /* Íconos de línea propios junto a títulos y accesos (reemplazan los emojis). */
-  [data-icon] { display: inline-flex; align-items: center; gap: 8px; }
-  [data-icon] > svg { flex: none; color: var(--accent); }
+  [data-icon]:not(strong) { display: inline-flex; align-items: center; }
+  [data-icon] > svg { flex: none; color: var(--accent); margin-inline-end: 8px; vertical-align: -4px; }
   /* Versión publicable: complementa prototype/voxa.css. Una sola página con vistas. */
   :root[data-theme="dark"] {
     --bg: #0f1117; --card: #181b24; --text: #e8eaf0; --muted: #9aa1b2;
