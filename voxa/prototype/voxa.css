@@ -294,3 +294,6 @@
   .levels-list li { border-top: 1px solid var(--line); padding: 12px 0; }
   .levels-list h3 { margin: 0 0 4px; font-size: 1.15rem; }
   .levels-list p { margin: 0 0 4px; }
+  /* Tablas anchas se desplazan dentro de su caja (nunca toda la página) y las direcciones largas se cortan. */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  li, p { overflow-wrap: break-word; }

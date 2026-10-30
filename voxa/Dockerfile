@@ -9,4 +9,5 @@ COPY prototype prototype
 WORKDIR /app/server
 ENV VOXA_DB=/data/voxa.db
 EXPOSE 8000
-CMD ["sh", "-c", "mkdir -p /data && uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Detrás del proxy de Render o Fly: la IP real de cada persona viene en X-Forwarded-For (límite de solicitudes por persona).
+CMD ["sh", "-c", "mkdir -p /data && uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips=*"]

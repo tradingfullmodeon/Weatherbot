@@ -62,9 +62,19 @@ function rulesFor(lang) {
     read: (words, sentences) => !words.length || !sentences ? 0 : Math.round(L.read(words.length / sentences, words.reduce((a, w) => a + syl(w), 0) / words.length)) };
 }
 
+// Ejemplos de los consejos en el idioma del texto (la explicación queda en español).
+const EX = {
+  es: { ask: '«¿Puedes…?», «Necesito…»', indirect: '«quería ver si…», «podría…»', direct: '«¿Puedes revisar…?»', deadline: '«antes del jueves a las 12»' },
+  en: { ask: '«Can you…?», «I need…»', indirect: '«I was wondering if…», «could…»', direct: '«Can you review…?»', deadline: '«by Thursday at 12»' },
+  pt: { ask: '«Você pode…?», «Preciso…»', indirect: '«queria saber se…», «poderia…»', direct: '«Você pode revisar…?»', deadline: '«até quinta às 12h»' },
+  fr: { ask: '«Peux-tu… ?», «J’ai besoin…»', indirect: '«je voulais savoir si…», «pourriez-vous…»', direct: '«Peux-tu relire… ?»', deadline: '«d’ici jeudi 12 h»' },
+  de: { ask: '«Kannst du…?», «Ich brauche…»', indirect: '«ich wollte fragen, ob…», «könnten Sie…»', direct: '«Kannst du … prüfen?»', deadline: '«bis Donnerstag, 12 Uhr»' },
+  it: { ask: '«Puoi…?», «Ho bisogno…»', indirect: '«volevo sapere se…», «potresti…»', direct: '«Puoi rivedere…?»', deadline: '«entro giovedì alle 12»' },
+};
+
 // Revisión instantánea de un texto según su tipo: devuelve las comprobaciones, un puntaje y estadísticas.
 export function analyzeWriting(text, k, lang = PRACTICE_LANG) {
-  const R = rulesFor(lang);
+  const R = rulesFor(lang), ex = EX[lang] || EX.es;
   const ASK_RE = R.ask, DEADLINE_RE = R.deadline, INDIRECT_ASK_RE = R.indirect, APOLOGY_RE = R.apology, VAGUE_OPEN_RE = R.vague, HEDGE_RE = R.hedge;
   const words = (text.match(/\p{L}+/gu) || []);
   const sents = sentencesOf(text);
@@ -85,11 +95,11 @@ export function analyzeWriting(text, k, lang = PRACTICE_LANG) {
   add(words.length >= lo && words.length <= hi, words.length < lo ? `Es muy corto para este tipo de texto (${words.length} palabras; ideal ${lo}–${hi}).`
     : words.length > hi ? `Es largo (${words.length} palabras; ideal ${lo}–${hi}). Quita lo que no ayude a lograr tu objetivo.` : `Buena extensión (${words.length} palabras).`);
   if (k.ask) {
-    if (!indirect) add(askIdx >= 0, askIdx >= 0 ? 'Hay un pedido explícito.' : 'No se ve un pedido claro: di exactamente qué necesitas («¿Puedes…?», «Necesito…»).');
-    if (indirect) add(false, 'Tu pedido es indirecto («quería ver si…», «podría…»): hazlo directo («¿Puedes revisar…?»).');
+    if (!indirect) add(askIdx >= 0, askIdx >= 0 ? 'Hay un pedido explícito.' : `No se ve un pedido claro: di exactamente qué necesitas (${ex.ask}).`);
+    if (indirect) add(false, `Tu pedido es indirecto (${ex.indirect}): hazlo directo (${ex.direct}).`);
     if (askIdx >= 0) add(askIdx <= 1, askIdx <= 1 ? 'El pedido está al inicio: quien lee entiende enseguida qué necesitas.' : `El pedido aparece recién en la frase ${askIdx + 1}. Súbelo al inicio (lo importante primero).`);
   }
-  if (k.deadline) add(DEADLINE_RE.test(text), DEADLINE_RE.test(text) ? 'Incluye un plazo o fecha.' : 'Falta un plazo: agrega para cuándo («antes del jueves a las 12»).');
+  if (k.deadline) add(DEADLINE_RE.test(text), DEADLINE_RE.test(text) ? 'Incluye un plazo o fecha.' : `Falta un plazo: agrega para cuándo (${ex.deadline}).`);
   add(avg <= 22 && longest <= 35, avg <= 22 && longest <= 35 ? 'Frases de largo cómodo.' : `Hay frases largas (la más larga tiene ${longest} palabras). Divide las de más de 25.`);
   if (words.length >= 30) add(read >= 55, read >= 55 ? `Fácil de leer (índice de legibilidad ${read}).` : `Cuesta leerlo (índice de legibilidad ${read}; apunta a 60 o más): usa palabras y frases más simples.`);
   add(hedges === 0, hedges === 0 ? 'Lenguaje seguro.' : `${hedges === 1 ? 'Una frase resta' : `${hedges} frases restan`} seguridad: ${[...new Set((text.replace(APOLOGY_RE, '').match(HEDGE_RE) || []).map(h => `«${h.trim().toLowerCase()}»`))].join(', ')}.`);

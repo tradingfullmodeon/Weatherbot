@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS plans (user TEXT PRIMARY KEY, plan TEXT, until REAL);
 CREATE TABLE IF NOT EXISTS usage (user TEXT, period TEXT, route TEXT, n INTEGER, PRIMARY KEY (user, period, route));
 CREATE TABLE IF NOT EXISTS spend (month TEXT PRIMARY KEY, usd REAL);
 CREATE TABLE IF NOT EXISTS answers (key TEXT PRIMARY KEY, at REAL, body TEXT);
+CREATE TABLE IF NOT EXISTS trials_used (user TEXT PRIMARY KEY);
 """
 _ready: set[str] = set()
 _lock = threading.Lock()
@@ -57,15 +58,20 @@ def _db():
     WAL permite leer mientras otro hilo escribe; el esquema se crea una sola vez por archivo.
     """
     path = db_path()
-    con = sqlite3.connect(path, timeout=10)
+    con = sqlite3.connect(path, timeout=30, isolation_level=None)   # transacciones explícitas (BEGIN IMMEDIATE)
     try:
         if path not in _ready:
             with _lock:
                 con.execute("PRAGMA journal_mode=WAL")
                 con.executescript(SCHEMA)
                 _ready.add(path)
-        with con:
+        con.execute("BEGIN IMMEDIATE")   # una escritura a la vez: cupos y altas no se pisan entre hilos
+        try:
             yield con
+            con.execute("COMMIT")
+        except BaseException:
+            con.execute("ROLLBACK")
+            raise
     finally:
         con.close()
 
@@ -118,19 +124,28 @@ def user_id(request: Request) -> str:
     return "ip_" + (request.client.host if request.client else "desconocido").replace(".", "_").replace(":", "_")
 
 
-def plan_of(user: str) -> tuple[str, float | None]:
-    """Plan vigente. Quien llega por primera vez recibe VOXA_DEFAULT_PLAN (por defecto, la prueba de 7 días)."""
-    with _db() as con:
+def _plan(con, user: str) -> tuple[str, float | None]:
+    """Plan vigente dentro de una transacción. Quien llega por primera vez recibe VOXA_DEFAULT_PLAN (por defecto,
+    la prueba de 7 días), salvo que ya la haya usado y después borrado sus datos: la prueba no se reinicia."""
+    row = con.execute("SELECT plan, until FROM plans WHERE user = ?", (user,)).fetchone()
+    if row is None:
+        plan = os.environ.get("VOXA_DEFAULT_PLAN", "prueba")
+        if plan == "prueba" and con.execute("SELECT 1 FROM trials_used WHERE user = ?", (user,)).fetchone():
+            plan = "gratis"
+        until = time.time() + TRIAL_DAYS * 86400 if plan == "prueba" else None
+        con.execute("INSERT OR IGNORE INTO plans VALUES (?, ?, ?)", (user, plan, until))
+        if plan == "prueba":
+            con.execute("INSERT OR IGNORE INTO trials_used VALUES (?)", (user,))
         row = con.execute("SELECT plan, until FROM plans WHERE user = ?", (user,)).fetchone()
-        if row is None:
-            plan = os.environ.get("VOXA_DEFAULT_PLAN", "prueba")
-            until = time.time() + TRIAL_DAYS * 86400 if plan == "prueba" else None
-            con.execute("INSERT INTO plans VALUES (?, ?, ?)", (user, plan, until))
-            return plan, until
     plan, until = row
     if until is not None and time.time() > until:
         return "gratis", None
     return plan, until
+
+
+def plan_of(user: str) -> tuple[str, float | None]:
+    with _db() as con:
+        return _plan(con, user)
 
 
 def set_plan(user: str, plan: str, until: float | None = None) -> None:
@@ -153,27 +168,50 @@ def used(user: str, plan: str, route: str) -> int:
 
 
 def check(user: str, route: str) -> None:
-    """Antes de llamar a la IA: corta si se acabó el cupo del plan o el presupuesto del mes."""
+    """Antes de llamar a la IA: reserva una unidad del cupo en la misma transacción en que la verifica, así varias
+    solicitudes en paralelo no pueden pasarse del cupo. Si la llamada falla, release() la devuelve."""
     budget = float(os.environ.get("VOXA_MONTHLY_BUDGET_USD", "0") or 0)
-    if budget and spent_this_month() >= budget:
-        raise HTTPException(503, "El coach IA está en pausa por hoy. El análisis local de tu práctica sigue funcionando.")
-    plan, _ = plan_of(user)
-    if used(user, plan, route) >= PLANS[plan][route]:
-        raise HTTPException(402, LIMIT_MSG[plan])
-
-
-def count(user: str, route: str, usd: float) -> None:
-    """Después de una llamada exitosa: suma el uso de la persona y el gasto del mes."""
-    plan, _ = plan_of(user)
     with _db() as con:
+        if budget:
+            row = con.execute("SELECT usd FROM spend WHERE month = ?", (month(),)).fetchone()
+            if (row[0] if row else 0.0) >= budget:
+                raise HTTPException(503, "El coach IA está en pausa por hoy. El análisis local de tu práctica sigue funcionando.")
+        plan, _ = _plan(con, user)
+        row = con.execute("SELECT n FROM usage WHERE user = ? AND period = ? AND route = ?", (user, _period(plan), route)).fetchone()
+        if (row[0] if row else 0) >= PLANS[plan][route]:
+            raise HTTPException(402, LIMIT_MSG[plan])
         con.execute("INSERT INTO usage VALUES (?, ?, ?, 1) ON CONFLICT(user, period, route) DO UPDATE SET n = n + 1",
                     (user, _period(plan), route))
+
+
+def release(user: str, route: str) -> None:
+    """Devuelve la unidad reservada cuando la IA falló o no entregó una respuesta usable: no se cobra."""
+    with _db() as con:
+        plan, _ = _plan(con, user)
+        con.execute("UPDATE usage SET n = MAX(0, n - 1) WHERE user = ? AND period = ? AND route = ?", (user, _period(plan), route))
+
+
+def add_spend(usd: float) -> None:
+    with _db() as con:
         con.execute("INSERT INTO spend VALUES (?, ?) ON CONFLICT(month) DO UPDATE SET usd = usd + excluded.usd", (month(), usd))
 
 
-def forget(user: str) -> None:
-    """Derecho a borrar: elimina el plan y el uso de esta persona. Las compras se recuperan con «Restaurar compras»."""
+def count(user: str, route: str, usd: float) -> None:
+    """Suma un uso y su gasto sin pasar por la reserva (pruebas y cargas manuales)."""
     with _db() as con:
+        plan, _ = _plan(con, user)
+        con.execute("INSERT INTO usage VALUES (?, ?, ?, 1) ON CONFLICT(user, period, route) DO UPDATE SET n = n + 1",
+                    (user, _period(plan), route))
+    add_spend(usd)
+
+
+def forget(user: str) -> None:
+    """Derecho a borrar: elimina el plan y el uso de esta persona. Las compras se recuperan con «Restaurar compras».
+
+    Sólo queda el id anónimo en trials_used, para que borrar los datos no reinicie la prueba gratis."""
+    with _db() as con:
+        if con.execute("SELECT 1 FROM plans WHERE user = ? AND plan = 'prueba'", (user,)).fetchone():
+            con.execute("INSERT OR IGNORE INTO trials_used VALUES (?)", (user,))
         con.execute("DELETE FROM plans WHERE user = ?", (user,))
         con.execute("DELETE FROM usage WHERE user = ?", (user,))
 

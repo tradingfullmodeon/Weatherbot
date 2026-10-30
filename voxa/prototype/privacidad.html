@@ -41,7 +41,7 @@
   <h2>Lo que llega a nuestro servidor (sólo con el coach IA)</h2>
   <ul>
     <li><strong>Al pedir un consejo, un roleplay, una evaluación, un correo mejorado o preguntas para tu evento:</strong> el texto de esa práctica, sus métricas numéricas y el material que agregaste para personalizarla.</li>
-    <li><strong>Tu identificador anónimo, tu plan y cuántas veces usaste cada función,</strong> para aplicar los cupos del plan.</li>
+    <li><strong>Tu identificador anónimo, tu plan y cuántas veces usaste cada función,</strong> para aplicar los cupos del plan. El identificador lo crea la app en tu teléfono; si no llega (por ejemplo, con el almacenamiento bloqueado), se usa uno derivado de tu dirección IP, sólo para los cupos.</li>
     <li><strong>La respuesta del coach se guarda 7 días,</strong> sin tu identificador, para no cobrarte dos veces la misma consulta. Después se borra sola.</li>
     <li><strong>No guardamos el texto de tus prácticas en una cuenta ni lo usamos para otros fines.</strong></li>
   </ul>
@@ -59,7 +59,7 @@
 
   <h2>Tus derechos</h2>
   <ul>
-    <li><strong>Borrar:</strong> Progreso → «Borrar todos mis datos» borra lo de tu dispositivo y lo que nuestro servidor guarda de ti (tu plan y tu uso).</li>
+    <li><strong>Borrar:</strong> Progreso → «Borrar todos mis datos» borra lo de tu dispositivo y lo que nuestro servidor guarda de ti (tu plan y tu uso). Sólo conservamos tu identificador anónimo como «prueba gratis ya usada», para que la prueba no se reinicie.</li>
     <li><strong>Llevarte tus datos:</strong> Progreso → «Exportar mis datos (JSON)».</li>
     <li><strong>Acceder, corregir u oponerte:</strong> escríbenos a [correo de contacto]. Respondemos en un máximo de 30 días.</li>
     <li>También puedes reclamar ante la autoridad de protección de datos de tu país.</li>
@@ -73,5 +73,9 @@
 
   <p class="note"><a href="terminos.html">Términos de uso</a> · <a href="index.html">Volver a Talkride</a></p>
 </main>
+<script type="module">
+import { applyDisplayPrefs } from './shared.js';
+applyDisplayPrefs();   // letra grande y alto contraste también en las páginas legales
+</script>
 </body>
 </html>

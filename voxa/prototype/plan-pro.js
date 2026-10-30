@@ -8,6 +8,8 @@ export const AI_FEATURES = [
   ['writing', 'correos mejorados'],
   ['event', 'preparaciones de evento'],
 ];
+const ONE = { feedback: 'consejo del coach', roleplay: 'turno de roleplay con personajes', evaluate: 'evaluación de roleplay',
+  writing: 'correo mejorado', event: 'preparación de evento' };
 // Lo que nunca se cobra: todo lo que se calcula en el teléfono.
 export const ALWAYS_FREE = [
   'Diagnóstico inicial, Índice Talkride y metas',
@@ -54,7 +56,8 @@ export function planLine(me, now = Date.now()) {
 
 export function remainingHTML(me) {
   if (!me || me.plan === 'gratis') return '';
-  return `<ul class="plan-left">${AI_FEATURES.map(([k, label]) => `<li><strong>${me.remaining[k] ?? 0}</strong> ${esc(label)}</li>`).join('')}</ul>`;
+  return `<ul class="plan-left">${AI_FEATURES.map(([k, label]) => { const n = me.remaining[k] ?? 0;
+    return `<li><strong>${n}</strong> ${esc(n === 1 ? ONE[k] : label)}</li>`; }).join('')}</ul>`;
 }
 
 // Al agotarse el cupo, el mensaje del servidor más un camino claro (nunca un error mudo).

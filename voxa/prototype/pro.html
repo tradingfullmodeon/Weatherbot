@@ -66,8 +66,9 @@ function showPlan() {
 
 // Compra en la app (App Store o Google Play) cuando el puente nativo está; en la web, el link de pago si hay uno.
 const store = window.VOXA_PURCHASES;
-async function confirmPro(isPro) {
-  $('buyMsg').textContent = isPro ? 'Listo: ya tienes Pro. Confirmando con el servidor…' : 'No encontramos una compra activa.';
+// fromStore: la tienda confirmó la compra. Desde «Ya pagué» (web) no hay confirmación hasta que el servidor la vea.
+async function confirmPro(isPro, fromStore = true) {
+  $('buyMsg').textContent = !isPro ? 'No encontramos una compra activa.' : fromStore ? 'La tienda confirmó tu compra. Activando Pro…' : 'Buscando tu pago…';
   if (!isPro) return;
   for (let i = 0; i < 5; i++) {   // el aviso de la tienda puede tardar unos segundos
     try { me = await syncMe(); } catch {}
@@ -75,7 +76,9 @@ async function confirmPro(isPro) {
     await new Promise(r => setTimeout(r, 2000));
   }
   showPlan();
-  $('buyMsg').textContent = me?.plan === 'pro' ? 'Listo: tienes Pro. El coach IA ya está disponible.' : 'Tu compra quedó registrada; el plan se activará en unos minutos.';
+  $('buyMsg').textContent = me?.plan === 'pro' ? 'Listo: tienes Pro. El coach IA ya está disponible.'
+    : fromStore ? 'Tu compra quedó registrada en la tienda; el plan se activará en unos minutos.'
+    : 'Todavía no vemos tu pago. Si ya pagaste, puede tardar unos minutos: vuelve a tocar «Ya pagué».';
 }
 
 async function showBuy() {
@@ -108,7 +111,7 @@ async function showBuy() {
   } else if (me?.checkout_url) {
     $('buy').innerHTML = `<div class="btns"><a class="btn-link cta" href="${esc(me.checkout_url)}" target="_blank" rel="noopener">Pasar a Pro</a></div>
       <p class="note">Después de pagar, vuelve a esta página y toca «Ya pagué».</p><div class="btns"><button id="paid">Ya pagué</button></div>`;
-    $('paid').addEventListener('click', () => confirmPro(true));
+    $('paid').addEventListener('click', () => confirmPro(true, false));
   } else {
     $('buy').innerHTML = '<p class="note">La suscripción se activa desde la app de Talkride para iPhone o Android.</p>';
   }

@@ -219,9 +219,16 @@ const PROFILE_KEY = 'voxa.profile.v1';
 // la visita para que el progreso no desaparezca de golpe; storageWorks() permite avisarlo.
 const memory = {};
 let storageOk = true;
+// Lee y valida la forma: un dato dañado (JSON roto o de otro tipo) se descarta sin romper la página
+// y sin confundirlo con un navegador que no guarda datos.
 function read(key, fallback) {
-  if (key in memory) return JSON.parse(memory[key]);
-  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { storageOk = false; return fallback; }
+  let raw;
+  if (key in memory) raw = memory[key];
+  else { try { raw = localStorage.getItem(key); } catch { storageOk = false; return fallback; } }
+  let v;
+  try { v = JSON.parse(raw); } catch { return fallback; }
+  const ok = Array.isArray(fallback) ? Array.isArray(v) : v !== null && typeof v === 'object' && !Array.isArray(v);
+  return ok ? (Array.isArray(v) ? v.filter(x => x && typeof x === 'object') : v) : fallback;
 }
 function write(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); delete memory[key]; return true; }
@@ -264,10 +271,20 @@ export function deviceId() {
 async function api(method, path, body) {
   // Toda llamada al coach lleva el idioma de práctica: el coach explica en español y cita y reescribe en ese idioma.
   const payload = body && typeof body === 'object' && !Array.isArray(body) && !('language' in body) ? { ...body, language: PRACTICE_LANG } : body;
-  const r = await fetch(API_BASE + path, { method, headers: { 'Content-Type': 'application/json', 'X-VOXA-User': deviceId() }, body: payload && JSON.stringify(payload) });
+  let r;
+  try {
+    r = await fetch(API_BASE + path, { method, headers: { 'Content-Type': 'application/json', 'X-VOXA-User': deviceId() }, body: payload && JSON.stringify(payload) });
+  } catch {
+    throw Object.assign(new Error('Sin conexión con el coach IA. Revisa tu internet; el análisis de tu práctica en el teléfono sigue funcionando.'), { status: 0 });
+  }
   if (!r.ok) {
-    let detail = `Error ${r.status}`;
-    try { detail = (await r.json()).detail || detail; } catch {}
+    let detail = r.status >= 500 ? 'El coach IA no está disponible en este momento. Inténtalo en unos minutos.' : `Error ${r.status}`;
+    try {
+      const d = (await r.json()).detail;
+      // El servidor manda texto; si llegara una lista de errores de validación, se muestra su primer mensaje.
+      if (typeof d === 'string' && d) detail = d;
+      else if (Array.isArray(d) && d[0]?.msg) detail = 'Algunos datos no son válidos: ' + d[0].msg;
+    } catch {}
     throw Object.assign(new Error(detail), { status: r.status });   // 402 = cupo del plan agotado
   }
   return r.json();

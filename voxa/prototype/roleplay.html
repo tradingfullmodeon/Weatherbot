@@ -64,7 +64,7 @@
     <div class="hint" id="hint"></div>
     <div class="talk">
       <button id="btnMic" class="cta" aria-pressed="false">Tocar para hablar</button>
-      <input id="txt" placeholder="…o escribe tu respuesta y pulsa Enter">
+      <input id="txt" maxlength="4000" placeholder="…o escribe tu respuesta y pulsa Enter">
       <button id="btnSend">Enviar</button>
     </div>
     <div class="toggles">
@@ -92,7 +92,7 @@
 
 <script type="module">
 import {
-  $, FILLER_RE, countMatches, wordCount, mean, esc, colorFor, highlight, renderNav, saveSession, aiStatus, postJSON, AI_MIN_WORDS, waitMessages, WAIT_STEPS, userLocale, loadProfile, saveProfile, loadSessions,
+  $, FILLER_RE, countMatches, wordCount, mean, esc, colorFor, highlight, renderNav, saveSession, aiStatus, postJSON, AI_MIN_WORDS, waitMessages, WAIT_STEPS, userLocale, loadProfile, saveProfile, loadSessions, PRACTICE_LANG, langInfo,
 } from './shared.js';
 import { unblockHelp } from './devices.js';
 import { INTERVIEW_PERSONA, createInterview, currentQuestion, interviewNext, interviewHint, interviewProgress, interviewScore, interviewReportHTML, quoteSaid } from './interview.js';
@@ -147,7 +147,7 @@ function pick(id) {
   $('personas').querySelectorAll('.persona').forEach(b => b.classList.toggle('on', b.dataset.id === id));
   $('brief').innerHTML = `<strong>${esc(persona.scenario)}</strong>Tu objetivo: ${esc(persona.goal)}
     <div class="note">Técnicas a practicar: ${persona.skills.map(esc).join(' · ')}</div>
-    ${ai ? '' : '<div class="note">Sin servidor IA: el entrevistador usa preguntas fijas y la evaluación es sólo por métricas.</div>'}
+    ${ai ? '' : `<div class="note">Sin servidor IA: el entrevistador usa preguntas fijas${PRACTICE_LANG !== 'es' ? ', en español' : ''} y la evaluación es sólo por métricas.</div>`}
     ${memoryNote(profile, persona)?.html || ''}`;
 }
 
@@ -155,7 +155,11 @@ $('btnBegin').addEventListener('click', () => {
   history = []; userSpeechMs = 0; offline = createInterview();
   $('chat').innerHTML = ''; $('hint').textContent = '';
   $('stage').style.display = 'block'; $('report').style.display = 'none';
-  addTurn('persona', persona.opening);
+  evaluatedAt = -1;
+  // Las frases de apertura de los personajes están en español: en otro idioma empieza la persona y el personaje
+  // responde ya en ese idioma.
+  if (ai && PRACTICE_LANG !== 'es') $('status').textContent = `Empieza tú: saluda y preséntate en ${langInfo(PRACTICE_LANG).label}. ${persona.name} te responderá en ese idioma.`;
+  else addTurn('persona', persona.opening);
   $('stage').scrollIntoView({ behavior: 'smooth' });
 });
 
@@ -226,6 +230,11 @@ function startListening() {
       'no-speech': 'No te escuchamos. Acércate al micrófono e inténtalo de nuevo.', 'audio-capture': 'No encontramos un micrófono. Revisa que esté conectado.',
       network: 'El dictado por voz necesita internet. Puedes escribir tu respuesta.' }[e.error];
     $('status').textContent = msg || 'Micrófono: ' + e.error;
+    // Si no se puede seguir escuchando, el botón vuelve a su estado inicial (no queda en «Tocar para enviar»).
+    if (e.error !== 'no-speech') {
+      recognition = null;
+      $('btnMic').classList.remove('rec-on'); $('btnMic').setAttribute('aria-pressed', 'false'); $('btnMic').textContent = 'Tocar para hablar';
+    }
   };
   recStart = performance.now();
   recognition.start();
@@ -270,6 +279,11 @@ async function send(ms) {
       $('status').textContent = next ? interviewProgress(offline) : 'Fin del simulacro. Pulsa «Terminar y evaluar».';
     }
   } catch (e) {
+    // El turno que no tuvo respuesta se saca de la conversación y vuelve a la caja de texto para reintentarlo.
+    if (history.at(-1)?.role === 'user' && history.at(-1).text === text) {
+      history.pop(); userSpeechMs = Math.max(0, userSpeechMs - ms); renderChat();
+      if (!$('txt').value) $('txt').value = text;
+    }
     $('status').innerHTML = esc(e.message) + upgradeHTML(e);
   } finally { busy = false; }
 }
@@ -288,9 +302,10 @@ $('btnRewind').addEventListener('click', () => {
 
 // ---------------------------------------------------------------- evaluación
 // Evita evaluar dos veces (y guardar dos sesiones) con un doble toque.
-let ending = false;
+let ending = false, evaluatedAt = -1;   // largo de la conversación ya evaluada: no se evalúa (ni se guarda) dos veces
 $('btnEnd').addEventListener('click', () => {
   if (ending) return;
+  if (evaluatedAt === history.length) { $('status').textContent = 'Ya evaluaste esta conversación. Sigue hablando o empieza una nueva para otra evaluación.'; return; }
   ending = true; $('btnEnd').disabled = true;
   endRoleplay().finally(() => { ending = false; $('btnEnd').disabled = false; });
 });
@@ -319,6 +334,7 @@ async function endRoleplay() {
   if (ev) { const { logro_objetivo: goalScore = 0, ...rest } = scores; total = Math.round(0.4 * goalScore + 0.6 * mean(Object.values(rest))); }
   else if (persona.id === 'offline') ({ scores, total } = interviewScore(offline, scores));
   else total = Math.round(mean(Object.values(scores)));
+  evaluatedAt = history.length;
   saveSession({
     id: Date.now().toString(36), date: new Date().toISOString(), type: 'roleplay',
     scenario: 'roleplay:' + persona.id, scenarioName: 'Roleplay: ' + persona.name, total, dims: scores,

@@ -23,13 +23,13 @@
       <div><label for="evDate">¿Cuándo es?</label><input type="date" id="evDate" class="field"></div>
     </div>
     <label for="evTitle">Ponle un nombre (opcional)</label>
-    <input id="evTitle" class="field" placeholder="Ej.: Entrevista en Banco Andino, charla en el congreso">
+    <input id="evTitle" class="field" maxlength="200" placeholder="Ej.: Entrevista en Banco Andino, charla en el congreso">
     <label for="evAudience" style="margin-top:10px">¿Ante quién? (opcional)</label>
-    <input id="evAudience" class="field" placeholder="Ej.: gerente de datos y RR. HH.; 200 personas del sector">
+    <input id="evAudience" class="field" maxlength="300" placeholder="Ej.: gerente de datos y RR. HH.; 200 personas del sector">
     <label for="evMessage" style="margin-top:10px">Tu mensaje clave en una frase (opcional)</label>
-    <input id="evMessage" class="field" placeholder="Ej.: Sé convertir datos en decisiones que ahorran dinero">
+    <input id="evMessage" class="field" maxlength="500" placeholder="Ej.: Sé convertir datos en decisiones que ahorran dinero">
     <label for="evConcern" style="margin-top:10px">¿Qué es lo que más te preocupa? (opcional)</label>
-    <input id="evConcern" class="field" placeholder="Ej.: quedarme en blanco, o que me pregunten por mi poca experiencia">
+    <input id="evConcern" class="field" maxlength="500" placeholder="Ej.: quedarme en blanco, o que me pregunten por mi poca experiencia">
     <details><summary>Agregar contexto: oferta de trabajo, guion o notas (opcional)</summary>
       <textarea id="evContext" maxlength="6000" placeholder="Pega aquí la oferta, tu presentación o tus notas."></textarea>
     </details>
@@ -107,7 +107,7 @@ aiStatus().then(s => { if (s.ai) $('evQuestionsAI').classList.remove('hidden'); 
 $('evQuestionsAI').addEventListener('click', async () => {
   const ev = profile.event;
   if (wordCount([ev.title, ev.audience, ev.message, ev.concern, ev.context].join(' ')) < AI_MIN_WORDS.event) {
-    $('evAI').innerHTML = '<p class="note">Sin datos de tu evento, las preguntas de la guía ya son las más probables. Completa ante quién, tu mensaje o lo que te preocupa (con «Nuevo evento») para recibir preguntas a tu medida.</p>';
+    $('evAI').innerHTML = '<p class="note">Sin datos de tu evento, las preguntas de la guía ya son las más probables. Completa ante quién, tu mensaje o lo que te preocupa (con «Preparar otro evento») para recibir preguntas a tu medida.</p>';
     return;
   }
   $('evQuestionsAI').disabled = true;

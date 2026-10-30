@@ -35,7 +35,7 @@
     </div>
     <p class="note" id="recState" aria-live="polite"></p>
     <label for="dgSaid">¿Qué dijiste? (se completa solo si tu navegador transcribe; puedes corregirlo)</label>
-    <textarea id="dgSaid" placeholder="Si no puedes grabarte ahora, escribe aquí tu presentación como la dirías."></textarea>
+    <textarea id="dgSaid" maxlength="20000" placeholder="Si no puedes grabarte ahora, escribe aquí tu presentación como la dirías."></textarea>
     <div class="progress hidden" id="dgProgress" aria-hidden="true"><div id="dgBar"></div></div>
     <p class="note" id="dgVoiceStatus" aria-live="polite"></p>
     <div id="dgWin" aria-live="polite"></div>
@@ -58,7 +58,7 @@
     <h2 tabindex="-1">Pide el viernes libre</h2>
     <div class="prompt"><strong>Escríbele a tu jefe o jefa</strong>Un mensaje breve para pedir el viernes libre, como lo enviarías de verdad.</div>
     <label for="dgWrite" class="visually-hidden">Tu mensaje</label>
-    <textarea id="dgWrite" placeholder="Hola Carolina: …"></textarea>
+    <textarea id="dgWrite" maxlength="6000" placeholder="Hola Carolina: …"></textarea>
     <p class="note" id="dgErr" aria-live="polite"></p>
     <div class="btns"><button id="dgBack3">← Atrás</button><button id="dgRun" class="cta">Ver mi diagnóstico</button></div>
   </section>
@@ -93,7 +93,12 @@ $('selfItems').addEventListener('click', (e) => {
 
 // ---------------------------------------------------------------- pasos: una pantalla a la vez
 const STEPS = [...document.querySelectorAll('.dg-step')];
-function go(n) {
+// Cada paso queda en el historial: «Atrás» del navegador o del gesto de Android vuelve al paso anterior
+// sin perder las respuestas, en vez de salir del diagnóstico.
+let step = 1;
+function go(n, push = true) {
+  if (push && n !== step) history.pushState({ dgStep: n }, '', `#paso-${n}`);
+  step = n;
   STEPS.forEach(st => st.classList.toggle('hidden', +st.dataset.step !== n));
   const cur = STEPS[n - 1];
   $('dgStepLabel').textContent = `Paso ${n} de ${STEPS.length} · ${cur.dataset.name}`;
@@ -101,6 +106,13 @@ function go(n) {
   window.scrollTo({ top: 0 });
   cur.querySelector('h2')?.focus({ preventScroll: true });
 }
+
+history.replaceState({ dgStep: 1 }, '', location.pathname + location.search);
+window.addEventListener('popstate', (e) => {
+  const n = e.state?.dgStep ?? 1;
+  if (n === 4 && !result) return go(3, false);   // el resultado se vuelve a calcular con «Ver mi diagnóstico»
+  go(n, false);
+});
 
 // ---------------------------------------------------------------- prueba de voz: grabar en vivo o subir
 let recording = null, recorder = null, stream = null, recognition = null, timer = 0, recStopped = null;
@@ -239,7 +251,14 @@ $('dgBack3').addEventListener('click', () => go(2));
 
 let result = null;
 $('dgRun').addEventListener('click', async () => {
-  $('dgErr').textContent = ''; $('dgRun').disabled = true;
+  $('dgErr').textContent = '';
+  // El mensaje mide la escritura; vacío, esa dimensión queda sin medir. Se avisa una vez y se puede seguir.
+  if (wordCount($('dgWrite').value) < 5 && !$('dgRun').dataset.warned) {
+    $('dgRun').dataset.warned = '1';
+    $('dgErr').textContent = 'Escribe el mensaje (unas líneas bastan) para medir tu escritura. Si prefieres seguir sin él, vuelve a tocar «Ver mi diagnóstico».';
+    return;
+  }
+  $('dgRun').disabled = true;
   const items = await analyzeVoice();
   const w = $('dgWrite').value.trim();
   const writingScore = wordCount(w) >= 5 ? analyzeWriting(w, KINDS.find(k => k.id === 'pedido')).score : null;
