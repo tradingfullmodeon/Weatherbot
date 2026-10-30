@@ -7,7 +7,7 @@
   const keys = window.VOXA_RC_KEYS || {};
   const apiKey = plugin && keys[cap.getPlatform && cap.getPlatform()];
   if (!plugin || !apiKey) return;
-  const ENTITLEMENT = window.VOXA_RC_ENTITLEMENT || 'pro';
+  const ENTITLEMENT = window.VOXA_RC_ENTITLEMENT || 'voxa_pro';   // el identificador del derecho en RevenueCat
   const LABELS = { MONTHLY: 'Mensual', ANNUAL: 'Anual', SIX_MONTH: 'Semestral', THREE_MONTH: 'Trimestral', WEEKLY: 'Semanal', LIFETIME: 'Para siempre' };
   let ready = null, byId = {};
 

@@ -13,7 +13,7 @@ test('sin la app, sin plugin o sin clave, no aparece la compra', () => {
   for (const w of [{}, native({}), native({ Purchases: {} })]) { load('native-purchases.js', w); assert.equal(w.VOXA_PURCHASES, undefined); }
 });
 
-test('compra: id del servidor, anual primero, Pro por el derecho «pro» y cancelación sin error', async () => {
+test('compra: id del servidor, anual primero, Pro por el derecho «voxa_pro» y cancelación sin error', async () => {
   const calls = [];
   const pkg = (identifier, packageType, priceString) => ({ identifier, packageType, product: { title: identifier, priceString } });
   const Purchases = {
@@ -21,7 +21,7 @@ test('compra: id del servidor, anual primero, Pro por el derecho «pro» y cance
     getOfferings: async () => ({ current: { availablePackages: [pkg('$rc_monthly', 'MONTHLY', '$5.99'), pkg('$rc_annual', 'ANNUAL', '$39.99')] } }),
     purchasePackage: async ({ aPackage }) => {
       if (aPackage.identifier === '$rc_monthly') throw Object.assign(new Error('cancelada'), { code: '1', userCancelled: true });
-      return { customerInfo: { entitlements: { active: { pro: {} } } } };
+      return { customerInfo: { entitlements: { active: { voxa_pro: {} } } } };
     },
     restorePurchases: async () => ({ customerInfo: { entitlements: { active: {} } } }),
   };

@@ -74,7 +74,7 @@ Se obtiene un link https con micrófono y cámara en vivo, coach IA incluido y a
 | `VOXA_DEFAULT_PLAN`, `VOXA_MONTHLY_BUDGET_USD`, `VOXA_RATE_LIMIT` | Plan inicial, tope de gasto del mes y consultas por minuto por IP |
 | `VOXA_ADMIN_TOKEN` | Acceso a `/api/admin/usage` |
 | `VOXA_REVENUECAT_AUTH` | Secreto del webhook de pagos |
-| `VOXA_REVENUECAT_SECRET`, `VOXA_RC_ENTITLEMENT` | Clave secreta de la API de RevenueCat y nombre del derecho (por defecto `pro`): `/api/me/sync` confirma una compra recién hecha |
+| `VOXA_REVENUECAT_SECRET`, `VOXA_RC_ENTITLEMENT` | Clave secreta de la API de RevenueCat y nombre del derecho (por defecto `voxa_pro`): `/api/me/sync` confirma una compra recién hecha |
 | `VOXA_CHECKOUT_URL` | Link de pago en la web, con `{user}` donde va el id de la persona (opcional) |
 | `VOXA_JWT_SECRET` o `VOXA_JWKS_URL` (+ `VOXA_JWT_AUD`) | Cuentas verificadas (Supabase Auth u otro emisor); sin ellas se usa el id del dispositivo |
 | `VOXA_CORS_ORIGINS` | Orígenes que pueden llamar a la API (por defecto, la app instalable) |

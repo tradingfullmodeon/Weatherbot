@@ -234,7 +234,7 @@ La decisión de cambiar es tuya. Hoy todo usa el modelo de mayor calidad.
 | 4 | Invitar a la beta con el link propio (la prueba de 7 días se activa sola) | Tú | — |
 | 5 | Cuentas de desarrollador: Apple (US$99/año) y Google Play (US$25) | Tú | 1–2 días de aprobación |
 | 6 | App instalable: descargar el APK de prueba desde GitHub Actions e instalarlo en un Android (con `VOXA_API_BASE` definida como variable del repositorio para usar el coach IA). iOS necesita una Mac o un compilador en la nube con la cuenta de Apple. Probar micrófono, cámara y transcripción en teléfonos reales | Tú (Android, 10 min); desarrollo (iOS) | 10 min Android; 1 semana iOS |
-| 7 | Pagos: crear en RevenueCat el derecho `pro` y una oferta con los paquetes mensual y anual; conectar las tiendas; webhook a `/api/webhooks/revenuecat` con `VOXA_REVENUECAT_AUTH`; cargar `VOXA_REVENUECAT_SECRET` en el servidor y las claves públicas al empaquetar la app. El código de la app y del servidor ya está | Tú, en los paneles | 1–2 días |
+| 7 | Pagos: crear en RevenueCat el derecho `voxa_pro` y una oferta con los paquetes mensual y anual; conectar las tiendas; webhook a `/api/webhooks/revenuecat` con `VOXA_REVENUECAT_AUTH`; cargar `VOXA_REVENUECAT_SECRET` en el servidor y las claves públicas al empaquetar la app. El código de la app y del servidor ya está | Tú, en los paneles | 1–2 días |
 | 8 | (Opcional) Cuentas con Supabase Auth y `VOXA_JWT_SECRET` o `VOXA_JWKS_URL` | Desarrollo | 3–5 días |
 | 9 | Publicar en las tiendas con 4,3 ★ o más en la beta | Tú | 1–2 semanas de revisión |
 

@@ -383,7 +383,7 @@ def test_admin_auth(monkeypatch):
     assert api.get("/api/admin/usage", headers={"Authorization": "Bearer adm"}).status_code == 200
 
 
-@pytest.mark.parametrize("sub", [{"subscriber": None}, {"subscriber": {"entitlements": {"pro": {"expires_date": "nunca"}}}}, {}])
+@pytest.mark.parametrize("sub", [{"subscriber": None}, {"subscriber": {"entitlements": {"voxa_pro": {"expires_date": "nunca"}}}}, {}])
 def test_sync_with_odd_revenuecat_answers_never_500(monkeypatch, sub):
     monkeypatch.setenv("VOXA_REVENUECAT_SECRET", "sk")
     monkeypatch.setattr(voxa, "fetch_subscriber", lambda u, s: sub)

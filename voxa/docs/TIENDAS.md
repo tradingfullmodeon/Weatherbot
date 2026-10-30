@@ -45,14 +45,14 @@ El código de la app y del servidor ya está listo. Estos nombres son los que es
 
 | Qué | Valor exacto | Dónde se usa en el código |
 |---|---|---|
-| Derecho (Entitlement) | `pro` | `VOXA_RC_ENTITLEMENT` en el servidor, `native-purchases.js` en la app |
+| Derecho (Entitlement) | `voxa_pro` (el que RevenueCat crea con el proyecto) | `VOXA_RC_ENTITLEMENT` en el servidor, `native-purchases.js` en la app |
 | Oferta (Offering) | `default`, marcada como **Current** | La app muestra los paquetes de la oferta actual |
 | Paquetes | `$rc_annual` (Anual) y `$rc_monthly` (Mensual) | La app muestra el anual primero |
 | App User ID | El id anónimo del dispositivo que genera Talkride | Igual en la app y en el servidor; no hay que configurarlo |
 
 **Probar ya, sin Google Play ni App Store: la Test Store de RevenueCat.** Cada proyecto de RevenueCat trae una tienda de prueba que imita a una real, sin cobros ([guía de RevenueCat](https://www.revenuecat.com/docs/test-and-launch/sandbox/test-store)). Es lo que pide el correo «Create your first product»:
 1. En RevenueCat, **Apps → Test Store**: créala y copia su clave, que empieza con `test_`.
-2. En **Product catalog**, crea en la Test Store dos productos, mensual y anual, con los precios de abajo. Asígnalos al derecho `pro` y ponlos en la oferta `default` como paquetes Mensual y Anual.
+2. En **Product catalog**, crea en la Test Store dos productos, mensual y anual, con los precios de abajo. Asígnalos al derecho `voxa_pro` y ponlos en la oferta `default` como paquetes Mensual y Anual.
 3. En GitHub, Settings → Secrets and variables → Actions → **Variables**, crea `VOXA_RC_TEST_KEY` con esa clave.
 4. El siguiente APK de prueba trae las compras activadas. En «Tu plan» verás los dos planes, y al «comprar» se abre la compra simulada de RevenueCat.
 
@@ -71,7 +71,7 @@ El paquete para la tienda **se niega a compilar con una clave `test_`**: nunca s
 
 1. **Apps** (menú de abajo a la izquierda) → agrega **Play Store**, con el paquete `app.talkride.coach`, y **App Store**, con el bundle ID `app.talkride.coach`. Cada una pide conectar su tienda: para Google, una cuenta de servicio con acceso a Play Console; para Apple, la clave de compras dentro de la app (In-App Purchase Key) de App Store Connect. El asistente de RevenueCat lo explica en cada caso.
 2. **Product catalog → Entitlements →** crea `pro`.
-3. **Product catalog → Products →** importa los productos de cada tienda y asígnalos al derecho `pro`.
+3. **Product catalog → Products →** importa los productos de cada tienda y asígnalos al derecho `voxa_pro`.
 4. **Product catalog → Offerings →** crea `default` con los paquetes Anual y Mensual de cada tienda, y márcala como **Current**.
 5. **API keys:**
    - Las claves públicas `goog_…` y `appl_…` van en GitHub, en Settings → Secrets and variables → Actions → Variables: `VOXA_RC_ANDROID_KEY`, y `VOXA_RC_IOS_KEY` cuando haya versión de iPhone.

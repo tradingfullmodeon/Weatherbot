@@ -332,13 +332,13 @@ def test_checkout_link_and_sync_with_revenuecat(monkeypatch):
     seen = {}
     def fake(uid, secret):
         seen.update(uid=uid, secret=secret)
-        return {"subscriber": {"entitlements": {"pro": {"expires_date": "2099-01-01T00:00:00Z"}}}}
+        return {"subscriber": {"entitlements": {"voxa_pro": {"expires_date": "2099-01-01T00:00:00Z"}}}}
     monkeypatch.setattr(voxa, "fetch_subscriber", fake)
     out = api.post("/api/me/sync", headers={"X-VOXA-User": "dispositivo777"}).json()
     assert out["plan"] == "pro" and seen == {"uid": "dispositivo777", "secret": "sk_test"}
     # Una suscripción vencida no da Pro.
     voxa.quotas.set_plan("dispositivo888", "gratis")
-    monkeypatch.setattr(voxa, "fetch_subscriber", lambda u, s: {"subscriber": {"entitlements": {"pro": {"expires_date": "2001-01-01T00:00:00Z"}}}})
+    monkeypatch.setattr(voxa, "fetch_subscriber", lambda u, s: {"subscriber": {"entitlements": {"voxa_pro": {"expires_date": "2001-01-01T00:00:00Z"}}}})
     assert api.post("/api/me/sync", headers={"X-VOXA-User": "dispositivo888"}).json()["plan"] == "gratis"
 
 

@@ -618,7 +618,7 @@ def me_sync(user: str = Depends(quotas.user_id)) -> dict:
             log.warning("RevenueCat no respondió: %s", e)
             raise HTTPException(502, "No pudimos confirmar la compra todavía. Inténtalo en un minuto.") from e
         ents = sub.get("entitlements") if isinstance(sub, dict) else None
-        ent = ents.get(os.environ.get("VOXA_RC_ENTITLEMENT", "pro")) if isinstance(ents, dict) else None
+        ent = ents.get(os.environ.get("VOXA_RC_ENTITLEMENT", "voxa_pro")) if isinstance(ents, dict) else None
         if isinstance(ent, dict):
             until = iso_to_ts(ent.get("expires_date"))
             if until is None or until > time.time():
