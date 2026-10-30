@@ -1,0 +1,31 @@
+# Benchmark visual de la categoría: colores reales de íconos y pantallas de las apps de comunicación en la App Store.
+# Corre al cambiar el script (voxa/docs/marca/benchmark_visual.py). Resumen en la página de la ejecución y en el
+# registro; detalle y hoja de íconos en Artifacts → talkride-benchmark-visual.
+name: Talkride benchmark visual
+
+on:
+  push:
+    paths: ["voxa/docs/marca/benchmark_visual.py", ".github/workflows/voxa-marca.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pillow
+      - run: |
+          python voxa/docs/marca/benchmark_visual.py --out "$RUNNER_TEMP/visual"
+          cat "$RUNNER_TEMP/visual/benchmark_visual.md" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: talkride-benchmark-visual
+          path: ${{ runner.temp }}/visual
+          retention-days: 30
