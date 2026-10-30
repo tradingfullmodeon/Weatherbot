@@ -64,7 +64,7 @@ export function madeForYou(sessions, recent = 10) {
 
 export function madeForYouHTML(drills) {
   if (!drills.length) return '';
-  return `<h2>🎯 Hecho para ti</h2><p class="note">Ejercicios armados con lo que dijiste en tus últimas prácticas.</p>
+  return `<h2 data-icon="goal">Hecho para ti</h2><p class="note">Ejercicios armados con lo que dijiste en tus últimas prácticas.</p>
     <div class="foryou">${drills.map(d => `<div class="fy"><strong>${esc(d.title)}</strong><p class="note">${esc(d.why)}</p><p>${esc(d.how)}</p>
       <a class="btn-link" href="${esc(d.href)}">${esc(d.cta)}</a></div>`).join('')}</div>`;
 }

@@ -1,7 +1,7 @@
   /* Versión publicable: complementa prototype/voxa.css. Una sola página con vistas. */
   :root[data-theme="dark"] {
     --bg: #0f1117; --card: #181b24; --text: #e8eaf0; --muted: #9aa1b2;
-    --line: #2a2f3c; --accent: #8b85ff; --accent-soft: #23244a;
+    --line: #2a2f3c; --accent: #5fd3c4; --accent-soft: #12302d;
     --good: #4ade80; --mid: #fbbf24; --bad: #f87171; --on-accent: #0f1117; color-scheme: dark;
   }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; } }

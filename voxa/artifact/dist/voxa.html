@@ -2,14 +2,14 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
   :root {
-    --bg: #f6f7fb; --card: #ffffff; --text: #1b1f2a; --muted: #5d6475;
-    --line: #e3e6ee; --accent: #4f46e5; --accent-soft: #eef0ff;
+    --bg: #f5f7f6; --card: #ffffff; --text: #1b1f2a; --muted: #5d6475;
+    --line: #e3e6e4; --accent: #0b6e66; --accent-soft: #e4f3f0;
     --good: #15803d; --mid: #b45309; --bad: #b91c1c; --on-accent: #ffffff;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #0f1117; --card: #181b24; --text: #e8eaf0; --muted: #9aa1b2;
-      --line: #2a2f3c; --accent: #8b85ff; --accent-soft: #23244a;
+      --line: #2a2f3c; --accent: #5fd3c4; --accent-soft: #12302d;
       --good: #4ade80; --mid: #fbbf24; --bad: #f87171; --on-accent: #0f1117;
     }
   }
@@ -147,9 +147,9 @@
   .aud-label { font-size: .8rem; color: var(--muted); margin-top: 4px; }
 
   /* ---------- Inicio ---------- */
-  .hero { background: linear-gradient(135deg, var(--accent), #7c3aed); color: #fff; border: 0; }
-  .hero .muted, .hero .note { color: #e0e7ff; }
-  .hero .btn-link.cta { background: #fff; color: #312e81; border-color: #fff; }
+  .hero { background: linear-gradient(160deg, #0b6e66, #084c47); color: #fff; border: 0; }   /* igual en claro y oscuro */
+  .hero .muted, .hero .note { color: #d3ece8; }
+  .hero .btn-link.cta { background: #fff; color: #084c47; border-color: #fff; }
   .hero a:not(.btn-link) { color: #fff; text-decoration: underline; text-underline-offset: 2px; }
   .wait { display: flex; align-items: center; gap: 8px; }
   .spinner { width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .9s linear infinite; flex: none; }
@@ -229,10 +229,13 @@
   .week .wk { width: 28px; height: 28px; border-radius: 50%; display: inline-grid; place-items: center; font-size: .7rem; border: 1px solid currentColor; opacity: .55; }
   .week .wk.on { background: var(--good); border-color: var(--good); color: #fff; opacity: 1; }
   .week .wk.today { outline: 2px solid var(--accent); outline-offset: 1px; opacity: 1; }
+  /* Íconos de línea propios junto a títulos y accesos (reemplazan los emojis). */
+  [data-icon] { display: inline-flex; align-items: center; gap: 8px; }
+  [data-icon] > svg { flex: none; color: var(--accent); }
   /* Versión publicable: complementa prototype/voxa.css. Una sola página con vistas. */
   :root[data-theme="dark"] {
     --bg: #0f1117; --card: #181b24; --text: #e8eaf0; --muted: #9aa1b2;
-    --line: #2a2f3c; --accent: #8b85ff; --accent-soft: #23244a;
+    --line: #2a2f3c; --accent: #5fd3c4; --accent-soft: #12302d;
     --good: #4ade80; --mid: #fbbf24; --bad: #f87171; --on-accent: #0f1117; color-scheme: dark;
   }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; } }
@@ -856,6 +859,14 @@ const ICONS = {
   chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
   pen: '<path d="M4 20l4-1 11-11-3-3L5 16z"/>',
   book: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 21V5"/>',
+  cam: '<rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/>',
+  mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+  cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  compass: '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+  clock: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>',
+  heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+  goal: '<path d="M4 18c4 0 5-9 10-9"/><circle cx="18" cy="9" r="3" fill="currentColor"/>',
+  person: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
 };
 const PAGES = [
   ['index.html', 'Hoy', 'home', true], ['evaluar.html', 'Evaluar', 'rec', true], ['roleplay.html', 'Roleplay', 'chat', true],
@@ -871,6 +882,10 @@ function applyDisplayPrefs(p = loadProfile()) {
   if (p.highContrast) root.dataset.contrast = 'alto'; else delete root.dataset.contrast;
 }
 
+function fillIcons(root) {
+  root.querySelectorAll('[data-icon]:not([data-icon-done])').forEach(el => { el.insertAdjacentHTML('afterbegin', icon(el.dataset.icon)); el.dataset.iconDone = ''; });
+}
+
 function renderNav() {
   applyDisplayPrefs();
   const here = location.pathname.split('/').pop() || 'index.html';
@@ -884,6 +899,8 @@ function renderNav() {
   bottom.innerHTML = PAGES.filter(p => p[3]).map(([href, label, ic]) =>
     `<a href="${href}" ${href === here ? 'class="on" aria-current="page"' : ''}>${icon(ic)}<span>${label}</span></a>`).join('');
   document.body.appendChild(bottom);
+  // Íconos propios en vez de emojis (que cambian según el teléfono): <strong data-icon="cam">Evaluar</strong>.
+  fillIcons(document);
   // App instalable y disponible sin conexión (sólo en http/https; el registro puede fallar sin consecuencias).
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 }
@@ -1943,8 +1960,8 @@ function firstWin(items) {
 function firstWinHTML(win) {
   if (!win) return '';
   const head = win.strength
-    ? `<p class="lead">✨ <strong>Tu primera fortaleza: ${esc(win.strength.label)}.</strong> Obtuviste ${esc(win.strength.display)}; lo recomendado es ${esc(win.strength.target)}.</p>`
-    : '<p class="lead">✨ <strong>Ya diste el paso más difícil: hablar frente al micrófono.</strong> Desde aquí todo se puede entrenar.</p>';
+    ? `<p class="lead"><strong>Tu primera fortaleza: ${esc(win.strength.label)}.</strong> Obtuviste ${esc(win.strength.display)}; lo recomendado es ${esc(win.strength.target)}.</p>`
+    : '<p class="lead"><strong>Ya diste el paso más difícil: hablar frente al micrófono.</strong> Desde aquí todo se puede entrenar.</p>';
   const next = win.next
     ? `<p>Lo primero que vamos a entrenar: <strong>${esc(win.next.label)}</strong>. Hoy: ${esc(win.next.display)}; la meta: ${esc(win.next.target)}.</p>`
     : '';

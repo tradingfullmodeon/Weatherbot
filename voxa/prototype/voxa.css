@@ -1,12 +1,12 @@
   :root {
-    --bg: #f6f7fb; --card: #ffffff; --text: #1b1f2a; --muted: #5d6475;
-    --line: #e3e6ee; --accent: #4f46e5; --accent-soft: #eef0ff;
+    --bg: #f5f7f6; --card: #ffffff; --text: #1b1f2a; --muted: #5d6475;
+    --line: #e3e6e4; --accent: #0b6e66; --accent-soft: #e4f3f0;
     --good: #15803d; --mid: #b45309; --bad: #b91c1c; --on-accent: #ffffff;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #0f1117; --card: #181b24; --text: #e8eaf0; --muted: #9aa1b2;
-      --line: #2a2f3c; --accent: #8b85ff; --accent-soft: #23244a;
+      --line: #2a2f3c; --accent: #5fd3c4; --accent-soft: #12302d;
       --good: #4ade80; --mid: #fbbf24; --bad: #f87171; --on-accent: #0f1117;
     }
   }
@@ -144,9 +144,9 @@
   .aud-label { font-size: .8rem; color: var(--muted); margin-top: 4px; }
 
   /* ---------- Inicio ---------- */
-  .hero { background: linear-gradient(135deg, var(--accent), #7c3aed); color: #fff; border: 0; }
-  .hero .muted, .hero .note { color: #e0e7ff; }
-  .hero .btn-link.cta { background: #fff; color: #312e81; border-color: #fff; }
+  .hero { background: linear-gradient(160deg, #0b6e66, #084c47); color: #fff; border: 0; }   /* igual en claro y oscuro */
+  .hero .muted, .hero .note { color: #d3ece8; }
+  .hero .btn-link.cta { background: #fff; color: #084c47; border-color: #fff; }
   .hero a:not(.btn-link) { color: #fff; text-decoration: underline; text-underline-offset: 2px; }
   .wait { display: flex; align-items: center; gap: 8px; }
   .spinner { width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .9s linear infinite; flex: none; }
@@ -226,3 +226,6 @@
   .week .wk { width: 28px; height: 28px; border-radius: 50%; display: inline-grid; place-items: center; font-size: .7rem; border: 1px solid currentColor; opacity: .55; }
   .week .wk.on { background: var(--good); border-color: var(--good); color: #fff; opacity: 1; }
   .week .wk.today { outline: 2px solid var(--accent); outline-offset: 1px; opacity: 1; }
+  /* Íconos de línea propios junto a títulos y accesos (reemplazan los emojis). */
+  [data-icon]:not(strong) { display: inline-flex; align-items: center; }
+  [data-icon] > svg { flex: none; color: var(--accent); margin-inline-end: 8px; vertical-align: -4px; }

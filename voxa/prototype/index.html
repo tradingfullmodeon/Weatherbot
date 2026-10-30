@@ -8,7 +8,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="theme-color" content="#4f46e5">
+<meta name="theme-color" content="#0b6e66">
 </head>
 <body>
 <header>
@@ -61,14 +61,14 @@
   <section class="card full">
     <h2>Practica lo que necesites</h2>
     <div class="quick">
-      <a href="evaluar.html"><strong>🎥 Evaluar</strong><span>Habla a la cámara y recibe un consejo concreto.</span></a>
-      <a href="roleplay.html"><strong>💬 Roleplay</strong><span>Ensaya una conversación difícil con un personaje.</span></a>
-      <a href="gimnasio.html"><strong>🎙 Gimnasio de voz</strong><span>Calentamientos de 1 minuto: respiración, tono y volumen.</span></a>
-      <a href="evento.html"><strong>📅 Evento real</strong><span>Prepara una entrevista, charla o reunión con fecha.</span></a>
-      <a href="escritura.html"><strong>✍️ Escritura</strong><span>Mejora un correo o mensaje antes de enviarlo.</span></a>
-      <a href="aprender.html"><strong>📘 Aprender</strong><span>Lecciones de 2 minutos con práctica incluida.</span></a>
-      <a href="diagnostico.html"><strong>🧭 Diagnóstico</strong><span>Tu nivel en 8 dimensiones y metas a tu medida.</span></a>
-      <a href="progreso.html"><strong>📈 Mi progreso</strong><span>Tu evolución, tu racha y tu plan de 30 días.</span></a>
+      <a href="evaluar.html"><strong data-icon="cam">Evaluar</strong><span>Habla a la cámara y recibe un consejo concreto.</span></a>
+      <a href="roleplay.html"><strong data-icon="chat">Roleplay</strong><span>Ensaya una conversación difícil con un personaje.</span></a>
+      <a href="gimnasio.html"><strong data-icon="mic">Gimnasio de voz</strong><span>Calentamientos de 1 minuto: respiración, tono y volumen.</span></a>
+      <a href="evento.html"><strong data-icon="cal">Evento real</strong><span>Prepara una entrevista, charla o reunión con fecha.</span></a>
+      <a href="escritura.html"><strong data-icon="pen">Escritura</strong><span>Mejora un correo o mensaje antes de enviarlo.</span></a>
+      <a href="aprender.html"><strong data-icon="book">Aprender</strong><span>Lecciones de 2 minutos con práctica incluida.</span></a>
+      <a href="diagnostico.html"><strong data-icon="compass">Diagnóstico</strong><span>Tu nivel en 8 dimensiones y metas a tu medida.</span></a>
+      <a href="progreso.html"><strong data-icon="chart">Mi progreso</strong><span>Tu evolución, tu racha y tu plan de 30 días.</span></a>
     </div>
   </section>
 
@@ -79,16 +79,16 @@
   </section>
 
   <section class="card" id="remindCard">
-    <h2>⏰ Recordatorio diario</h2>
+    <h2 data-icon="clock">Recordatorio diario</h2>
     <p class="note">Practicar siempre a la misma hora ayuda a crear el hábito. Elige la hora y tu calendario te avisará cada día.</p>
     <div class="row"><div><label for="remindTime">Hora</label><input type="time" id="remindTime" class="field" value="08:30"></div></div>
     <div class="btns hidden" id="remindNativeBox"><button id="remindNative" class="cta">🔔 Avisarme en este teléfono</button></div>
     <p class="note" id="remindNativeMsg" aria-live="polite"></p>
-    <div class="btns" id="remindCalBox"><button id="remindIcs" class="cta">📅 Agregar a mi calendario</button><a class="btn-link file-btn" id="remindGoogle" target="_blank" rel="noopener">Google Calendar</a></div>
+    <div class="btns" id="remindCalBox"><button id="remindIcs" class="cta">Agregar a mi calendario</button><a class="btn-link file-btn" id="remindGoogle" target="_blank" rel="noopener">Google Calendar</a></div>
   </section>
 
-  <details class="card full help-card" id="ayuda"><summary>💙 ¿Te sientes muy mal?</summary><div id="helpBox"></div></details>
-  <details class="card full help-card"><summary>🧭 Buscar un profesional</summary><div id="proBox"></div></details>
+  <details class="card full help-card" id="ayuda"><summary><span data-icon="heart">¿Te sientes muy mal?</span></summary><div id="helpBox"></div></details>
+  <details class="card full help-card"><summary><span data-icon="person">Buscar un profesional</span></summary><div id="proBox"></div></details>
 
   <section class="card" id="dispositivos">
     <h2>Tus dispositivos</h2>
@@ -110,7 +110,7 @@
 </main>
 
 <script type="module">
-import { $, esc, renderNav, loadProfile, saveProfile, loadSessions, GOALS, LOCALES, userLocale, aiStatus, getMe, applyDisplayPrefs } from './shared.js';
+import { $, esc, renderNav, loadProfile, saveProfile, loadSessions, GOALS, LOCALES, userLocale, aiStatus, getMe, applyDisplayPrefs, fillIcons } from './shared.js';
 import { planLine } from './plan-pro.js';
 import { madeForYou, madeForYouHTML } from './foryou.js';
 import { todayTask, streak, streakInfo, practicedToday } from './plan.js';
@@ -142,7 +142,7 @@ const TIPS = [
 ];
 $('tip').textContent = TIPS[Math.floor(Date.now() / 864e5) % TIPS.length];
 const nextLesson = LESSONS.find(l => !profile.lessons?.[l.id]);
-if (nextLesson) $('nextLesson').innerHTML = `<a href="aprender.html?leccion=${nextLesson.id}">📘 Lección sugerida (${nextLesson.minutes} min): ${esc(nextLesson.title)}</a>`;
+if (nextLesson) $('nextLesson').innerHTML = `<a href="aprender.html?leccion=${nextLesson.id}">Lección sugerida (${nextLesson.minutes} min): ${esc(nextLesson.title)}</a>`;
 
 // ---------------------------------------------------------------- bienvenida
 const fillLocales = (sel) => { for (const [id, label] of LOCALES) sel.add(new Option(label, id)); sel.value = userLocale(profile); };
@@ -181,7 +181,7 @@ $('tGo').href = task.href;
 // Con metas activas, la práctica del día avanza una meta; el plan de 30 días queda como alternativa.
 const gd = goalOfTheDay(profile.goals, sessions);
 if (gd) {
-  $('tWeek').textContent = '🎯 Tu meta de hoy';
+  $('tWeek').textContent = 'Tu meta de hoy';
   $('tText').textContent = gd.text;
   $('tGo').href = goalHref(gd.goal);
   $('tAlt').innerHTML = `<a href="${task.href}">O haz la del plan de 30 días: ${esc(task.text)}</a>`;
@@ -202,7 +202,7 @@ const last = sessions.filter(x => x.type === 'evaluacion').pop();
 // Si un día de descanso salvó la racha en los últimos dos días, se dice: así no parece un error.
 const rest = streakInfo(sessions).rested[0];
 const restedRecently = rest && (Date.now() - new Date(rest + 'T12:00').getTime()) < 2.5 * 864e5;
-$('tStreak').textContent = (s ? `🔥 ${s} ${s === 1 ? 'día seguido' : 'días seguidos'}` : 'Empieza tu racha hoy') +
+$('tStreak').textContent = (s ? `Racha: ${s} ${s === 1 ? 'día seguido' : 'días seguidos'}` : 'Empieza tu racha hoy') +
   (restedRecently ? ' · 🛡️ un día de descanso protegió tu racha (1 cada 7 días)' : '') +
   (last ? ` · Último puntaje: ${last.total} en «${last.scenarioName}»` : '');
 
@@ -254,7 +254,7 @@ $('remindIcs').addEventListener('click', () => {
 
 // ---------------------------------------------------------------- hecho para ti (con tus propios errores)
 const forYou = madeForYou(sessions);
-if (forYou.length && !firstRun) { $('forYouCard').innerHTML = madeForYouHTML(forYou); $('forYouCard').classList.remove('hidden'); }
+if (forYou.length && !firstRun) { $('forYouCard').innerHTML = madeForYouHTML(forYou); fillIcons($('forYouCard')); $('forYouCard').classList.remove('hidden'); }
 
 // ---------------------------------------------------------------- plan (sólo con el coach IA conectado)
 aiStatus().then(async (s) => {

@@ -270,8 +270,8 @@ export function firstWin(items) {
 export function firstWinHTML(win) {
   if (!win) return '';
   const head = win.strength
-    ? `<p class="lead">✨ <strong>Tu primera fortaleza: ${esc(win.strength.label)}.</strong> Obtuviste ${esc(win.strength.display)}; lo recomendado es ${esc(win.strength.target)}.</p>`
-    : '<p class="lead">✨ <strong>Ya diste el paso más difícil: hablar frente al micrófono.</strong> Desde aquí todo se puede entrenar.</p>';
+    ? `<p class="lead"><strong>Tu primera fortaleza: ${esc(win.strength.label)}.</strong> Obtuviste ${esc(win.strength.display)}; lo recomendado es ${esc(win.strength.target)}.</p>`
+    : '<p class="lead"><strong>Ya diste el paso más difícil: hablar frente al micrófono.</strong> Desde aquí todo se puede entrenar.</p>';
   const next = win.next
     ? `<p>Lo primero que vamos a entrenar: <strong>${esc(win.next.label)}</strong>. Hoy: ${esc(win.next.display)}; la meta: ${esc(win.next.target)}.</p>`
     : '';

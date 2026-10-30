@@ -120,7 +120,7 @@
 | 6 | Sin tamaño de letra ajustable ni alto contraste (pendiente de la primera revisión) | Accesibilidad; usuarios mayores o con baja visión | **Ajustes → Tamaño de la letra** (normal, grande, muy grande) y **Alto contraste** (texto secundario a 16,5:1 y bordes marcados), en todas las pantallas |
 
 **Autoridad sin rigidez** (lo que se mantiene a propósito):
-- **Color:** un solo color de acción, el índigo; verde, ámbar y rojo sólo para resultados. Con la persona en modo calma, los puntajes bajos se muestran en neutro.
+- **Color:** un solo color de acción, el petróleo (`#0b6e66`, elegido con el benchmark visual de [`marca/MARCA.md`](marca/MARCA.md) para no parecernos a otras apps); verde, ámbar y rojo sólo para resultados. Con la persona en modo calma, los puntajes bajos se muestran en neutro.
 - **Botones:** uno principal por pantalla, grande (52 px) y con verbo («Hacer la práctica de hoy», «Empezar», «Comenzar conversación»). Los secundarios van con borde, y los terciarios como enlace.
 - **Evidencia visible:** cada puntaje dice qué se midió y cuál es la meta («142 palabras/min; recomendado 120–165»). Así se gana autoridad: mostrando el método, no con adornos.
 - **Tono:** se tutea y se celebra lo logrado primero, con un solo foco de mejora. Es la práctica de los mejores profesores de oratoria y del feedback SBI.

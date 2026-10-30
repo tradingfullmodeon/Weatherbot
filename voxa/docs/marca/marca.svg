@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <title>Talkride</title>
   <path d="M176 118H336A76 76 0 0 1 412 194V270A76 76 0 0 1 336 346H234L152 404Q138 413 142 397L170 346A76 76 0 0 1 100 270V194A76 76 0 0 1 176 118Z" fill="#fff"/>
-  <path d="M162 286C232 286 250 186 318 186" fill="none" stroke="#4f46e5" stroke-width="32" stroke-linecap="round"/>
-  <circle cx="350" cy="186" r="25" fill="#f59e0b"/>
+  <path d="M162 286C232 286 250 186 318 186" fill="none" stroke="#0b6e66" stroke-width="32" stroke-linecap="round"/>
+  <circle cx="350" cy="186" r="25" fill="#f5a524"/>
 </svg>

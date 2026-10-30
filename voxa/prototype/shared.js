@@ -145,12 +145,20 @@ const ICONS = {
   chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
   pen: '<path d="M4 20l4-1 11-11-3-3L5 16z"/>',
   book: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 21V5"/>',
+  cam: '<rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/>',
+  mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+  cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  compass: '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+  clock: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>',
+  heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+  goal: '<path d="M4 18c4 0 5-9 10-9"/><circle cx="18" cy="9" r="3" fill="currentColor"/>',
+  person: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
 };
 const PAGES = [
   ['index.html', 'Hoy', 'home', true], ['evaluar.html', 'Evaluar', 'rec', true], ['roleplay.html', 'Roleplay', 'chat', true],
   ['gimnasio.html', 'Gimnasio', 'wave', true], ['escritura.html', 'Escritura', 'pen', false], ['aprender.html', 'Aprender', 'book', false], ['progreso.html', 'Progreso', 'chart', true],
 ];
-const icon = (k) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k]}</svg>`;
+export const icon = (k) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k]}</svg>`;
 export const STORAGE_WARNING = 'Este navegador no permite guardar datos (modo privado o cookies bloqueadas): tu progreso se perderá al cerrar la página. Ábrela en una ventana normal para conservarlo.';
 
 // Tamaño de letra y alto contraste elegidos en Ajustes (se aplican en todas las pantallas).
@@ -158,6 +166,10 @@ export function applyDisplayPrefs(p = loadProfile()) {
   const root = document.documentElement;
   if (p.textSize && p.textSize !== 'normal') root.dataset.text = p.textSize; else delete root.dataset.text;
   if (p.highContrast) root.dataset.contrast = 'alto'; else delete root.dataset.contrast;
+}
+
+export function fillIcons(root) {
+  root.querySelectorAll('[data-icon]:not([data-icon-done])').forEach(el => { el.insertAdjacentHTML('afterbegin', icon(el.dataset.icon)); el.dataset.iconDone = ''; });
 }
 
 export function renderNav() {
@@ -173,6 +185,8 @@ export function renderNav() {
   bottom.innerHTML = PAGES.filter(p => p[3]).map(([href, label, ic]) =>
     `<a href="${href}" ${href === here ? 'class="on" aria-current="page"' : ''}>${icon(ic)}<span>${label}</span></a>`).join('');
   document.body.appendChild(bottom);
+  // Íconos propios en vez de emojis (que cambian según el teléfono): <strong data-icon="cam">Evaluar</strong>.
+  fillIcons(document);
   // App instalable y disponible sin conexión (sólo en http/https; el registro puede fallar sin consecuencias).
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 }

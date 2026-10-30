@@ -8,7 +8,7 @@ const HERE = __dirname;
 const VOXA = path.resolve(HERE, '../..');
 const RES = path.join(VOXA, 'app/android/app/src/main/res');
 const IOS = path.join(VOXA, 'app/ios/App/App/Assets.xcassets');
-const BG = 'linear-gradient(135deg, #4f46e5, #7c3aed)';
+const BG = 'linear-gradient(160deg, #0b6e66, #084c47)';
 const svg = (f) => 'data:image/svg+xml;base64,' + fs.readFileSync(path.join(HERE, f)).toString('base64');
 const ICON = svg('icono.svg'), MARK = svg('marca.svg');
 

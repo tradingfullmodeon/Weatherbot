@@ -4,6 +4,6 @@
   "webDir": "www",
   "server": { "androidScheme": "https" },
   "plugins": {
-    "LocalNotifications": { "iconColor": "#5b4bdb" }
+    "LocalNotifications": { "iconColor": "#0b6e66" }
   }
 }
