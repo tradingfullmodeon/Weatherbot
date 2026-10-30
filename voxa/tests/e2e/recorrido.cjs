@@ -7,6 +7,9 @@
 //
 // Falla (código 1) si hay errores de JavaScript, botones demasiado chicos, contenido que se sale de la pantalla
 // o algún paso del recorrido no llega a donde debe.
+//
+// Con VOXA_STORE=carpeta además guarda, a 1290 × 2796 (iPhone 6,7"), las pantallas para las tiendas: después
+// node voxa/docs/marca/capturas_tienda.cjs carpeta les pone el título y el marco de la marca.
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -14,6 +17,10 @@ const path = require('path');
 const BASE = (process.argv[2] || 'http://localhost:8800').replace(/\/$/, '');
 const OUT = process.argv[3] || 'capturas';
 fs.mkdirSync(OUT, { recursive: true });
+const STORE = process.env.VOXA_STORE;
+// Pantalla → elemento que queda arriba en la captura para la tienda.
+const STORE_SHOTS = { '05-hoy': 'header', '07-evaluar-reporte': '#report', '09-roleplay-conversacion': '#chat',
+  '10-roleplay-evaluacion': '#report', '13-evento': '#eventCard', '14-gimnasio': 'header', '16-progreso': 'header' };
 
 const problems = [];
 const steps = [];
@@ -45,6 +52,16 @@ async function shoot(page, name) {
     await page.screenshot({ path: path.join(OUT, `${name}-${scheme}.png`), fullPage: true });
   }
   await page.emulateMedia({ colorScheme: 'light' });
+  if (STORE && STORE_SHOTS[name]) {
+    fs.mkdirSync(STORE, { recursive: true });
+    await page.evaluate((sel) => {
+      const el = document.querySelector(sel);
+      window.scrollTo(0, el && sel !== 'header' ? el.getBoundingClientRect().top + window.scrollY - 24 : 0);
+    }, STORE_SHOTS[name]);
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: path.join(STORE, `${name}.png`) });
+    await page.evaluate(() => window.scrollTo(0, 0));
+  }
 }
 
 (async () => {
@@ -52,7 +69,7 @@ async function shoot(page, name) {
   const audio = process.env.VOXA_FAKE_AUDIO;
   const browser = await chromium.launch({ args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream',
     ...(audio ? [`--use-file-for-fake-audio-capture=${path.resolve(audio)}`] : [])] });
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, permissions: ['microphone', 'camera'], locale: 'es-CL' });
+  const ctx = await browser.newContext({ viewport: STORE ? { width: 430, height: 932 } : { width: 390, height: 844 }, deviceScaleFactor: STORE ? 3 : 1, permissions: ['microphone', 'camera'], locale: 'es-CL' });
   const page = await ctx.newPage();
   const jsErrors = [];
   page.on('pageerror', e => jsErrors.push(`${page.url().split('/').pop()}: ${e.message}`));

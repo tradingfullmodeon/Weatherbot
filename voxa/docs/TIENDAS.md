@@ -171,10 +171,19 @@ Dímelos y los reemplazo. Antes de publicar, conviene que alguien con conocimien
 
 **Categoría:** Educación (secundaria: Productividad)
 
-**Capturas sugeridas** (6, en un teléfono de 6,7"):
-1. «Tu primera fortaleza en 1 minuto» (diagnóstico).
-2. «Así suena tu voz»: el reporte de la práctica.
-3. «Te dice qué falta en tu respuesta» (estructura STAR).
-4. «Ensaya con personajes que reaccionan a cómo hablas» (roleplay).
-5. «Tu plan hasta el día de tu entrevista» (evento real).
-6. «Te comparas contigo» (progreso e Índice Talkride).
+**Capturas (listas para subir):** 7 pantallas reales de la app, con el título y el marco de la marca, en [`marca/tienda/ios/`](marca/tienda/ios/) (1290 × 2796, iPhone 6,7") y [`marca/tienda/android/`](marca/tienda/android/) (1080 × 1920). Súbelas en este orden:
+
+1. «Practica la conversación antes de tenerla» (Hoy).
+2. «Ensaya con personajes que reaccionan a cómo hablas» (roleplay).
+3. «Un consejo concreto después de cada práctica» (reporte de Evaluar).
+4. «Sabes qué hiciste bien y qué cambiar» (evaluación del roleplay).
+5. «Llega preparado a tu entrevista, charla o reunión» (evento real).
+6. «Calienta tu voz en un minuto» (gimnasio).
+7. «Mira cómo avanzas, semana a semana» (progreso).
+
+Para regenerarlas después de cambiar la app:
+
+1. Corre el recorrido con `VOXA_STORE=pantallas` (ver `tests/e2e/recorrido.cjs`).
+2. Luego corre `node voxa/docs/marca/capturas_tienda.cjs pantallas`.
+
+El ícono para Google Play (512 × 512) y la portada (1024 × 500) están en `marca/`.
