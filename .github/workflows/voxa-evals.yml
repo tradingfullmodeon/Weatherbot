@@ -1,0 +1,47 @@
+# Prueba real de modelos y nubes en cada función de VOXA (server/evals), con la clave de pruebas guardada como
+# secreto de GitHub (Settings → Secrets and variables → Actions → Secrets → ANTHROPIC_API_KEY). Nadie ve la clave.
+# Se ejecuta sólo a mano (Actions → «VOXA pruebas de modelos» → Run workflow): cuesta menos de US$1 por corrida.
+# El resumen queda en la página de la ejecución y el detalle (todas las respuestas) en Artifacts → voxa-evals.
+name: VOXA pruebas de modelos
+
+on:
+  workflow_dispatch:
+    inputs:
+      models:
+        description: "Modelos separados por coma"
+        default: "claude-opus-5-5,claude-sonnet-5-5,claude-haiku-5-5"
+      repeat:
+        description: "Repeticiones por caso (1 a 3)"
+        default: "1"
+
+permissions:
+  contents: read
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Revisar que esté la clave de pruebas
+        env:
+          KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: test -n "$KEY" || { echo "::error::Falta el secret ANTHROPIC_API_KEY (la clave voxa-pruebas)"; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r voxa/server/requirements.txt
+      - name: Correr el banco de pruebas
+        working-directory: voxa/server
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MODELS: ${{ inputs.models }}
+          REPEAT: ${{ inputs.repeat }}
+        run: |
+          python -m evals.run --models "$MODELS" --repeat "$REPEAT" --out "$RUNNER_TEMP/evals/RESULTADOS.md"
+          cat "$RUNNER_TEMP/evals/RESULTADOS.md" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: voxa-evals
+          path: ${{ runner.temp }}/evals
+          retention-days: 30
