@@ -24,7 +24,7 @@ Trámites para que **Plenior SpA** sea dueña de Talkride y la publique en Googl
 |---|---|---|---|
 | 1 | Revisar el objeto social y ampliarlo si hace falta | Registro de Empresas y Sociedades | Pendiente (dueño) |
 | 2 | Ampliar la glosa en el SII y agregar la actividad 582000 | SII | Pendiente (dueño) |
-| 3 | Pedir el D-U-N-S | Apple D-U-N-S lookup | Pendiente (dueño) |
+| 3 | Pedir el D-U-N-S | Apple D-U-N-S lookup | **Solicitado el 31-10-2026**; esperar el correo de D&B en administracion@plenior.cl |
 | 4 | Hacer a Plenior emisor electrónico | SII + certificado digital | Pendiente (dueño + contador) |
 | 5 | Confirmar el régimen y el tratamiento de los pagos de las tiendas | Contador | Pendiente |
 | 6 | Cuenta bancaria a nombre de Plenior | Banco | Pendiente (dueño) |
