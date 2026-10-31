@@ -123,14 +123,11 @@ Las tarjetas «Install SDK» y «Create your first paywall» se pueden marcar co
 5. **Compilar:** iOS necesita una Mac con Xcode, o un servicio de compilación en la nube con macOS, con tu cuenta de Apple. Cuando tengas la cuenta, preparo el flujo para compilar en la nube y subir a TestFlight.
 6. **Notas para la revisión de Apple:** «No requiere cuenta. La prueba de 7 días del coach IA se activa al abrir la app. Para probar: Hoy → Hacer la práctica de hoy. El micrófono y la cámara se usan para analizar la práctica en el dispositivo».
 
-## 5. Datos legales que faltan
+## 5. Datos legales
 
-En `prototype/privacidad.html` y `prototype/terminos.html` hay tres marcadores entre corchetes que sólo tú puedes completar:
-- **[nombre de la persona o empresa responsable]**;
-- **[país]**, que define la ley aplicable;
-- **[correo de contacto]**, mejor uno dedicado como `privacidad@…`.
+El responsable de Talkride es **Plenior SpA** (RUT 78.512.567-3, Las Condes, Chile), con ley aplicable chilena y contacto `administracion@plenior.cl`. Ya está cargado en `prototype/privacidad.html` y `prototype/terminos.html`. Cuando exista un correo dedicado (por ejemplo `privacidad@talkride.app`), basta con reemplazarlo.
 
-Dímelos y los reemplazo. Antes de publicar, conviene que alguien con conocimiento legal de tu país revise ambos textos.
+Antes de publicar, conviene que un abogado revise ambos textos. Los trámites de la empresa para publicar a su nombre están en [`empresa/PLENIOR.md`](empresa/PLENIOR.md).
 
 ## 6. Fichas de las tiendas (textos listos)
 
