@@ -28,7 +28,7 @@ Trámites para que **Plenior SpA** sea dueña de Talkride y la publique en Googl
 | 4 | Hacer a Plenior emisor electrónico | SII + certificado digital | Pendiente (dueño + contador) |
 | 5 | Confirmar el régimen y el tratamiento de los pagos de las tiendas | Contador | Pendiente |
 | 6 | Cuenta bancaria a nombre de Plenior | Banco | Pendiente (dueño) |
-| 7 | Correo `apps@plenior.cl` para las cuentas de desarrollador | Google Workspace | Pendiente (dueño) |
+| 7 | Grupo `apps@plenior.cl` para las cuentas de desarrollador | Google Workspace → Grupos | Pendiente (dueño); ya hay acceso a la consola |
 | 8 | Cuentas de organización en Google Play y Apple | Play Console / Apple Developer | Después del D-U-N-S |
 | 9 | Cesión de derechos del código de Talkride a Plenior | Ver `CESION_TALKRIDE.md` | Borrador listo |
 | 10 | Marca TALKRIDE a nombre de Plenior | INAPI. Ver `MARCA_TALKRIDE.md` | Datos listos |
@@ -86,7 +86,14 @@ Apple y Google pagan sólo a una cuenta **a nombre de Plenior SpA**. Sirve en pe
 
 ## 7. Correo para las cuentas de desarrollador
 
-Crea `apps@plenior.cl` (o reenvía ese alias a tu correo) en https://admin.google.com. Úsalo para inscribir a Plenior en Google Play Console y en Apple Developer. Así las cuentas quedan en la empresa y no dependen de un Gmail personal.
+`apps@plenior.cl` se crea como **grupo** (gratis), no como usuario, porque cada usuario es una licencia de Workspace de unos $15.400 al mes:
+
+1. https://admin.google.com → **Grupos → Crear grupo**.
+2. Nombre `Apps Talkride`, correo `apps`, propietario `administracion@plenior.cl`.
+3. Quién puede publicar en el grupo: **cualquier persona de Internet**, para que lleguen los correos de Apple, Google y D&B.
+4. Agrega a `administracion@plenior.cl` como miembro.
+
+Para iniciar sesión en Play Console y en Apple se usa `administracion@plenior.cl`. `apps@plenior.cl` queda como correo de contacto del desarrollador.
 
 ## 8. Cuentas de organización (cuando llegue el D-U-N-S)
 
