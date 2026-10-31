@@ -83,7 +83,7 @@ Las tarjetas «Install SDK» y «Create your first paywall» se pueden marcar co
 
 ## 3. Google Play (Android)
 
-1. **Cuenta:** https://play.google.com/console (US$25, una sola vez). Las cuentas personales nuevas deben hacer una **prueba cerrada con 12 personas durante 14 días** antes de publicar. La beta de 30 personas del plan de acción sirve para eso.
+1. **Cuenta:** https://play.google.com/console (US$25, una sola vez), de tipo **organización** a nombre de Plenior SpA, con su D-U-N-S. El paso a paso está en [`empresa/PLENIOR.md`](empresa/PLENIOR.md) §8. Con cuenta de organización **no se exige** la prueba cerrada de 12 personas durante 14 días; igual conviene hacer la beta (`BETA.md`) para corregir antes del lanzamiento.
 2. **Crear la app:** nombre «Talkride: habla con seguridad», idioma español (Latinoamérica), app gratuita con compras.
 3. **Clave de subida** (una vez, en tu computadora; guárdala con su contraseña en un lugar seguro):
    - Instala un JDK gratis (por ejemplo Temurin) o usa el de Android Studio.
@@ -104,21 +104,29 @@ Las tarjetas «Install SDK» y «Create your first paywall» se pueden marcar co
    | Audio | No se recopila: se analiza en el teléfono |
    | Fotos y videos | No se recopila: se analiza en el teléfono |
    | Otro contenido generado por el usuario | Sí: el texto que se envía al coach IA. Propósito: funcionalidad de la app. Opcional. Se conserva hasta 7 días |
-   | ID de dispositivo u otros identificadores | Sí: el id anónimo de Talkride. Propósito: funcionalidad de la app (cupos y compras) |
+   | ID de dispositivo u otros identificadores | Sí: el id anónimo de Talkride. Propósito: funcionalidad de la app (cupos y compras) y estadísticas |
+   | Actividad en la app → Interacciones con la app | Sí: qué tipo de práctica se hace cada día, nunca su contenido. Propósito: estadísticas |
+   | Otro contenido generado por el usuario (opiniones) | Sí, si la persona envía su opinión: estrellas, recomendación y comentario. Propósito: estadísticas y mejorar la app. Opcional |
+   | ¿La recopilación es obligatoria? | El texto del coach y la opinión son opcionales; el id y el tipo de práctica se envían al usar la app |
    | Historial de compras | Sí, a través de RevenueCat. Propósito: funcionalidad de la app |
    | ¿Se cifran en tránsito? | Sí (https) |
    | ¿Se pueden borrar? | Sí: Progreso → «Borrar todos mis datos» |
 
 6. **Clasificación de contenido:** cuestionario IARC. No tiene violencia, compras de azar ni interacción entre usuarios: queda «Para todos» o «PEGI 3».
-7. **Política de privacidad:** `https://TU-SERVICIO.onrender.com/privacidad.html`.
+7. **Política de privacidad:** `https://talkride.app/privacidad.html` cuando el dominio esté conectado; mientras tanto, `https://voxa-kfg6.onrender.com/privacidad.html`.
+8. **Eliminación de cuenta:** Talkride no crea cuentas, así que Google no exige un enlace para borrarlas. Si lo pregunta, la respuesta es que los datos se borran desde la app (Progreso → «Borrar todos mis datos»).
 
 ## 4. App Store (iPhone)
 
-1. **Cuenta:** https://developer.apple.com/programs (US$99 al año). Como persona o como empresa; como empresa se necesita un número D-U-N-S.
+1. **Cuenta:** https://developer.apple.com/programs (US$99 al año), como **organización** a nombre de Plenior SpA, con su D-U-N-S (solicitado el 31-10-2026).
 2. **App Store Connect → Apps → +:** nombre «Talkride: habla con seguridad», bundle ID `app.talkride.coach`, SKU `talkride`.
 3. **Suscripciones:** el grupo «Talkride Pro» con `voxa_pro_mensual` y `voxa_pro_anual` (§2).
 4. **Privacidad de la app:**
-   - Datos no vinculados a la identidad: contenido del usuario, identificadores (id de dispositivo) y compras, todos para funcionalidad de la app.
+   - Datos no vinculados a la identidad:
+     - contenido del usuario (texto del coach y opiniones): funcionalidad de la app y estadísticas;
+     - identificadores (id de dispositivo): funcionalidad de la app y estadísticas;
+     - compras: funcionalidad de la app;
+     - datos de uso → interacción con el producto (tipo de práctica por día): estadísticas.
    - **Sin rastreo.**
 5. **Compilar:** iOS necesita una Mac con Xcode, o un servicio de compilación en la nube con macOS, con tu cuenta de Apple. Cuando tengas la cuenta, preparo el flujo para compilar en la nube y subir a TestFlight.
 6. **Notas para la revisión de Apple:** «No requiere cuenta. La prueba de 7 días del coach IA se activa al abrir la app. Para probar: Hoy → Hacer la práctica de hoy. El micrófono y la cámara se usan para analizar la práctica en el dispositivo».
@@ -139,7 +147,7 @@ Antes de publicar, conviene que un abogado revise ambos textos. Los trámites de
 
 **Descripción larga:**
 
-> Habla con seguridad en entrevistas, presentaciones, reuniones y conversaciones difíciles. Talkride es tu entrenador de comunicación en español: practicas unos minutos al día y ves cómo mejoras.
+> Habla con seguridad en entrevistas, presentaciones, reuniones y conversaciones difíciles. Talkride es tu entrenador de comunicación: practicas unos minutos al día con el método RIDE y ves cómo mejoras, nivel por nivel.
 >
 > EMPIEZA SABIENDO DÓNDE ESTÁS
 > Un diagnóstico de 6 minutos mide tu voz, tu estructura y tu escritura en 8 dimensiones. En el primer minuto ya ves tu primera fortaleza.
@@ -155,6 +163,11 @@ Antes de publicar, conviene que un abogado revise ambos textos. Los trámites de
 > • Roleplay con 9 personajes: reclutadora, jefe, cliente, comité, y conversaciones de feedback o malas noticias.
 > • Evento real: plan día a día hasta tu fecha y las preguntas más probables.
 > • Correos y mensajes reescritos listos para enviar.
+>
+> UN MÉTODO, CINCO NIVELES
+> • Método RIDE: Reconoce, Intención, Dilo, Evalúa y repite. Cada práctica sigue los mismos cuatro pasos.
+> • De Explorador a Referente: cada nivel trae sus situaciones, sus lecciones y un roleplay más exigente. Subes cuando lo demuestras en práctica, no por tiempo.
+> • Practica en español, inglés, portugués, francés, alemán o italiano (la app está en español).
 >
 > HECHO CON CUIDADO
 > • Modo calma para quienes se ponen nerviosos.
@@ -184,3 +197,7 @@ Para regenerarlas después de cambiar la app:
 2. Luego corre `node voxa/docs/marca/capturas_tienda.cjs pantallas`.
 
 El ícono para Google Play (512 × 512) y la portada (1024 × 500) están en `marca/`.
+
+### Otros idiomas de la ficha
+
+La interfaz de Talkride está en español; los otros 5 idiomas son para **practicar**. Por eso la ficha se publica sólo en español (Latinoamérica). Una ficha en inglés haría creer que la app está en inglés, lo que genera malas reseñas y puede ser motivo de rechazo en Apple. Se agrega cuando la interfaz se traduzca.
