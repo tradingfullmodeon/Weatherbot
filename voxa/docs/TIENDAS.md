@@ -70,14 +70,14 @@ El paquete para la tienda **se niega a compilar con una clave `test_`**: nunca s
 **Los 6 pasos del panel de RevenueCat** (la lista «Let's get you ready»):
 
 1. **Apps** (menú de abajo a la izquierda) → agrega **Play Store**, con el paquete `app.talkride.coach`, y **App Store**, con el bundle ID `app.talkride.coach`. Cada una pide conectar su tienda: para Google, una cuenta de servicio con acceso a Play Console; para Apple, la clave de compras dentro de la app (In-App Purchase Key) de App Store Connect. El asistente de RevenueCat lo explica en cada caso.
-2. **Product catalog → Entitlements →** crea `pro`.
+2. **Product catalog → Entitlements →** ya existe `voxa_pro`; no crees otro.
 3. **Product catalog → Products →** importa los productos de cada tienda y asígnalos al derecho `voxa_pro`.
 4. **Product catalog → Offerings →** crea `default` con los paquetes Anual y Mensual de cada tienda, y márcala como **Current**.
 5. **API keys:**
    - Las claves públicas `goog_…` y `appl_…` van en GitHub, en Settings → Secrets and variables → Actions → Variables: `VOXA_RC_ANDROID_KEY`, y `VOXA_RC_IOS_KEY` cuando haya versión de iPhone.
-   - Crea también una **secret key** para el servidor y pégala en Render como `VOXA_REVENUECAT_SECRET`.
+   - Crea también una **secret key** para el servidor, de **API versión V1** (el servidor usa `/v1/subscribers`), y pégala en Render como `VOXA_REVENUECAT_SECRET`.
    - Si quieres que yo revise la configuración, crea otra de **solo lectura** y guárdala en este entorno como `REVENUECAT_API_KEY`.
-6. **Integrations → Webhooks →** URL `https://TU-SERVICIO.onrender.com/api/webhooks/revenuecat`. En **Authorization header** pon el mismo valor que `VOXA_REVENUECAT_AUTH`. Envía el **evento de prueba**: debe responder 200.
+6. **Integrations → Webhooks →** URL `https://voxa-kfg6.onrender.com/api/webhooks/revenuecat` (luego `https://talkride.app/api/webhooks/revenuecat`). En **Authorization header** pon el mismo valor que `VOXA_REVENUECAT_AUTH`. Envía el **evento de prueba**: debe responder 200.
 
 Las tarjetas «Install SDK» y «Create your first paywall» se pueden marcar como hechas: el SDK ya está integrado en `app/native-purchases.js` y la pantalla de compra es la nuestra (`pro.html`), que cumple las reglas de Apple. Por eso no hace falta el editor de paywalls de RevenueCat.
 
